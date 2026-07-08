@@ -40,7 +40,7 @@ selected(){ [ ${#ONLY[@]} -eq 0 ] && return 0; local n; for n in "${ONLY[@]}"; d
 
 [ -f "$MANIFEST" ] || { echo "manifest 없음: $MANIFEST" >&2; exit 1; }
 
-while IFS='|' read -r name url link setup || [ -n "$name" ]; do
+while IFS='|' read -r name url link setup sync || [ -n "$name" ]; do
   name="$(echo "$name" | xargs)"; [ -z "$name" ] && continue
   case "$name" in \#*) continue ;; esac
   url="$(echo "$url" | xargs)"; link="$(echo "$link" | xargs)"; setup="$(echo "$setup" | xargs)"

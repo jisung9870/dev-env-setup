@@ -15,7 +15,7 @@ fail=0
 
 printf "${B}== repo 상태 ==${N}\n"
 printf "%-13s %-6s %-10s %-7s %s\n" "repo" "git" "branch" "dirty" "배포링크"
-while IFS='|' read -r name url link setup || [ -n "$name" ]; do
+while IFS='|' read -r name url link setup sync || [ -n "$name" ]; do
   name="$(echo "$name" | xargs)"; [ -z "$name" ] && continue
   case "$name" in \#*) continue ;; esac
   link="$(echo "$link" | xargs)"

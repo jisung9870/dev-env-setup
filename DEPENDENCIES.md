@@ -7,6 +7,7 @@
 | 파일 | 역할 |
 |---|---|
 | `bootstrap.sh` | 프로비저닝 (쓰기). clone/pull → 심볼릭 링크 → 각 repo setup. **멱등**. |
+| `upgrade.sh` | 최신 동기화 (쓰기). 각 repo 를 `sync_cmd` 로 최신화 (git pull + 플러그인 복원 등). |
 | `doctor.sh` | 상태 점검 (읽기 전용). repo·링크·의존계약 검사, 아무것도 안 바꿈. |
 | `repos.txt` | 매니페스트. 관리 대상 repo 목록 (한 줄 = 한 repo). |
 
@@ -42,7 +43,8 @@
 ```bash
 cd ~/home/setup
 ./doctor.sh            # 상태 점검 (읽기 전용)
-./bootstrap.sh         # 전체 동기화·셋업 — 평소엔 이거면 충분 (멱등)
+./bootstrap.sh         # 프로비저닝·셋업 — 새 장비/복구 (멱등)
+./upgrade.sh           # 최신으로 동기화 — 평소 업데이트는 이거면 충분
 ```
 
 | 명령 | 하는 일 |
@@ -53,6 +55,13 @@ cd ~/home/setup
 | `./bootstrap.sh --link-only` | 심볼릭 링크만 재생성 (경로 이동 후 복구 등, 안전) |
 | `./bootstrap.sh binbox nvim` | 지정한 repo만 처리 |
 | `./bootstrap.sh -h` | 도움말 |
+| `./upgrade.sh` | 세 repo 를 의존 순서로 최신화 (binbox pull → nvim pull+plugin → cmux pull) |
+| `./upgrade.sh binbox nvim` | 지정한 repo만 최신화 |
+| `./upgrade.sh -h` | 도움말 |
+
+> **bootstrap vs upgrade** — `bootstrap.sh` 는 *배치*(clone/link/setup, 새 장비·복구용, pull 은 부수효과),
+> `upgrade.sh` 는 *최신 반영* 전용(각 repo 의 `sync_cmd`: git pull + nvim 플러그인 lock 복원 등).
+> 평소 "업데이트 좀 당겨오자"는 `./upgrade.sh`.
 
 ---
 
@@ -61,7 +70,7 @@ cd ~/home/setup
 `repos.txt` 를 **줄 순서(=의존 순서)** 로 읽어, repo마다 아래 3단계를 수행한다:
 
 ```
-repo 한 줄:  name | url | link_target | setup_cmd
+repo 한 줄:  name | url | link_target | setup_cmd | sync_cmd
    │
    ├─ 1) clone / pull
    │     .git 없음  → git clone <url>                         (새 장비)
@@ -95,23 +104,27 @@ repo 한 줄:  name | url | link_target | setup_cmd
 bootstrap 은 repo 안의 모든 스크립트를 도는 게 아니라, **repos.txt 의 `setup_cmd` 한 줄만**
 실행한다. 나머지 내부 스크립트는 전부 수동/온디맨드다.
 
-| repo | 자동 실행 (setup_cmd) | 자동 아님 (수동 호출) |
+| repo | bootstrap 자동 (setup_cmd) | upgrade (sync_cmd) | 수동 (온디맨드) |
+|---|---|---|---|
+| binbox | `./bb setup` (bb 링크 + 셸 rc 등록) | `./bb upgrade` (git pull) | 나머지 `bb <tool>` 들 — `tm`, `assume`, `kx`, `tfx`, `gx`, `dx`, `wenv`, `sec`, … |
+| nvim | `./scripts/setup.sh --link --yes` (설정 링크) | `./scripts/setup.sh --sync --sync-plugins` (git pull + 플러그인 복원) | `--install`, `test-setup.sh` |
+| cmux-config | `bash scripts/bootstrap.sh` (cmux 설정 링크) | `git pull --ff-only` | `build-config.py`, `check-config.sh`, `pull-local.sh` (역방향 캡처) |
+
+**pull-local 은 upgrade 가 아니다** — `cmux-config/scripts/pull-local.sh` 는 라이브(`~/.config/cmux/*`,
+ghostty)를 repo 로 **캡처(역방향, 커밋 준비용)** 한다. "최신으로 당겨오기"와 방향이 반대라 `upgrade.sh`
+에 넣지 않는다. 라이브 변경을 저장할 때 별도로 수동 실행 → 그 뒤 git commit.
+
+**nvim 뉘앙스** — `setup.sh` 는 한 스크립트가 여러 레이어를 담당한다. bootstrap 은 `--link` 만,
+upgrade 는 `--sync --sync-plugins` 만 넘긴다:
+
+| 기능 | 플래그 | 어디서 실행 |
 |---|---|---|
-| binbox | `./bb setup` (bb 링크 + 셸 rc 등록) | 나머지 `bb <tool>` 들 — `tm`, `assume`, `kx`, `tfx`, `gx`, `dx`, `wenv`, `sec`, … (평소 도구로 직접 호출) |
-| nvim | `./scripts/setup.sh --link --yes` (설정 링크 레이어) | `--install`/`--sync`/`--sync-plugins`, `test-setup.sh` |
-| cmux-config | `bash scripts/bootstrap.sh` (cmux 설정 링크) | `build-config.py`, `check-config.sh`, `pull-local.sh` |
+| 설정 심볼릭 링크 (nvim/tmux/local.lua) | `--link` | ✅ bootstrap |
+| git 동기화 | `--sync` | ✅ upgrade |
+| 플러그인 버전 맞춤 (Lazy 복원) | `--sync-plugins` | ✅ upgrade (nvim 필요) |
+| 툴 설치 (brew/asdf/npm/go) | `--install` | ❌ 새 장비 1회성 (아래) |
 
-**nvim 뉘앙스** — `setup.sh` 는 자동 실행되지만 `--link`(설정 링크)만 넘긴다. 같은 스크립트의
-무거운 부분은 자동으로 돌지 않는다:
-
-| 기능 | 플래그 | bootstrap 자동? |
-|---|---|---|
-| 설정 심볼릭 링크 (nvim/tmux/local.lua) | `--link` | ✅ |
-| 툴 설치 (brew/asdf/npm/go) | `--install` | ❌ (새 장비 1회성, 아래) |
-| git 동기화 | `--sync` | ❌ (bootstrap 이 이미 pull) |
-| 플러그인 버전 맞춤 | `--sync-plugins` | ❌ (nvim 필요, 수동) |
-
-→ "설치·연결(링크/rc 등록)" 레이어만 자동, **무거운 툴 설치와 개별 도구/유틸은 수동**.
+→ 링크/rc 등록은 **bootstrap**, git pull·플러그인 복원은 **upgrade**, **무거운 툴 설치는 새 장비 1회성 수동**.
 
 ---
 
@@ -128,8 +141,10 @@ exec $SHELL -l                             # 셸 rc 재적용
 
 ```bash
 cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-tmux-plugins --yes
-# 플러그인 버전까지 맞추려면:  ./scripts/setup.sh --sync-plugins
 ```
+
+이후 평소 업데이트는 `cd ~/home/setup && ./upgrade.sh` 한 줄이면 세 repo 가 최신으로 맞춰진다
+(git pull + nvim 플러그인 lock 복원 포함).
 
 ---
 
@@ -147,12 +162,13 @@ cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-t
 
 ## repo 추가/변경
 
-`repos.txt` 에 한 줄 추가: `name | git_url | link_target | setup_cmd`
+`repos.txt` 에 한 줄 추가: `name | git_url | link_target | setup_cmd | sync_cmd`
 
 - 줄 위치 = 설치 순서. 의존이 있으면 의존 대상보다 **아래**에.
 - `link_target` 없으면 비움 (심볼릭 링크 안 만듦). `~` 확장됨.
 - `setup_cmd` 없으면 비움. 넣을 땐 **멱등·경량**만 (무거운 설치는 새 장비 1회성 단계로 분리).
-- 편집 후 `./bootstrap.sh` 재실행하면 반영됨.
+- `sync_cmd` 없으면 비움. "최신으로 동기화" 명령 (git pull 등) — `./upgrade.sh` 가 이 컬럼을 실행한다.
+- 편집 후 `./bootstrap.sh`(프로비저닝) 또는 `./upgrade.sh`(동기화) 재실행하면 반영됨.
 
 ---
 
