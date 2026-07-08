@@ -3,8 +3,10 @@
 #   - 줄 순서 = 설치/셋업 순서 (= 의존 순서). binbox 가 기반이므로 맨 위.
 #   - link_target : repo 를 심볼릭 링크로 노출할 런타임 경로 (없으면 비움). ~ 확장됨.
 #   - setup_cmd   : repo 디렉토리에서 실행할 자체 셋업 명령 (없으면 비움).
+#                   매 bootstrap 마다 실행되므로 멱등·경량이어야 함 (링크/rc 등록 레이어).
+#                   무거운 툴 설치는 여기 넣지 말 것 (새 장비 1회성 단계로 분리 — DEPENDENCIES.md).
 # 편집 후 ./bootstrap.sh 재실행하면 반영됨 (멱등).
 
 binbox      | https://github.com/jisung9870/binbox.git        | ~/binbox        | ./bb setup
-nvim        | https://github.com/jisung9870/lazyvim-config.git | ~/.config/nvim  |
+nvim        | https://github.com/jisung9870/lazyvim-config.git | ~/.config/nvim  | ./scripts/setup.sh --link --yes
 cmux-config | https://github.com/jisung9870/cmux-config.git    |                 | bash scripts/bootstrap.sh

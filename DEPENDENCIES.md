@@ -50,6 +50,18 @@ cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 셋
 exec $SHELL -l                             # 셸 rc 재적용
 ```
 
+`bootstrap.sh` 는 각 repo 의 **경량 셋업(setup_cmd)** 을 매번 실행한다:
+binbox `./bb setup`(bb 링크 + 셸 rc 등록), nvim `./scripts/setup.sh --link --yes`(nvim/tmux
+설정 링크 + local.lua), cmux `bash scripts/bootstrap.sh`(cmux 설정 링크). 모두 멱등하다.
+
+**툴 설치는 1회성(새 장비)** — 무거운 패키지/런타임(neovim, ripgrep, asdf 툴 등)은 자동 실행에서
+제외한다(멱등하지 않고 asdf 미설치 시 실패). 새 장비에서 한 번만:
+
+```bash
+cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-tmux-plugins --yes
+# 플러그인 버전까지 맞추려면: ./scripts/setup.sh --sync-plugins
+```
+
 ## repo 추가/변경
 
 `repos.txt` 에 한 줄 추가: `name | git_url | link_target | setup_cmd`
