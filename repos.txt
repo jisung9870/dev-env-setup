@@ -11,4 +11,4 @@
 
 binbox      | https://github.com/jisung9870/binbox.git        | ~/binbox        | ./bb setup                      | ./bb upgrade
 nvim        | https://github.com/jisung9870/lazyvim-config.git | ~/.config/nvim  | ./scripts/setup.sh --link --yes | ./scripts/setup.sh --sync --sync-plugins
-cmux-config | https://github.com/jisung9870/cmux-config.git    |                 | bash scripts/bootstrap.sh       | git pull --ff-only
+cmux-config | https://github.com/jisung9870/cmux-config.git    | ~/.config/cmux/cmux.json  | bash scripts/bootstrap.sh       | git pull --ff-only
