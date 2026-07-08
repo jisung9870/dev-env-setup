@@ -53,7 +53,7 @@ while IFS='|' read -r name url link setup || [ -n "$name" ]; do
   if [ ! -d "$dir/.git" ]; then
     if [ -n "$url" ]; then git clone "$url" "$dir" && ok "cloned $url"; else warn "repo 없음 & url 미정 → 건너뜀"; continue; fi
   elif [ "$NO_PULL" -eq 0 ]; then
-    if [ -z "$(git -C "$dir" status --porcelain)" ]; then
+    if [ -z "$(git -C "$dir" status --porcelain --untracked-files=no)" ]; then
       git -C "$dir" pull --ff-only >/dev/null 2>&1 && ok "pulled (ff)" || warn "pull 생략 (ff 불가/오프라인)"
     else
       warn "로컬 변경 있음 → pull 생략"
