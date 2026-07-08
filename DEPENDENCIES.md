@@ -45,7 +45,7 @@ cd ~/home/setup
 ## 새 장비 세팅
 
 ```bash
-git clone <이 setup 저장소> ~/home/setup   # 진입점만 먼저
+git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup   # 진입점만 먼저
 cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 셋업
 exec $SHELL -l                             # 셸 rc 재적용
 ```
