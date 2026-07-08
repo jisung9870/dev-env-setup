@@ -1,0 +1,6 @@
+# 개별 환경 repo는 bootstrap.sh 가 clone/pull 로 관리 → setup repo 에는 포함하지 않음
+/binbox/
+/nvim/
+/cmux-config/
+
+.DS_Store
