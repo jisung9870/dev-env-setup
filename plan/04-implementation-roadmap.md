@@ -222,6 +222,18 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - remove가 repo를 삭제하지 않음
 - migration 전 backup과 dry-run diff 제공
 
+### 2026-08-04 Slice 2A 로컬 구현 기록
+
+- workbench `84ba289`: Go 1.25.12 module, supported target, BurntSushi TOML v1.4.0 선택 근거와 checksum 고정
+- workbench `7ddc5d3`: schema-v1 project registry, config/profile validation, JSON read envelope,
+  sessionizer `--check`/`--apply`, atomic replacement와 state backup
+- 검증: `go test -race ./...`, `go vet ./...`, Linux build, macOS amd64/arm64 및 Windows amd64 cross-build 통과
+- safety: canonical path/ID conflict는 exit 4, remove는 registry만 변경, migration source와 이전 registry backup 유지
+- 원격 상태: 사용자가 push를 추후 수행하기로 하여 remote 생성, GitHub Actions, setup platform manifest와
+  `locks/repos.lock` 연결은 보류
+- 계획 차이: Phase 1 원격 CI 게이트를 완료 처리하지 않았지만, 사용자 명시 승인으로 Slice 2A 로컬 구현만 선행
+- 다음 로컬 작업: Slice 2B adapter contract와 shell backend
+
 ### Slice 2B — backend와 open
 
 - headless adapter contract와 CLI behavior

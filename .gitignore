@@ -2,6 +2,7 @@
 /binbox/
 /nvim/
 /cmux-config/
+/workbench/
 
 # Local agent/runtime state
 .omx/

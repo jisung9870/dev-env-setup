@@ -1,6 +1,6 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **계획 기준선 확정, 구현 미착수**
+- 상태: **Phase 2 Slice 2A 로컬 구현 완료, 원격 CI 대기**
 - 최종 갱신일: 2026-08-04
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
@@ -45,10 +45,11 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | macOS/Linux binbox CI 확인 후 Phase 2 착수 |
+| CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | push 후 macOS/Linux binbox CI 확인 |
 | Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
 | LazyVim UI 방향 | Phase 1 project client 완료 | Phase 2 core 이후 Agent/worktree picker 구현 |
-| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기 | child push/CI 후 compatible lock 확정 |
+| Workbench core | Slice 2A 로컬 구현 완료 | Slice 2B backend/open 구현 |
+| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
 
 ## 읽는 순서
 
@@ -74,9 +75,14 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 1 — 구조화 read API의 CI 완료 판정**이다. binbox JSON API와 LazyVim의
+현재 원격 완료 게이트는 **Phase 1 — 구조화 read API의 CI 완료 판정**이다. binbox JSON API와 LazyVim의
 비동기 JSON 우선/fallback client는 구현·로컬 commit됐고 WSL contract test가 통과했다. 원격 push 후
-기존 binbox macOS/Linux CI에서 새 Bats JSON test를 확인해야 Phase 2로 이동한다.
+기존 binbox macOS/Linux CI에서 새 Bats JSON test를 확인해야 Phase 1을 완료로 판정한다.
+
+사용자가 push를 추후 직접 하기로 결정하고 로컬 진행을 명시 승인하여, 이 게이트를 완료 처리하지 않은 채
+`workbench` Slice 2A만 선행 구현했다. 로컬 repo의 `84ba289`, `7ddc5d3`에 Go baseline, schema-v1 project
+registry, strict TOML validation, XDG/Windows 경로, JSON read API, sessionizer dry-run/apply와 backup이 있다.
+Linux test/race/vet와 Linux build, macOS amd64/arm64 및 Windows amd64 cross-build를 통과했다.
 
 착수 전:
 
@@ -107,8 +113,10 @@ git -C nvim status --short
 `bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
 contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-Phase 1 CI 증거와 child commit push를 확정한 뒤 [04-implementation-roadmap.md](04-implementation-roadmap.md)의
-Phase 2로 이동한다. CI 확인 전에는 신규 `workbench` repo부터 만들지 않는다.
+다음 로컬 구현 단위는 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Slice 2B
+adapter contract와 shell backend다. 다만 신규 `workbench` remote, platform manifest, `locks/repos.lock`은
+repo가 실제로 생성·push되기 전까지 연결하지 않는다. Phase 1과 Workbench의 원격 CI 결과가 없으므로
+formal completion 표시는 계속 보류한다.
 
 ## 범위 제외
 
