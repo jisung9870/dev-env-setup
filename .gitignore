@@ -3,4 +3,7 @@
 /nvim/
 /cmux-config/
 
+# Local agent/runtime state
+.omx/
+
 .DS_Store
