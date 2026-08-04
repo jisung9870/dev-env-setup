@@ -351,6 +351,24 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - project/workflow generated fragments
 - generated reference validation
 
+### 2026-08-05 Slice 3A 기반 로컬 구현 기록
+
+- cmux-config `1c23d2a`: `wb projects list --json` schema-v1 기반 project action generator,
+  `config.d/generated/workbench.json` merge, `Show Workbench Agents` action
+- generated action: project마다 `wb open <id> --backend cmux`, Codex/Claude
+  `wb agents start <id> --agent <kind> --backend cmux`만 허용하고 New Workspace menu에는 Open action만 추가
+- data boundary: stable project ID와 표시 이름만 사용하며 machine-local project path, prompt, 임의 shell
+  fragment를 generated output에 포함하지 않음
+- contract validation: action ID의 project/operation과 exact `wb` command 일치, generated menu reference,
+  기존 workspace `commandName`, UI action reference를 CI에서 함께 검사
+- compatibility: Workbench unavailable 장비용 기존 direct Codex/Claude, `bb doctor`, terminal/browser action 유지
+- 검증: `scripts/check-config.sh`, 2-project/6-action fixture, mismatched project command 거부,
+  generated drift, JSON, sensitive scan 통과; WSL에서는 cmux CLI 단계만 명시적으로 skipped
+- 남은 Slice 3A: 아직 producer가 없는 `wb doctor`와 `wb dashboard` action은 노출하지 않음;
+  macOS에서 실제 generated project menu와 cmux Agent workspace smoke 필요
+- 다음 로컬 작업: upstream `wb doctor` provider contract 구현 후 Workbench Doctor action 연결;
+  Dashboard action은 Slice 3D server 이후 연결
+
 ### Slice 3B — Windows Terminal
 
 - Slice 2B adapter를 사용하는 user-facing action과 profile UX
