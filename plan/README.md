@@ -1,6 +1,6 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 2 Slice 2B 로컬 구현 완료, 원격 CI·실장비 smoke 대기**
+- 상태: **Phase 2 Slice 2C 로컬 구현 완료, 원격 CI·실장비 smoke 대기**
 - 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
@@ -48,8 +48,8 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 | CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | push 후 macOS/Linux binbox CI 확인 |
 | Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
 | LazyVim UI 방향 | Phase 1 project client 완료 | Phase 2 core 이후 Agent/worktree picker 구현 |
-| Workbench core | Slice 2B 로컬 구현 완료 | Slice 2C worktree 구현 |
-| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A·2B 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
+| Workbench core | Slice 2C 로컬 구현 완료 | Slice 2D Agent registry 구현 |
+| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A~2C 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
 
 ## 읽는 순서
 
@@ -80,10 +80,10 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 기존 binbox macOS/Linux CI에서 새 Bats JSON test를 확인해야 Phase 1을 완료로 판정한다.
 
 사용자가 push를 추후 직접 하기로 결정하고 로컬 진행을 명시 승인하여, 이 게이트를 완료 처리하지 않은 채
-`workbench` Slice 2A와 2B를 선행 구현했다. 로컬 repo의 `84ba289`, `7ddc5d3`, `6712279`에 Go baseline,
+`workbench` Slice 2A~2C를 선행 구현했다. 로컬 repo의 `84ba289`, `7ddc5d3`, `6712279`, `ac5028c`에 Go baseline,
 schema-v1 project registry, strict TOML validation, XDG/Windows 경로, JSON read API, sessionizer migration,
-backend contract와 `wb open`이 있다. shell/tmux/cmux/Windows Terminal·WSL adapter의 selector와 argument-array
-계약을 test했고 Linux race/vet, macOS/Windows cross-test와 build를 통과했다.
+backend contract, `wb open`, stable worktree registry와 safe create/list/remove가 있다. backend selector,
+argument-array와 실제 Git worktree lifecycle을 test했고 Linux race/vet, macOS/Windows cross-test와 build를 통과했다.
 
 착수 전:
 
@@ -114,8 +114,8 @@ git -C nvim status --short
 `bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
 contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-다음 로컬 구현 단위는 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Slice 2C
-worktree registry와 dirty/conflict safety다. 다만 신규 `workbench` remote, platform manifest, `locks/repos.lock`은
+다음 로컬 구현 단위는 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Slice 2D
+Agent registry와 task state safety다. 다만 신규 `workbench` remote, platform manifest, `locks/repos.lock`은
 repo가 실제로 생성·push되기 전까지 연결하지 않는다. Phase 1과 Workbench의 원격 CI 결과가 없으므로
 formal completion 표시는 계속 보류한다.
 

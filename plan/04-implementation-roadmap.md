@@ -283,6 +283,23 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - Git porcelain 결과와 target path 일치 확인
 - branch 삭제는 별도 option과 확인 필요
 
+### 2026-08-05 Slice 2C 로컬 구현 기록
+
+- workbench `ac5028c`: Git porcelain adapter, schema-v1 `worktrees.json`, stable worktree ID,
+  `wb worktrees list|create|remove`
+- 생성: `repo_root`와 Git top-level 일치 확인, branch/base validation, 같은 branch 중복 차단,
+  메인 repo 밖 `<repo-parent>/.worktrees/<project-id>/<id>`에 생성 후 porcelain 재검증
+- 목록: 메인 worktree 제외, dirty/locked/prunable/detached/managed/drifted 상태 표시;
+  외부 worktree는 `managed=false`로 관찰만 허용
+- 삭제: Workbench 등록 ID, managed root, 현재 porcelain path/branch, lock, dirty를 실행 직전 재검증;
+  force를 사용하지 않고 기본적으로 branch 보존
+- branch 삭제: `--delete-branch`에서 정확한 branch 이름 확인 후 `git branch -d`만 사용하며,
+  unmerged branch 또는 registry 후속 실패는 exit 5 partial result로 보존
+- 검증: 실제 임시 Git repo create/list/duplicate/dirty/remove/delete-branch smoke,
+  `go test -race ./...`, `go vet ./...`, macOS arm64/Windows amd64 cross-test와 cross-build 통과
+- 원격 상태: remote 생성, GitHub Actions, setup platform manifest와 `locks/repos.lock` 연결은 계속 보류
+- 다음 로컬 작업: Slice 2D Agent registry, state transition, launch/jump/stop safety
+
 ### Slice 2D — Agent registry
 
 - task ID와 state model
