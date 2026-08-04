@@ -30,6 +30,7 @@ printf 'platform selection: ok\n'
 
 tests/failure-semantics-test.sh
 tests/sessionizer-contract-test.sh
+tests/json-contract-test.sh
 python3 cmux-config/scripts/check-references.py
 python3 cmux-config/scripts/build-config.py --check
 cmux-config/scripts/check-sensitive.sh
