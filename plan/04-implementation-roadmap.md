@@ -61,8 +61,8 @@ Repo snapshot은 dependency 없이 Bash에서 읽을 수 있는 `locks/repos.loc
 
 ```text
 # schema-version: 1
-binbox c7988eb193c91ccf6bff9145748a41e35fc764b5
-nvim 06f298b7335bba34c7f08d9285cf5adcfa81c601
+binbox 25f20c24fe07d79dfbaa5e11f574b28cdba02210
+nvim f12e9c0963aef7fe136381841be9a1de5b627a79
 cmux-config 042074805d0faf85a15ba641261051bb70589450
 ```
 
@@ -184,6 +184,14 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 
 - LazyVim feature flag로 API client 비활성화
 - 기존 parser와 `bb agents` text UI 유지
+
+### 2026-08-04 구현 기록
+
+- binbox `25f20c2`: projects/sessions/agents/doctor schema v1 JSON read API
+- nvim `bfca6e7`, `f12e9c0`: 비동기 JSON 우선 project picker와 help 문서
+- WSL 검증: `tests/json-contract-test.sh`, `tests/contract-test.sh`, `bb check`, Stylua 통과
+- compatibility: 기존 text UI와 sessionizer fallback 유지
+- 완료 대기: 기존 binbox macOS/Linux CI는 원격 push 이후 새 `tests/json.bats`를 실행해야 함
 
 ## Phase 2 — Workbench core
 

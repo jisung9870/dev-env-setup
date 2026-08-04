@@ -86,8 +86,8 @@ plan/README.md
 
 ## 현재 다음 작업 찾기
 
-`plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 baseline에서는 Phase 0
-완료 판정이 다음 작업이다. 이후 commit에서 상태가 변경됐다면 최신 문서를 따른다.
+`plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 baseline에서는 Phase 1
+macOS/Linux CI 완료 판정이 다음 작업이다. 이후 commit에서 상태가 변경됐다면 최신 문서를 따른다.
 
 확인 command:
 

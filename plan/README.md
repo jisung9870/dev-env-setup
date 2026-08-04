@@ -45,10 +45,10 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | 계획 완료 | Phase 0 완료 판정 후 Phase 1 구현 |
+| CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | macOS/Linux binbox CI 확인 후 Phase 2 착수 |
 | Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
-| LazyVim UI 방향 | 계획 완료 | JSON API 이후 thin client 구현 |
-| 실제 소스 변경 | Phase 0 구현·검증 중 | aggregate test와 WSL smoke 증거를 확정하고 commit 분리 |
+| LazyVim UI 방향 | Phase 1 project client 완료 | Phase 2 core 이후 Agent/worktree picker 구현 |
+| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기 | child push/CI 후 compatible lock 확정 |
 
 ## 읽는 순서
 
@@ -74,9 +74,9 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 0 — 기존 계약 고정의 완료 판정**이다. platform selector, repo lock,
-failure semantics, sessionizer fixture, cmux reference/sensitive 검사는 구현됐으며 최종 검증과 commit
-분리가 남았다.
+현재 다음 작업은 **Phase 1 — 구조화 read API의 CI 완료 판정**이다. binbox JSON API와 LazyVim의
+비동기 JSON 우선/fallback client는 구현·로컬 commit됐고 WSL contract test가 통과했다. 원격 push 후
+기존 binbox macOS/Linux CI에서 새 Bats JSON test를 확인해야 Phase 2로 이동한다.
 
 착수 전:
 
@@ -91,7 +91,7 @@ git -C cmux-config status --short
 ```
 
 Windows/WSL에서는 cmux가 없는 것이 정상이며 `windows-wsl` profile이 자동으로 disabled/skipped 처리한다.
-다음을 Phase 0 증거로 남긴다.
+다음을 공통 baseline 증거로 남긴다.
 
 ```bash
 ./bootstrap.sh --show-selection
@@ -107,8 +107,8 @@ git -C nvim status --short
 `bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
 contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-Phase 0 완료 증거와 commit을 확정한 뒤 [04-implementation-roadmap.md](04-implementation-roadmap.md)의
-Phase 1로 이동한다. 아직 신규 `workbench` repo부터 만들지 않는다.
+Phase 1 CI 증거와 child commit push를 확정한 뒤 [04-implementation-roadmap.md](04-implementation-roadmap.md)의
+Phase 2로 이동한다. CI 확인 전에는 신규 `workbench` repo부터 만들지 않는다.
 
 ## 범위 제외
 
