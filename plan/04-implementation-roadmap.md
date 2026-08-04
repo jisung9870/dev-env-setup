@@ -385,6 +385,26 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - Dashboard default browser open
 - cmux 없는 Windows smoke test
 
+### 2026-08-05 Slice 3B 기반 로컬 구현 기록
+
+- Workbench `6d64f4f`: profile에 machine-local Windows Terminal profile name/GUID, WSL distro,
+  target window와 launch mode를 추가하고 strict validation/default를 제공
+- per-open UX: `wb open <id> --backend windows-terminal --window <last|new|id/name>
+  --terminal-mode <tab|split-auto|split-horizontal|split-vertical>`
+- official CLI mapping: `--window`, `new-tab`, `split-pane`, `--horizontal`, `--vertical`을 free-form
+  shell fragment 없이 argument array로 생성하며 project open과 Agent launch가 같은 helper를 사용
+- profile preflight: Windows Terminal settings JSONC의 visible profile name과 GUID를 case-insensitive로
+  확인하고, 불일치 시 available profile과 shell/tmux recovery guidance 제공
+- WSL contract: distro는 explicit project overlay → active profile → `WSL_DISTRO_NAME`; native path는
+  `--startingDirectory`, WSL path는 명시적 `wsl.exe -d ... --cd ...`만 사용하며 추론하지 않음
+- 실제 WSL `wb doctor --json`에서 Windows Terminal과 new-window/tab/split capability available 확인;
+  visible terminal window를 생성하는 `wt.exe` launch는 자동 실행하지 않음
+- 검증: profile/GUID, window/tab/pane, distro precedence/missing recovery, native/WSL exact argument,
+  backend option boundary test와 Go race/vet, Linux/macOS/Windows amd64·arm64 build 통과
+- 남은 Slice 3B: native Windows와 WSL 실제 tab/pane interactive smoke; Dashboard browser open은 Slice 3D
+  loopback server와 함께 구현
+- 다음 로컬 작업: Phase 3 Slice 3C LazyVim client picker/async UX
+
 ### Slice 3C — LazyVim
 
 - project/Agent/worktree/doctor picker
