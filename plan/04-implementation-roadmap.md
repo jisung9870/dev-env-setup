@@ -254,6 +254,22 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - SSH에서 cmux auto-select하지 않음
 - backend command 실패 시 stderr/exit/reference 보존
 
+### 2026-08-05 Slice 2B 로컬 구현 기록
+
+- workbench `6712279`: capability-oriented adapter contract, `wb open`, shell/tmux/cmux/Windows Terminal·WSL adapter
+- 선택 규칙: explicit option → project override → active profile → native Windows Terminal → non-SSH cmux →
+  tmux/SSH/WSL → shell; configured preference의 preflight 실패만 경고 후 fallback
+- process safety: shell interpolation 없이 argument array 사용, launch 직전 project path 재검증,
+  cmux/Windows Terminal 15초와 version probe 2초 timeout, stderr/exit/reference 보존
+- Windows/WSL: native starting directory와 `wsl.exe --cd`를 분리하고, native-to-WSL은 explicit
+  `windows_wsl.distro`/`wsl_path`만 사용; Windows Terminal JSONC profile preflight와 recovery guidance 제공
+- 검증: `go test -race ./...`, `go vet ./...`, shell `/bin/true` smoke, explicit cmux exit 3,
+  macOS arm64 cross-test, macOS amd64 build, Windows amd64 cross-test/build 통과
+- 실장비 대기: macOS cmux workspace, 실제 tmux attach/switch, native Windows Terminal profile open은
+  해당 장비에서 원격 push 이후 smoke 필요
+- 원격 상태: remote 생성, GitHub Actions, setup platform manifest와 `locks/repos.lock` 연결은 계속 보류
+- 다음 로컬 작업: Slice 2C worktree registry와 dirty/conflict safety
+
 ### Slice 2C — worktree
 
 - list/create/remove
