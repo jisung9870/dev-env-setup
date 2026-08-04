@@ -315,6 +315,27 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - 등록되지 않은 process를 stop하지 않음
 - legacy scraping state에는 source 표시
 
+### 2026-08-05 Slice 2D 로컬 구현 기록
+
+- workbench `c725c98`: schema-v1 `agents.json`, 검증된 state transition,
+  `wb agents list|show|start|jump|stop`, Codex/Claude allowlist
+- launch lifecycle: backend 실행 전에 `starting` task를 atomic write하고, process/pane/workspace/tab 생성 직후
+  backend reference와 함께 `running`으로 갱신; launch 실패도 `failed` task로 조회 가능
+- target safety: tmux pane의 `@workbench_task_id` exact match 후에만 jump/kill하며, cmux 전용 workspace가
+  현재 JSON 목록에 exact reference로 존재한 뒤에만 select/close
+- capability boundary: attached shell PID와 Windows Terminal launch-only tab은 안정적인 소유권 재검증이
+  불가능하므로 jump/stop을 exit 3으로 거부하고, process/PID 추측 종료를 사용하지 않음
+- worktree 연계: Workbench managed ID를 현재 Git porcelain과 재검증하고 drifted/prunable/external worktree
+  launch를 거부
+- compatibility: registry task는 `state_source=registry`; 기존 binbox legacy 관찰은
+  `legacy:*`/`state_source=scrape` 계약을 그대로 유지하며 기존 direct Agent/cmux/`bb` command를 제거하지 않음
+- 검증: `go test -race ./...`, `go vet ./...`, Linux/macOS/Windows amd64·arm64 6개 target cross-build 통과;
+  tmux/cmux destructive target mismatch와 shell/Windows Terminal unsafe stop 거부를 fake executor로 검증
+- 실장비 대기: macOS cmux socket 접근 모드와 workspace/surface launch, 실제 tmux attach/switch,
+  native Windows Terminal/WSL Agent launch smoke는 해당 장비에서 수행 필요
+- 원격 상태: 사용자가 push를 추후 수행하기로 하여 local commit만 생성; setup manifest/lock과 CI 연결은 보류
+- 다음 로컬 작업: Phase 3 Slice 3A cmux client action과 generated reference contract
+
 ### 롤백
 
 - state migration backup
