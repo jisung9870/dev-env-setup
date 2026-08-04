@@ -31,6 +31,12 @@ Global
 
 ## Dashboard 와이어프레임
 
+![Workbench Dashboard wireframe](assets/workbench-dashboard-wireframe.svg)
+
+위 이미지는 desktop 폭의 목표 정보 구조다. cmux browser, Windows 기본 browser, 일반 browser가 같은
+Dashboard를 표시하며 terminal backend의 차이는 capability와 action에만 반영한다. 아래 ASCII 버전은
+이미지를 열 수 없는 terminal 환경을 위한 대체 표현이다.
+
 ```text
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ Workbench                          local · cmux backend · personal profile│

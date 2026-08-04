@@ -22,6 +22,11 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
   └─ binbox        Kubernetes·Terraform·AWS 등 실제 실행 provider
 ```
 
+![Cross-platform Workbench architecture](assets/cross-platform-workbench-architecture.svg)
+
+이 그림은 목표 책임 경계를 보여준다. 실제 구현 순서와 현재/목표 상태 차이는 아래 문서와 Phase별
+수용 기준을 따른다.
+
 중요한 경계:
 
 - Workbench는 cmux 전용이 아니다.

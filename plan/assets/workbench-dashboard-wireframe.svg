@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Workbench dashboard desktop wireframe</title>
+  <desc id="desc">A desktop dashboard showing projects, active AI agents, worktrees, changes, capabilities and actions shared across cmux, Windows Terminal and standard browsers.</desc>
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#020617" flood-opacity=".5"/>
+    </filter>
+    <style>
+      .brand{font:700 24px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f8fafc}
+      .h1{font:700 30px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f8fafc}
+      .h2{font:700 18px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f1f5f9}
+      .body{font:500 15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#cbd5e1}
+      .small{font:500 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#94a3b8}
+      .mono{font:500 13px ui-monospace,SFMono-Regular,Consolas,monospace;fill:#94a3b8}
+      .card{fill:#141d2e;stroke:#2a3952;stroke-width:1.5}
+      .row{fill:#182338;stroke:#2a3952;stroke-width:1}
+      .rule{stroke:#26344a;stroke-width:1}
+    </style>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#070b14"/>
+  <rect x="35" y="35" width="1530" height="930" rx="24" fill="url(#page)" stroke="#334155" filter="url(#shadow)"/>
+
+  <rect x="35" y="35" width="1530" height="68" rx="24" fill="#101827"/>
+  <path d="M35 103H1565" class="rule"/>
+  <circle cx="70" cy="69" r="8" fill="#fb7185"/><circle cx="94" cy="69" r="8" fill="#fbbf24"/><circle cx="118" cy="69" r="8" fill="#34d399"/>
+  <rect x="153" y="50" width="32" height="32" rx="8" fill="#2563eb"/>
+  <path d="M163 61h12M163 69h8M163 77h12" stroke="#fff" stroke-width="2"/>
+  <text x="199" y="77" class="brand">Workbench</text>
+  <rect x="1120" y="50" width="185" height="36" rx="10" fill="#182338" stroke="#334155"/>
+  <text x="1143" y="73" class="small">Personal profile⌄</text>
+  <rect x="1320" y="50" width="210" height="36" rx="18" fill="#0f302b" stroke="#166534"/>
+  <circle cx="1344" cy="68" r="5" fill="#4ade80"/>
+  <text x="1358" y="73" class="small" fill="#bbf7d0">All required checks pass</text>
+
+  <rect x="35" y="103" width="238" height="862" fill="#0d1524"/>
+  <text x="63" y="150" class="small">NAVIGATION</text>
+  <rect x="51" y="170" width="206" height="44" rx="10" fill="#1e3a8a"/>
+  <path d="M72 184h16v16H72zM76 180h8v5h-8z" fill="none" stroke="#bfdbfe" stroke-width="2"/>
+  <text x="104" y="198" class="body" fill="#eff6ff">Projects</text>
+  <text x="225" y="198" class="small" fill="#bfdbfe">8</text>
+  <path d="M72 238h16M72 244h12M72 250h16" stroke="#94a3b8" stroke-width="2"/>
+  <text x="104" y="250" class="body">Agents</text><text x="225" y="250" class="small">3</text>
+  <path d="M72 284l8-7 8 7-8 7zM80 291v8" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  <text x="104" y="299" class="body">Worktrees</text><text x="225" y="299" class="small">4</text>
+  <circle cx="80" cy="341" r="8" fill="none" stroke="#94a3b8" stroke-width="2"/>
+  <path d="M80 337v5l4 2" stroke="#94a3b8" stroke-width="2"/>
+  <text x="104" y="347" class="body">Doctor</text>
+  <text x="63" y="414" class="small">RECENT PROJECTS</text>
+  <text x="63" y="452" class="body">terraform-lab</text><circle cx="231" cy="447" r="5" fill="#4ade80"/>
+  <text x="63" y="488" class="body">binbox</text>
+  <text x="63" y="524" class="body">lazyvim-config</text>
+  <text x="63" y="560" class="body">dev-env-setup</text>
+  <rect x="51" y="870" width="206" height="64" rx="12" class="row"/>
+  <text x="68" y="897" class="small">CURRENT BACKEND</text>
+  <text x="68" y="919" class="body">Windows Terminal · WSL2</text>
+
+  <text x="310" y="157" class="small">PROJECT / TERRAFORM-LAB</text>
+  <text x="310" y="199" class="h1">terraform-lab</text>
+  <text x="310" y="228" class="mono">/home/jisung/projects/terraform-lab · main</text>
+
+  <rect x="980" y="169" width="134" height="42" rx="10" fill="#2563eb"/>
+  <text x="1005" y="196" class="body" fill="#fff">Start agent</text>
+  <rect x="1128" y="169" width="142" height="42" rx="10" class="row"/>
+  <text x="1150" y="196" class="body">Open terminal</text>
+  <rect x="1284" y="169" width="126" height="42" rx="10" class="row"/>
+  <text x="1308" y="196" class="body">Open editor</text>
+  <rect x="1424" y="169" width="106" height="42" rx="10" class="row"/>
+  <text x="1447" y="196" class="body">More ···</text>
+
+  <rect x="310" y="265" width="805" height="286" rx="16" class="card"/>
+  <text x="338" y="305" class="h2">Active agents</text>
+  <text x="1049" y="305" class="small">3 tasks</text>
+  <path d="M338 326H1087" class="rule"/>
+  <rect x="338" y="348" width="749" height="54" rx="10" class="row"/>
+  <circle cx="365" cy="375" r="7" fill="#4ade80"/><text x="387" y="371" class="body">Codex · implement platform selector</text>
+  <text x="387" y="391" class="mono">task wb-018 · running 12m</text><text x="1000" y="380" class="small">Jump ↗</text>
+  <rect x="338" y="416" width="749" height="54" rx="10" class="row"/>
+  <circle cx="365" cy="443" r="7" fill="#fbbf24"/><text x="387" y="439" class="body">Claude · review JSON contract</text>
+  <text x="387" y="459" class="mono">task wb-017 · waiting approval</text><text x="1000" y="448" class="small">Review</text>
+  <rect x="338" y="484" width="749" height="44" rx="10" fill="#111827"/>
+  <circle cx="365" cy="506" r="7" fill="#64748b"/><text x="387" y="511" class="body">Codex · dashboard accessibility · completed</text>
+
+  <rect x="1137" y="265" width="393" height="286" rx="16" class="card"/>
+  <text x="1165" y="305" class="h2">Capabilities</text>
+  <path d="M1165 326H1502" class="rule"/>
+  <text x="1165" y="363" class="body">Workbench core</text><text x="1432" y="363" class="small" fill="#86efac">Available</text>
+  <text x="1165" y="402" class="body">Windows Terminal</text><text x="1432" y="402" class="small" fill="#86efac">Available</text>
+  <text x="1165" y="441" class="body">WSL2 · Ubuntu</text><text x="1432" y="441" class="small" fill="#86efac">Available</text>
+  <text x="1165" y="480" class="body">tmux</text><text x="1432" y="480" class="small" fill="#86efac">Attached</text>
+  <text x="1165" y="519" class="body">cmux</text><text x="1432" y="519" class="small">Optional · absent</text>
+
+  <rect x="310" y="575" width="542" height="342" rx="16" class="card"/>
+  <text x="338" y="615" class="h2">Worktrees</text><text x="790" y="615" class="small">New worktree +</text>
+  <path d="M338 636H824" class="rule"/>
+  <text x="338" y="676" class="body">main</text><text x="590" y="676" class="mono">.</text><text x="759" y="676" class="small" fill="#86efac">clean</text>
+  <path d="M338 695H824" class="rule"/>
+  <text x="338" y="735" class="body">agent/platform-selector</text><text x="590" y="735" class="mono">../wt-platform</text><text x="751" y="735" class="small" fill="#fde68a">+6 −1</text>
+  <path d="M338 754H824" class="rule"/>
+  <text x="338" y="794" class="body">agent/dashboard-a11y</text><text x="590" y="794" class="mono">../wt-a11y</text><text x="759" y="794" class="small" fill="#86efac">clean</text>
+  <rect x="338" y="836" width="486" height="50" rx="10" fill="#111827"/>
+  <text x="358" y="866" class="small">Unsafe remove is blocked when a worktree is dirty.</text>
+
+  <rect x="874" y="575" width="656" height="342" rx="16" class="card"/>
+  <text x="902" y="615" class="h2">Changes</text><text x="1448" y="615" class="small">View diff ↗</text>
+  <path d="M902 636H1502" class="rule"/>
+  <text x="902" y="674" class="mono">plan/04-implementation-roadmap.md</text>
+  <rect x="902" y="693" width="600" height="44" rx="8" fill="#0f2e27"/>
+  <text x="920" y="720" class="mono" fill="#86efac">+ Windows/WSL platform selector and doctor severity</text>
+  <rect x="902" y="747" width="600" height="44" rx="8" fill="#2b1c24"/>
+  <text x="920" y="774" class="mono" fill="#fda4af">− cmux required on every desktop environment</text>
+  <text x="902" y="827" class="small">Validation</text>
+  <circle cx="913" cy="856" r="6" fill="#4ade80"/><text x="931" y="861" class="body">Contract tests · Markdown links · schema compatibility</text>
+  <circle cx="913" cy="889" r="6" fill="#4ade80"/><text x="931" y="894" class="body">No source repositories modified</text>
+</svg>

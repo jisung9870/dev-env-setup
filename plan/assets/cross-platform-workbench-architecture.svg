@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="920" viewBox="0 0 1600 920" role="img" aria-labelledby="title desc">
+  <title id="title">Cross-platform personal Workbench architecture</title>
+  <desc id="desc">macOS, Windows Terminal with WSL2, Linux and SSH clients use one headless Workbench core. cmux is an optional macOS adapter.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#111a2f"/>
+    </linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="1" stop-color="#4f46e5"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#020617" flood-opacity="0.42"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#64748b"/>
+    </marker>
+    <style>
+      .title{font:700 38px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f8fafc}
+      .subtitle{font:400 18px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#94a3b8}
+      .h{font:700 21px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#f8fafc}
+      .t{font:500 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#cbd5e1}
+      .s{font:500 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#94a3b8}
+      .mono{font:600 14px ui-monospace,SFMono-Regular,Consolas,monospace;fill:#dbeafe}
+      .panel{fill:#172033;stroke:#334155;stroke-width:2}
+      .soft{fill:#111827;stroke:#334155;stroke-width:1.5}
+      .line{fill:none;stroke:#64748b;stroke-width:3;marker-end:url(#arrow)}
+      .dash{fill:none;stroke:#475569;stroke-width:2;stroke-dasharray:7 7}
+    </style>
+  </defs>
+
+  <rect width="1600" height="920" rx="28" fill="url(#bg)"/>
+  <text x="80" y="78" class="title">One Workbench, multiple terminal surfaces</text>
+  <text x="80" y="112" class="subtitle">The UI changes by platform. Project, agent and worktree contracts stay the same.</text>
+
+  <rect x="70" y="170" width="330" height="205" rx="20" class="panel" filter="url(#shadow)"/>
+  <circle cx="106" cy="210" r="16" fill="#38bdf8" opacity=".2"/>
+  <path d="M98 210h16M106 202v16" stroke="#7dd3fc" stroke-width="2"/>
+  <text x="135" y="218" class="h">macOS</text>
+  <rect x="96" y="245" width="130" height="40" rx="10" fill="#24324a"/>
+  <text x="118" y="271" class="t">Terminal</text>
+  <rect x="238" y="245" width="132" height="40" rx="10" fill="#1e3a5f" stroke="#38bdf8"/>
+  <text x="258" y="271" class="t">cmux</text>
+  <rect x="297" y="184" width="78" height="26" rx="13" fill="#164e63"/>
+  <text x="310" y="202" class="s" fill="#a5f3fc">optional</text>
+  <text x="96" y="319" class="s">Native wb · tmux · LazyVim</text>
+  <text x="96" y="345" class="s">Dashboard in browser or cmux</text>
+
+  <rect x="450" y="170" width="330" height="205" rx="20" class="panel" filter="url(#shadow)"/>
+  <circle cx="486" cy="210" r="16" fill="#60a5fa" opacity=".2"/>
+  <rect x="477" y="201" width="18" height="18" fill="none" stroke="#93c5fd" stroke-width="2"/>
+  <path d="M486 201v18M477 210h18" stroke="#93c5fd" stroke-width="2"/>
+  <text x="515" y="218" class="h">Windows</text>
+  <rect x="476" y="245" width="278" height="40" rx="10" fill="#1e3a5f" stroke="#60a5fa"/>
+  <text x="509" y="271" class="t">Windows Terminal</text>
+  <rect x="476" y="299" width="278" height="49" rx="10" fill="#132c2b" stroke="#34d399"/>
+  <text x="499" y="321" class="t">WSL2 · Linux wb</text>
+  <text x="499" y="340" class="s">Tier 1 full environment</text>
+
+  <rect x="830" y="170" width="330" height="205" rx="20" class="panel" filter="url(#shadow)"/>
+  <circle cx="866" cy="210" r="16" fill="#34d399" opacity=".2"/>
+  <path d="M858 205l8-5 8 5v10l-8 5-8-5z" fill="none" stroke="#6ee7b7" stroke-width="2"/>
+  <text x="895" y="218" class="h">Linux / SSH</text>
+  <rect x="856" y="245" width="278" height="40" rx="10" fill="#132c2b" stroke="#34d399"/>
+  <text x="883" y="271" class="t">Terminal + tmux</text>
+  <text x="856" y="319" class="s">Linux wb · LazyVim · binbox</text>
+  <text x="856" y="345" class="s">Reconnect and long-running jobs</text>
+
+  <rect x="1210" y="170" width="320" height="205" rx="20" class="panel" filter="url(#shadow)"/>
+  <circle cx="1246" cy="210" r="16" fill="#a78bfa" opacity=".2"/>
+  <path d="M1238 211l6 6 11-14" fill="none" stroke="#c4b5fd" stroke-width="2.5"/>
+  <text x="1275" y="218" class="h">Native Windows</text>
+  <rect x="1236" y="245" width="268" height="40" rx="10" fill="#2e2450" stroke="#8b5cf6"/>
+  <text x="1268" y="271" class="t">wb.exe + wt.exe</text>
+  <text x="1236" y="319" class="s">Core features and dashboard</text>
+  <text x="1236" y="345" class="s">WSL bridge or unavailable provider</text>
+
+  <path d="M235 375V460H650" class="line"/>
+  <path d="M615 375V430H720V460" class="line"/>
+  <path d="M995 375V430H880V460" class="line"/>
+  <path d="M1370 375V460H950" class="line"/>
+
+  <rect x="500" y="455" width="600" height="230" rx="26" fill="url(#core)" filter="url(#shadow)"/>
+  <text x="550" y="508" class="h" font-size="25">Headless Workbench core · wb</text>
+  <text x="550" y="537" class="mono">versioned commands + JSON contracts</text>
+  <rect x="550" y="570" width="150" height="72" rx="14" fill="#172554" opacity=".85"/>
+  <text x="574" y="600" class="t">Projects</text><text x="574" y="625" class="s">profiles · paths</text>
+  <rect x="716" y="570" width="150" height="72" rx="14" fill="#172554" opacity=".85"/>
+  <text x="740" y="600" class="t">Agents</text><text x="740" y="625" class="s">tasks · events</text>
+  <rect x="882" y="570" width="168" height="72" rx="14" fill="#172554" opacity=".85"/>
+  <text x="906" y="600" class="t">Worktrees</text><text x="906" y="625" class="s">safe lifecycle</text>
+
+  <path d="M620 685V747" class="line"/>
+  <path d="M800 685V747" class="line"/>
+  <path d="M980 685V747" class="line"/>
+
+  <rect x="380" y="750" width="250" height="105" rx="18" class="soft"/>
+  <text x="414" y="791" class="h">Adapters</text>
+  <text x="414" y="822" class="s">cmux · wt.exe · tmux · shell</text>
+  <rect x="675" y="750" width="250" height="105" rx="18" class="soft"/>
+  <text x="709" y="791" class="h">Providers</text>
+  <text x="709" y="822" class="s">binbox · git · Codex · Claude</text>
+  <rect x="970" y="750" width="250" height="105" rx="18" class="soft"/>
+  <text x="1004" y="791" class="h">Local state</text>
+  <text x="1004" y="822" class="s">config · registry · events · backup</text>
+
+  <path d="M80 885H1520" class="dash"/>
+  <text x="80" y="908" class="s">Rule: terminal surfaces never own authoritative project or agent state.</text>
+</svg>
