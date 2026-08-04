@@ -45,7 +45,8 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 | `doctor.sh` | **상태 점검**(읽기 전용). repo·링크·의존계약 검사. 아무것도 안 바꿈. |
 | `repos.txt` | **매니페스트**. 관리 대상 repo 목록 (한 줄 = 한 repo). |
 | `DEPENDENCIES.md` | 상세 레퍼런스 (동작 흐름, 자동 실행 범위, 계약, repo 추가 방법). |
-| `WORKBENCH-PLAN.md` | 프로젝트·세션·AI Agent 환경 통합 아키텍처와 장비 간 작업 재개 계획. |
+| `plan/` | 프로젝트·세션·AI Agent 환경의 self-contained 통합 계획 패키지. |
+| `WORKBENCH-PLAN.md` | 기존 링크를 `plan/README.md`로 안내하는 호환용 진입점. |
 
 ---
 
@@ -97,10 +98,10 @@ cd ~/home/setup
 
 ## 더 읽기
 
-- **[WORKBENCH-PLAN.md](WORKBENCH-PLAN.md)** — 현재 네 repo의 역할과 결합 지점, 권장 hybrid
-  workbench 구조, 단계별 구현·검증·롤백 기준. 다른 장비에서 통합 작업을 이어갈 때 기준 문서다.
+- **[plan/README.md](plan/README.md)** — 현재 네 repo의 역할과 결합 지점, 권장 hybrid workbench
+  구조, CLI/UI 계약, 단계별 구현·검증·롤백, 새 세션과 다른 장비의 인수인계 기준.
 - **[DEPENDENCIES.md](DEPENDENCIES.md)** — 동작 흐름, 무엇이 자동 실행되나, 계약(변경 시 같이
   고칠 것), repo 추가/변경 방법. 이 repo 를 손볼 때 먼저 읽는다.
-- **[binbox/README.md](binbox/README.md)** — `bb` 도구 전체 목록과 사용법.
-- **[nvim/README.md](nvim/README.md)** — LazyVim 설정 구조, 멀티 머신 동기화, 초기 설정.
-- **[cmux-config/README.md](cmux-config/README.md)** — cmux 워크스페이스/작업판 관리.
+- **[binbox README](https://github.com/jisung9870/binbox/blob/main/README.md)** — `bb` 도구 전체 목록과 사용법.
+- **[lazyvim-config README](https://github.com/jisung9870/lazyvim-config/blob/main/README.md)** — LazyVim 설정 구조, 멀티 머신 동기화, 초기 설정.
+- **[cmux-config README](https://github.com/jisung9870/cmux-config/blob/main/README.md)** — cmux 워크스페이스/작업판 관리.
