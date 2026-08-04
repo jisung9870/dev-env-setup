@@ -10,6 +10,9 @@
 | `upgrade.sh` | 최신 동기화 (쓰기). 각 repo 를 `sync_cmd` 로 최신화 (git pull + 플러그인 복원 등). |
 | `doctor.sh` | 상태 점검 (읽기 전용). repo·링크·의존계약 검사, 아무것도 안 바꿈. |
 | `repos.txt` | 매니페스트. 관리 대상 repo 목록 (한 줄 = 한 repo). |
+| `platforms/*.repos` | platform별 required/optional/disabled 선택. |
+| `locks/repos.lock` | 검증된 child repo commit 조합(report-only 비교). |
+| `tests/contract-test.sh` | cross-repo 계약 aggregate test. |
 
 하위 3개 repo는 `.gitignore` 로 제외된다(각자 독립 repo이므로). 이 레이어는 "어떤 repo를 어디에
 연결하고 무엇으로 셋업하는가"만 관리한다.
@@ -42,6 +45,7 @@
 
 ```bash
 cd ~/home/setup
+./bootstrap.sh --show-selection # 현재 platform에서 처리할 repo 확인
 ./doctor.sh            # 상태 점검 (읽기 전용)
 ./bootstrap.sh         # 프로비저닝·셋업 — 새 장비/복구 (멱등)
 ./upgrade.sh           # 최신으로 동기화 — 평소 업데이트는 이거면 충분
@@ -54,6 +58,8 @@ cd ~/home/setup
 | `./bootstrap.sh --no-setup` | setup_cmd 생략 (clone/pull/link 만 — rc/설정 안 건드림) |
 | `./bootstrap.sh --link-only` | 심볼릭 링크만 재생성 (경로 이동 후 복구 등, 안전) |
 | `./bootstrap.sh binbox nvim` | 지정한 repo만 처리 |
+| `./bootstrap.sh --platform windows-wsl --show-selection` | command 실행 없이 선택 결과 확인 |
+| `./bootstrap.sh --without cmux-config` | macOS optional cmux 제외 |
 | `./bootstrap.sh -h` | 도움말 |
 | `./upgrade.sh` | 세 repo 를 의존 순서로 최신화 (binbox pull → nvim pull+plugin → cmux pull) |
 | `./upgrade.sh binbox nvim` | 지정한 repo만 최신화 |
@@ -67,7 +73,8 @@ cd ~/home/setup
 
 ## bootstrap.sh 동작 흐름
 
-`repos.txt` 를 **줄 순서(=의존 순서)** 로 읽어, repo마다 아래 3단계를 수행한다:
+공통 selector가 `platforms/*.repos`를 먼저 읽고, 선택된 repo를 `repos.txt`의 **줄 순서(=의존 순서)** 로
+아래 3단계 처리한다:
 
 ```
 repo 한 줄:  name | url | link_target | setup_cmd | sync_cmd
@@ -84,17 +91,19 @@ repo 한 줄:  name | url | link_target | setup_cmd | sync_cmd
          ( cd <name> && eval "<setup_cmd>" )                  (repo 안에서 실행)
 ```
 
-마지막에 `완료. 상태 점검: ./doctor.sh` 를 출력한다.
+마지막에 `완료. 상태 점검: ./doctor.sh` 를 출력한다. required repo의 clone, pull, link, setup 중 하나가
+실패하면 나머지를 가능한 범위에서 처리한 뒤 aggregate command가 non-zero로 종료한다.
 
 **pull 규칙**
 - `--ff-only` — 절대 머지/충돌을 만들지 않고 전진만. 로컬이 앞서 있거나 갈라졌으면 그냥 skip.
 - 클린 판정은 **추적 변경만** 본다(`git status --porcelain --untracked-files=no`). 그래서
   `.claude/`, `.DS_Store` 같은 untracked 파일은 pull 을 막지 않는다.
 - 추적 변경이 있으면 그 repo만 "로컬 변경 있음" 경고 후 pull skip. 나머지는 계속 진행.
+- offline에서 pull을 의도적으로 생략할 때는 `--no-pull`을 사용한다. required pull 실패는 non-zero다.
 
 **setup 규칙**
 - repo당 `setup_cmd` **한 줄만** 실행한다(아래 "자동 실행" 참고).
-- 출력은 억제되고, 실패해도 경고만 남기고 **다음 repo로 계속**한다(전체가 멈추지 않음).
+- 출력은 억제되고, 실패해도 **다음 repo로 계속**하지만 required setup 실패는 aggregate non-zero다.
 - 매 bootstrap 마다 실행되므로 setup_cmd 는 **멱등·경량**이어야 한다.
 
 ---
@@ -177,5 +186,5 @@ cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-t
 | repo | 물리 위치 | 런타임 링크 |
 |---|---|---|
 | binbox | `~/home/setup/binbox` | `~/binbox`, `~/.local/bin/bb` |
-| nvim | `~/home/setup/nvim` | `~/.config/nvim`, `~/.tmux.conf` |
-| cmux-config | `~/home/setup/cmux-config` | `~/.config/cmux/*`, `~/Library/Application Support/com.cmuxterm.app/*` |
+| nvim | `~/home/setup/nvim` | child installer가 `~/.config/nvim`, `~/.tmux.conf` 소유 |
+| cmux-config | `~/home/setup/cmux-config` | child installer가 cmux/Application Support 링크 소유 |

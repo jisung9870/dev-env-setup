@@ -5,8 +5,8 @@
 `wb`는 UI가 없어도 사용할 수 있는 headless control plane이다. cmux, tmux, LazyVim, Dashboard는
 이 문서의 command와 JSON contract를 통해서만 project/session/Agent/worktree 상태를 다룬다.
 
-초기 구현 언어는 **Go**로 고정한다. 분석 기준 toolchain의 `lazyvim-config/.tool-versions`가
-`golang 1.25.11`을 사용하므로 첫 baseline도 Go 1.25.11로 맞춘다. 같은 source에서 macOS, Linux,
+초기 구현 언어는 **Go**로 고정한다. 구현 착수 기준 toolchain의 `lazyvim-config/.tool-versions`가
+`golang 1.25.12`를 사용하므로 첫 baseline도 Go 1.25.12로 맞춘다. 같은 source에서 macOS, Linux,
 Windows binary를 build한다.
 
 선택 근거:

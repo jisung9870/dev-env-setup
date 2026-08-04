@@ -61,9 +61,9 @@ Repo snapshot은 dependency 없이 Bash에서 읽을 수 있는 `locks/repos.loc
 
 ```text
 # schema-version: 1
-binbox 00b4f61433a8d095db919df303dbdfc5b0d35d5c
-nvim 426093864a32e23a095ebd1418b3425ff378d3cb
-cmux-config c8ce2688c625ea7a6b5d9d44e43f9b72554603bb
+binbox c7988eb193c91ccf6bff9145748a41e35fc764b5
+nvim 06f298b7335bba34c7f08d9285cf5adcfa81c601
+cmux-config 042074805d0faf85a15ba641261051bb70589450
 ```
 
 규칙:
@@ -189,7 +189,7 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 
 ### 고정 구현 기준
 
-- 언어: Go 1.25.11
+- 언어: Go 1.25.12
 - 배포: macOS/Linux/Windows single binary
 - initial schema version: 1
 - 초기 runtime: daemon 없는 CLI process

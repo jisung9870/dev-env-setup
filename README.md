@@ -5,13 +5,14 @@
 통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
 Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
 
-현재 Windows/WSL bootstrap은 `./bootstrap.sh binbox nvim`으로 cmux repo를 제외한다. platform-aware
-bootstrap과 doctor 자동 선택은 [통합 계획](plan/README.md)의 Phase 0 구현 대상이다.
+`bootstrap.sh`, `upgrade.sh`, `doctor.sh`는 공통 platform selector를 사용한다. macOS에서는 cmux를
+optional로 선택하고, Linux/WSL에서는 자동 제외한다. `--show-selection`으로 실행 전 선택 결과를
+확인할 수 있다.
 
 실제 설정은 3개의 독립 GitHub repo(**binbox · nvim · cmux-config**)에 있고, 이 폴더의 작은
 스크립트 3개가 그것들을 **의존 순서대로 clone·연결·셋업**하고 **점검·동기화**한다. 새 장비에서
-`git clone` 한 줄로 시작한다. 현재 macOS 기본 경로는 `./bootstrap.sh` 하나로 처리하고,
-Windows/WSL은 아래의 cmux 제외 호환 명령을 사용한다.
+`git clone` 한 줄로 시작한다. macOS와 Windows Terminal 안 WSL 모두 `./bootstrap.sh`를 기본
+진입점으로 사용한다.
 
 ```
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
@@ -49,8 +50,11 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 |---|---|
 | `bootstrap.sh` | **프로비저닝**(쓰기). clone/pull → 심볼릭 링크 → 각 repo setup. 멱등. |
 | `upgrade.sh` | **최신 동기화**(쓰기). 각 repo 를 `sync_cmd` 로 최신화 (git pull + nvim 플러그인 복원 등). |
-| `doctor.sh` | **상태 점검**(읽기 전용). repo·링크·의존계약 검사. 아무것도 안 바꿈. |
+| `doctor.sh` | **상태 점검**(읽기 전용). platform severity·repo·snapshot·링크·의존계약 검사. |
 | `repos.txt` | **매니페스트**. 관리 대상 repo 목록 (한 줄 = 한 repo). |
+| `platforms/*.repos` | platform별 required/optional/disabled 선택 기준. |
+| `locks/repos.lock` | 호환성을 확인한 child repo commit snapshot. |
+| `tests/contract-test.sh` | cross-repo 계약 aggregate test. |
 | `DEPENDENCIES.md` | 상세 레퍼런스 (동작 흐름, 자동 실행 범위, 계약, repo 추가 방법). |
 | `plan/` | 프로젝트·세션·AI Agent 환경의 self-contained 통합 계획 패키지. |
 | `WORKBENCH-PLAN.md` | 기존 링크를 `plan/README.md`로 안내하는 호환용 진입점. |
@@ -67,13 +71,13 @@ cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 경
 exec $SHELL -l                             # 셸 rc 재적용
 ```
 
-Windows Terminal + WSL2의 현재 호환 명령은 다음과 같다. 현재 `doctor.sh`는 cmux가 없으면 점검 필요로
-종료하며, 이 동작을 platform-aware optional capability로 바꾸는 작업이 Phase 0에 포함되어 있다.
+Windows Terminal + WSL2에서는 WSL profile의 Linux shell에서 같은 명령을 실행한다. cmux는
+`windows-wsl` profile에서 disabled/skipped이며 전체 실패를 만들지 않는다.
 
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
 cd ~/home/setup
-./bootstrap.sh binbox nvim
+./bootstrap.sh
 ./doctor.sh
 ```
 
@@ -103,6 +107,8 @@ cd ~/home/setup
 | `./bootstrap.sh --no-setup` | setup_cmd 생략 (clone/pull/link 만) |
 | `./bootstrap.sh --link-only` | 심볼릭 링크만 재생성 (경로 이동 후 복구용, 안전) |
 | `./bootstrap.sh binbox nvim` | 지정한 repo만 처리 |
+| `./bootstrap.sh --platform windows-wsl --show-selection` | 실행 없이 platform 선택 결과 출력 |
+| `./bootstrap.sh --without cmux-config` | optional repo를 명시적으로 제외 |
 | `./upgrade.sh` | 세 repo 를 의존 순서로 최신화 |
 | `./upgrade.sh binbox` | 지정한 repo만 최신화 |
 | `./doctor.sh` | repo/링크/의존계약 점검 (문제 있으면 종료코드 ≠ 0) |
@@ -110,6 +116,10 @@ cd ~/home/setup
 > **bootstrap vs upgrade** — `bootstrap.sh` 는 *배치*(clone/link/setup, 새 장비·복구용,
 > pull 은 부수효과), `upgrade.sh` 는 *최신 반영* 전용(각 repo 의 `sync_cmd`). 평소
 > "업데이트 좀 당겨오자"는 `./upgrade.sh`.
+
+required repo의 clone/pull/setup/sync가 실패하면 aggregate command도 non-zero로 종료한다. `upgrade.sh`는
+dirty repo를 자동 동기화하지 않는다. macOS optional cmux 실패는 warning이며 `doctor.sh --strict`에서만
+실패로 승격한다.
 
 ---
 

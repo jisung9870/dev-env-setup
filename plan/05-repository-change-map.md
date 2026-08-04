@@ -225,8 +225,7 @@ producer와 consumer를 같은 날 무조건 latest로 pull해야만 동작하�
 ### `dev-env-setup`
 
 - 현재 Bash bootstrap은 Windows Terminal 안 WSL에서 실행하는 경로를 Tier 1으로 유지한다.
-- platform-aware manifest 전에는 WSL에서 `./bootstrap.sh binbox nvim`을 사용한다. 구현 후에는
-  `windows-wsl.repos`가 cmux child setup을 자동 제외한다.
+- `windows-wsl.repos`가 cmux child setup을 자동 제외하며 `--show-selection`으로 결과를 확인한다.
 - Phase 0에 Windows Terminal + WSL doctor/profile smoke를 추가한다.
 - native PowerShell bootstrap을 Bash와 별도 구현해 즉시 복제하지 않는다.
 - `wb.exe` release가 안정화된 뒤 native Windows bootstrap wrapper 필요성을 재검토한다.

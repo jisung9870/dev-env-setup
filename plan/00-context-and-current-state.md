@@ -34,11 +34,10 @@
 Dashboard, shell/tmux/Windows Terminal backend가 동작해야 한다. cmux unavailable은 전체 doctor 실패가
 아니라 macOS optional capability 상태다.
 
-**현재 baseline 제한:** 기존 `bootstrap.sh` 전체 실행은 `repos.txt`의 세 항목을 모두 처리하므로
-WSL에서도 `cmux-config` setup을 시도한다. Phase 0의 platform-aware manifest가 구현되기 전에는 WSL에서
-`./bootstrap.sh binbox nvim`으로 대상 repo를 명시한다. 현재 `doctor.sh`도 cmux repo/link가 없으면
-non-zero이므로 결과 중 binbox/nvim 상태는 확인할 수 있지만 전체 환경 정상 판정은 기대하지 않는다.
-이는 목표 상태가 아니라 임시 호환 절차다.
+**현재 Phase 0 상태:** `bootstrap.sh`, `upgrade.sh`, `doctor.sh`는 공통 platform selector와
+`platforms/*.repos`를 사용한다. Linux/WSL에서는 cmux를 disabled/skipped 처리하고, macOS에서는
+optional로 선택한다. `--show-selection`으로 세 진입점의 동일한 선택 결과를 실행 없이 확인할 수 있다.
+이전 `./bootstrap.sh binbox nvim` 절차는 explicit selection 호환 경로로만 남는다.
 
 ## 분석 대상과 기준 commit
 

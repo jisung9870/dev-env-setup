@@ -45,10 +45,10 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | 계획 완료 | Phase 0 계약 테스트 후 Phase 1 구현 |
+| CLI/API와 데이터 경계 | 계획 완료 | Phase 0 완료 판정 후 Phase 1 구현 |
 | Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
 | LazyVim UI 방향 | 계획 완료 | JSON API 이후 thin client 구현 |
-| 실제 소스 변경 | 미착수 | [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0부터 시작 |
+| 실제 소스 변경 | Phase 0 구현·검증 중 | aggregate test와 WSL smoke 증거를 확정하고 commit 분리 |
 
 ## 읽는 순서
 
@@ -74,7 +74,9 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 0 — 기존 계약 고정**이다.
+현재 다음 작업은 **Phase 0 — 기존 계약 고정의 완료 판정**이다. platform selector, repo lock,
+failure semantics, sessionizer fixture, cmux reference/sensitive 검사는 구현됐으며 최종 검증과 commit
+분리가 남았다.
 
 착수 전:
 
@@ -88,24 +90,25 @@ git -C nvim status --short
 git -C cmux-config status --short
 ```
 
-Phase 0 이전 Windows/WSL에서는 cmux가 없는 것이 정상이다. 이때 공통 `doctor.sh`의 성공을 요구하지
-않고 다음을 baseline 증거로 남긴다.
+Windows/WSL에서는 cmux가 없는 것이 정상이며 `windows-wsl` profile이 자동으로 disabled/skipped 처리한다.
+다음을 Phase 0 증거로 남긴다.
 
 ```bash
-./bootstrap.sh binbox nvim
+./bootstrap.sh --show-selection
+./bootstrap.sh --no-pull
 ./binbox/bb list
 test -e "$HOME/.config/nvim"
 git -C binbox status --short
 git -C nvim status --short
-./doctor.sh  # cmux repo/link 누락만으로 non-zero인지 출력 확인
+./doctor.sh
+./tests/contract-test.sh
 ```
 
-`bootstrap.sh` 출력에 binbox/nvim setup warning이 없어야 하고, `bb list`와 nvim link 검사가 성공해야
-한다. aggregate doctor의 cmux-only failure는 Phase 0에서 platform-aware selector가 들어갈 때 제거한다.
+`bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
+contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-그다음 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0 작업을 작은 commit으로
-나누어 수행한다. 아직 신규 `workbench` repo부터 만들지 않는다. 먼저 기존 producer/consumer 계약을
-테스트로 고정해야 한다.
+Phase 0 완료 증거와 commit을 확정한 뒤 [04-implementation-roadmap.md](04-implementation-roadmap.md)의
+Phase 1로 이동한다. 아직 신규 `workbench` repo부터 만들지 않는다.
 
 ## 범위 제외
 
