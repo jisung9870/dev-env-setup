@@ -412,12 +412,41 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - schema/error/fallback UX
 - help 문서와 keymap contract update
 
+### 2026-08-05 Slice 3C 기반 로컬 구현 기록
+
+- nvim `c3e03a8`: `vim.system({ "wb", ... })` argument array와 5초 timeout을 공유하는 schema-v1
+  async client, `WorkbenchProjects/Agents/Worktrees/Doctor` user command 추가
+- project picker는 `wb projects list --json` → `bb tm projects --json` → sessionizer parser 순서로
+  fallback하며, 다른 picker는 legacy state를 직접 읽지 않고 unavailable을 명시
+- Agent picker는 registry task details/jump/stop만 제공하고 active task stop을 재확인; worktree picker는
+  project와 linked worktree를 순서대로 선택; Doctor는 scope/status/reason/recovery 표시
+- 첫 release는 기존 `<leader>fp` 외 새 default keymap을 추가하지 않으며 `:help nvim-workbench`에 계약 기록
+- 검증: StyLua, headless async/schema/fallback/command smoke, help tags, ShellCheck, setup test 통과
+- 남은 Slice 3C: macOS/WSL Snacks UI에서 실제 picker와 tmux/cmux jump/stop interactive smoke
+
 ### Slice 3D — Dashboard
 
 - loopback local server
 - Projects, Agents, Worktrees, Changes, Doctor 화면
 - selected task detail와 jump/test/stop action
 - responsive/keyboard accessibility
+
+### 2026-08-05 Slice 3D 기반 로컬 구현 기록
+
+- Workbench `435bb80`: `wb dashboard [--open auto|cmux|browser|none] [--port <0-65535>]`, foreground
+  lifecycle, `127.0.0.1` bind, port 0, signal shutdown과 embedded HTML/CSS/JS 구현
+- snapshot API는 project, reconciled Agent, Git-verified worktree, porcelain change summary, Doctor report를
+  schema-v1 envelope로 제공하고 browser는 state file을 직접 parse하지 않음
+- action API는 random per-process token, same-origin, no CORS, CSP/no-store/frame deny, JSON size/unknown
+  field 검증을 적용하고 typed project open 및 Agent start/jump/stop 외 입력을 거부
+- interactive shell이 HTTP request를 점유하지 않도록 project open은 cmux/Windows Terminal만, Agent start는
+  detached tmux/cmux/Windows Terminal만 허용; stop은 UI confirm 후 backend ownership 재검증 사용
+- cmux-config `b331c5d`: surface action `wb dashboard --open cmux`, exact reference allowlist, generated
+  `cmux.json`, server terminal tab lifecycle 문서 연결
+- 검증: handler envelope/token/origin/unknown-field, listener shutdown, browser/cmux opener, Git argument
+  test, JS syntax, Go race/vet, Linux/macOS/Windows amd64·arm64 build, cmux config/generation/sensitive scan 통과
+- 남은 Slice 3D: target browser의 responsive/keyboard/action visual smoke; registered test workflow schema가
+  없으므로 Run tests는 disabled이며 arbitrary command 추론 없이 후속 계약으로 유지
 
 ### 수용 기준
 

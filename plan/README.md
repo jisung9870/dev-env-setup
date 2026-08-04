@@ -1,6 +1,6 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 3 Slice 3B Windows Terminal client/profile UX 로컬 구현 완료, Dashboard·원격 CI·실장비 smoke 대기**
+- 상태: **Phase 3 Slice 3C LazyVim client·Slice 3D Dashboard 기반 로컬 구현 완료, 원격 CI·실장비 UI smoke 대기**
 - 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
@@ -46,12 +46,12 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
 | CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | push 후 macOS/Linux binbox CI 확인 |
-| Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
-| LazyVim UI 방향 | Phase 1 project client 완료 | Slice 3C Agent/worktree/doctor picker 구현 |
-| Workbench core | Slice 2A~2D, `wb doctor`, Windows Terminal UX 로컬 구현 완료 | Slice 3C LazyVim client 구현 |
-| cmux client | Slice 3A Project/Agent/Doctor action 완료 | Dashboard producer 이후 Open Dashboard 연결 |
+| Desktop/Web UI 방향 | Slice 3D loopback Dashboard 기반 완료 | 실제 browser 반응형/action smoke |
+| LazyVim UI 방향 | Slice 3C Project/Agent/Worktree/Doctor client 완료 | macOS/WSL interactive picker smoke |
+| Workbench core | Slice 2A~2D, doctor, Windows Terminal, Dashboard 로컬 구현 완료 | push/CI와 target-machine smoke |
+| cmux client | Slice 3A action과 Dashboard action 완료 | macOS cmux browser smoke |
 | Windows Terminal client | Slice 3B profile/window/tab/pane·native/WSL path contract 완료 | native Windows/WSL interactive smoke |
-| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A~2D·Slice 3A~3B 기반 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
+| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A~2D·Slice 3A~3D 기반 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
 
 ## 읽는 순서
 
@@ -102,6 +102,14 @@ Agent launch의 동일 argument contract를 구현했다. WSL의 실제 `wb doct
 new window/tab/split capability가 감지됐고 fake executor argument test, Go race/vet, Linux/macOS/Windows
 amd64·arm64 build가 통과했다. 실제 창을 만드는 native Windows/WSL interactive smoke는 남아 있다.
 
+Workbench `435bb80`은 foreground `wb dashboard`와 loopback-only versioned snapshot/action API, embedded
+responsive UI, browser/cmux opener, listener shutdown을 구현한다. project/Agent/worktree/change/Doctor를
+같은 core에서 수집하며 action은 per-process token과 same-origin 확인 후 typed project open 및 Agent
+start/jump/stop만 허용한다. nvim `c3e03a8`은 `:WorkbenchProjects`, `:WorkbenchAgents`,
+`:WorkbenchWorktrees`, `:WorkbenchDoctor` 비동기 picker와 schema/timeout 안내, project의
+wb → binbox → sessionizer fallback을 추가한다. cmux-config `b331c5d`는 exact
+`wb dashboard --open cmux` action과 generated config/reference 검사를 연결한다.
+
 착수 전:
 
 ```bash
@@ -131,8 +139,10 @@ git -C nvim status --short
 `bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
 contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-다음 로컬 구현 단위는 Phase 3 Slice 3C LazyVim project/Agent/worktree/doctor picker다.
-cmux의 `Open Workbench Dashboard` action은 Slice 3D의 loopback server가 구현된 뒤 연결한다. 다만 신규
+다음 완료 게이트는 macOS/Windows/WSL의 실제 Dashboard browser, LazyVim picker, cmux/Windows Terminal
+action smoke와 push 후 원격 CI다. Dashboard의 Run tests는 arbitrary command 추론을 피하기 위해
+등록 workflow schema가 정의될 때까지 비활성 상태다. Phase 4 legacy 제거는 이 실제 사용 주기가 지난 뒤
+착수한다. 신규
 `workbench` remote, platform manifest, `locks/repos.lock`은
 repo가 실제로 생성·push되기 전까지 연결하지 않는다. Phase 1과 Workbench의 원격 CI 결과가 없으므로
 formal completion 표시는 계속 보류한다.
