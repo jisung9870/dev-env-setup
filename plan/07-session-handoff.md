@@ -24,6 +24,37 @@ cd ~/home/setup
 ./doctor.sh
 ```
 
+## Windows 장비에서 시작
+
+전체 기능 기본 경로는 Windows Terminal + WSL2다.
+
+PowerShell에서 WSL 설치/상태를 확인한다.
+
+```powershell
+wsl --status
+wsl --list --verbose
+```
+
+Windows Terminal의 WSL profile을 열고 Linux shell에서 실행한다.
+
+```bash
+git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
+cd ~/home/setup
+./bootstrap.sh binbox nvim
+exec "$SHELL" -l
+./doctor.sh
+```
+
+현재 전체 bootstrap은 macOS 전용 `cmux-config`도 처리하므로 WSL에서는 위와 같이 대상 repo를 제한한다.
+현재 `doctor.sh`는 cmux repo/link가 없으면 non-zero로 끝난다. 출력의 binbox/nvim 상태를 확인하되
+Phase 0 전에는 전체 환경 정상 판정으로 사용하지 않는다.
+Phase 0의 `windows-wsl.repos` selection이 구현된 뒤에는 인자 없는 `./bootstrap.sh`가 cmux를
+optional/skipped로 처리하고 `doctor.sh`도 이를 실패로 판정하지 않아야 한다.
+
+현재 계획 단계에서는 native PowerShell에서 `bootstrap.sh`를 실행하지 않는다. native `wb.exe`가 구현된
+이후에는 project/worktree/doctor/dashboard와 Windows Terminal backend를 직접 사용할 수 있지만,
+binbox/LazyVim 전체 기능은 WSL을 기준으로 한다.
+
 ## 기존 장비에서 재개
 
 ```bash
@@ -72,10 +103,12 @@ rg -n "현재 진행 상태|Phase [0-9]|미착수|진행 중|완료" plan
 1. 작업할 repo와 모든 consumer를 식별했는가.
 2. 현재 branch와 remote가 예상과 같은가.
 3. worktree가 clean하거나 기존 변경의 소유권을 확인했는가.
-4. baseline test가 통과하는가.
+4. baseline test가 통과하는가. Phase 0 이전 WSL이면 aggregate doctor의 cmux-only known failure와
+   `bootstrap.sh binbox nvim`, `bb list`, nvim link 성공 증거를 구분해 기록했는가.
 5. producer contract를 먼저 고정했는가.
 6. compatibility/rollback path가 있는가.
 7. 변경 후 증명할 command를 정했는가.
+8. Windows 작업이면 native Windows와 WSL 중 실행 위치가 명시됐는가.
 
 ## AI Agent에게 전달할 시작 문안
 
@@ -88,6 +121,7 @@ dev-env-setup 저장소의 plan/README.md부터 plan/07-session-handoff.md까지
 
 현재 repo와 child repo(binbox, nvim/lazyvim-config, cmux-config)의 git status,
 현재 commit, plan 문서에 기록된 baseline 이후 contract 변경을 먼저 확인하라.
+Windows 장비라면 native Windows인지 WSL인지 먼저 기록하고, cmux를 required dependency로 가정하지 마라.
 
 plan/04-implementation-roadmap.md에서 가장 앞의 미완료 Phase를 찾고,
 그 Phase의 사전 조건·수용 기준·rollback을 유지한 최소 변경 계획을 제시하라.

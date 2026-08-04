@@ -37,6 +37,10 @@ profiles/
 ├─ personal.toml
 ├─ work.toml
 └─ minimal.toml
+platforms/
+├─ macos.repos
+├─ linux.repos
+└─ windows-wsl.repos
 locks/
 └─ repos.lock
 tests/
@@ -51,6 +55,7 @@ tests/
 - partial failure semantics
 - cross-repo contract fixtures
 - profile별 required/optional capability
+- platform별 child repo 선택; `cmux-config`는 macOS optional이며 Linux/WSL에서는 skipped
 - child installer만 호출하고 runtime link owner 중복 제거
 - parent가 유지하는 유일한 repo alias는 `~/binbox`
 
@@ -175,6 +180,8 @@ workbench/
 │  ├─ shell/
 │  ├─ tmux/
 │  ├─ cmux/
+│  ├─ windows_terminal/
+│  ├─ wsl/
 │  ├─ binbox/
 │  ├─ git/
 │  ├─ codex/
@@ -190,7 +197,7 @@ workbench/
 1. config/schema/errors/JSON envelope
 2. project registry
 3. shell backend
-4. tmux and cmux adapters
+4. tmux, cmux, Windows Terminal/WSL adapters
 5. worktree
 6. Agent registry
 7. Dashboard
@@ -212,3 +219,26 @@ workbench/
 8. docs, lock, completion 갱신
 
 producer와 consumer를 같은 날 무조건 latest로 pull해야만 동작하는 상태를 만들지 않는다.
+
+## Windows 관련 repo 경계
+
+### `dev-env-setup`
+
+- 현재 Bash bootstrap은 Windows Terminal 안 WSL에서 실행하는 경로를 Tier 1으로 유지한다.
+- platform-aware manifest 전에는 WSL에서 `./bootstrap.sh binbox nvim`을 사용한다. 구현 후에는
+  `windows-wsl.repos`가 cmux child setup을 자동 제외한다.
+- Phase 0에 Windows Terminal + WSL doctor/profile smoke를 추가한다.
+- native PowerShell bootstrap을 Bash와 별도 구현해 즉시 복제하지 않는다.
+- `wb.exe` release가 안정화된 뒤 native Windows bootstrap wrapper 필요성을 재검토한다.
+
+### `binbox`와 `lazyvim-config`
+
+- full 기능은 WSL 내부에서 기존 Bash/Linux 방식으로 실행한다.
+- native Windows용 PowerShell port를 만들지 않는다.
+- native `wb.exe`가 provider를 요청하면 WSL adapter로 실행하거나 unavailable을 반환한다.
+
+### `workbench`
+
+- Windows build와 `wt.exe` adapter를 core repo에서 함께 관리한다.
+- Windows/WSL path 변환은 별도 adapter boundary에 두고 project core에 암묵적으로 섞지 않는다.
+- Windows native와 WSL state는 초기에는 별도 유지한다.

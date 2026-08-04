@@ -6,18 +6,19 @@
 이 문서의 command와 JSON contract를 통해서만 project/session/Agent/worktree 상태를 다룬다.
 
 초기 구현 언어는 **Go**로 고정한다. 분석 기준 toolchain의 `lazyvim-config/.tool-versions`가
-`golang 1.25.11`을 사용하므로 첫 baseline도 Go 1.25.11로 맞춘다.
+`golang 1.25.11`을 사용하므로 첫 baseline도 Go 1.25.11로 맞춘다. 같은 source에서 macOS, Linux,
+Windows binary를 build한다.
 
 선택 근거:
 
-- macOS와 Linux/WSL single binary 배포
+- macOS, Linux/WSL, Windows single binary 배포
 - JSON, process, file, local HTTP server를 standard library 중심으로 구현 가능
 - Agent/session 상태처럼 Bash보다 복잡한 구조화 로직에 적합
 - 기존 binbox는 Bash provider로 남겨 빠른 script 수정성을 보존
 
 구현은 다음 조건을 만족해야 한다.
 
-- macOS와 Linux/WSL에서 single binary 또는 의존성이 명확한 실행 형태
+- macOS, Linux/WSL, Windows에서 single binary 또는 의존성이 명확한 실행 형태
 - JSON encode/decode와 atomic file write 지원
 - shell interpolation 없이 argument 배열로 외부 command 실행
 - provider별 timeout, exit code, stdout/stderr 보존
@@ -48,7 +49,7 @@ wb projects list [--json]
 wb projects show <project-id> [--json]
 wb projects add <path> [--id <id>] [--profile <profile>]
 wb projects remove <project-id>
-wb open <project-id> [--backend auto|cmux|tmux|shell]
+wb open <project-id> [--backend auto|cmux|windows-terminal|tmux|shell]
 ```
 
 규칙:
@@ -108,6 +109,23 @@ wb config validate
 - `--port 0`은 OS가 사용 가능한 port를 선택하게 한다.
 - 기본 listen address는 `127.0.0.1`과 `::1` 범위로 제한한다.
 - `--strict`는 optional capability warning도 실패로 취급할 때만 사용한다.
+
+### Windows와 WSL
+
+```bash
+# PowerShell/Command Prompt
+wb.exe open terraform-lab --backend windows-terminal
+
+# WSL에서 Windows Terminal에 새 WSL tab 열기
+wb open terraform-lab --backend windows-terminal
+
+# Windows Terminal 안 WSL에서 tmux 사용
+wb open terraform-lab --backend tmux
+```
+
+Windows Terminal adapter는 `wt.exe`의 profile/starting-directory/tab/pane command를 argument 배열로
+생성한다. WSL에서 execution alias `wt`를 직접 가정하지 않고 Windows interop을 통해 `wt.exe`를
+호출할 수 있는지 `detect()`에서 확인한다.
 
 ## JSON envelope
 
@@ -239,6 +257,17 @@ ${XDG_STATE_HOME:-~/.local/state}/workbench/
 └─ backups/
 ```
 
+Windows native path는 Go의 사용자 config/cache directory API를 사용해 다음 logical location에 둔다.
+
+```text
+%APPDATA%\workbench\          config, projects, profiles
+%LOCALAPPDATA%\workbench\    state, events, backups
+```
+
+Windows native와 WSL은 state file을 직접 공유하지 않는다. 같은 project identity가 필요하면 명시적
+import/export 또는 future sync contract를 사용한다. `/mnt/c`와 Windows path를 자동으로 동일 canonical
+path로 간주하지 않는다.
+
 설정과 runtime state를 분리한다. 설정은 Git 관리 가능하지만 state, event, socket, token은 commit하지
 않는다.
 
@@ -273,6 +302,21 @@ health()                doctor details
 모든 backend가 모든 capability를 제공할 필요는 없다. `detect()`가 capability set을 반환하며 UI는
 없는 action을 숨기거나 disabled reason을 표시한다.
 
+Windows Terminal adapter의 initial capability:
+
+```text
+detect wt.exe and profiles
+open project in new/existing window
+open native PowerShell or configured WSL profile
+set starting directory
+create optional tab/pane layout
+launch Agent command in selected profile
+```
+
+Windows Terminal은 session state owner가 아니므로 tab/pane enumeration이 안정적으로 제공되지 않는 경우
+Workbench registry의 launch record와 process health만 사용하고 “완전한 terminal inventory”를 추정하지
+않는다.
+
 ## Provider 경계
 
 `wb`는 기존 `bb tfx`, `bb kx`, `bb assume` 등을 재구현하지 않는다. workflow command는 stable
@@ -287,3 +331,25 @@ requires = ["terraform", "binbox"]
 ```
 
 Dashboard가 arbitrary command string을 받아 shell로 넘기지 않게 한다.
+
+### Native Windows에서 WSL provider 호출
+
+초기 release의 native bridge는 암묵적 path 추론을 하지 않는다. project에 다음 machine-local 필드가
+모두 있을 때만 WSL provider capability를 활성화한다.
+
+```toml
+[projects.terraform-lab.windows_wsl]
+distro = "Ubuntu-24.04"
+wsl_path = "/home/user/projects/terraform-lab"
+```
+
+고정 계약:
+
+- transport는 `wsl.exe -d <distro> --exec wb provider run --project-dir <wsl_path> -- <provider> <args...>`
+  형태의 argument array다. WSL의 `wb provider run`이 working directory와 provider allowlist를 적용한다.
+- Windows path에서 `wsl_path`를 자동 생성하지 않는다. distro 또는 path가 없으면 unavailable이다.
+- provider stdout은 versioned JSON envelope, stderr와 exit code는 그대로 보존한다.
+- timeout은 provider별 설정을 따르고 cancel은 host `wsl.exe` process와 등록된 child task에 전달한다.
+- bridge를 호출한 native `wb.exe` registry가 task record를 소유하고 distro/path/source를 기록한다.
+- Windows Terminal 안 WSL에서 Linux `wb`를 직접 실행한 경우에는 Linux registry가 소유한다.
+- 두 registry를 자동 병합하지 않으며 같은 task를 양쪽에 중복 등록하지 않는다.

@@ -25,6 +25,7 @@ contract/fixture test
 | binbox JSON | fixture, stdout purity, exit code | schema fixture와 완전 일치 |
 | project migration | `~`, 공백, `=`, dead path | dry-run과 apply 결과 일치 |
 | backend detect | cmux/tmux/shell/SSH 조합 | explicit option 우선, safe fallback |
+| Windows backend | `wt.exe`, WSL interop, missing profile, path | cmux 없이 open/fallback/recovery 동작 |
 | worktree | duplicate, dirty, conflict, remove | unsafe operation 거부 |
 | Agent registry | launch/list/jump/stop/crash | stable task ID, stale state 탐지 |
 | cmux config | build drift, action reference, sensitive scan | generated source 일치 |
@@ -54,6 +55,16 @@ contract/fixture test
 - browser open fallback
 - tmux and LazyVim client
 - macOS-only capability를 optional/unavailable로 표시
+- Windows Terminal profile과 `wt.exe` interop detect
+- WSL project path를 Windows path로 조용히 오해하지 않음
+
+### Windows native
+
+- `wb.exe projects/worktrees/agents/doctor/dashboard`
+- `wt.exe` new/existing window와 starting directory
+- WSL profile open과 missing profile guidance
+- cmux absent가 required failure가 아님
+- Bash/binbox provider는 WSL adapter 또는 explicit unavailable
 
 ### SSH
 
@@ -68,6 +79,8 @@ contract/fixture test
 | config parse 실패 | 변경하지 않고 field 위치와 오류 반환 | backup/config 수정 |
 | state write 중 crash | 이전 valid state 유지 | temp 정리, backup restore |
 | cmux unavailable | cmux action만 unavailable | tmux/shell 명시 |
+| Windows Terminal unavailable | WT action만 unavailable | PowerShell/shell 또는 WSL tmux |
+| WSL distribution/profile 불일치 | 사용 가능한 profile과 설정 guidance | machine-local profile 수정 |
 | tmux server 없음 | create 가능 여부 또는 unavailable 표시 | shell fallback |
 | Agent process 종료 | task를 stale/failed로 reconcile | acknowledge/archive |
 | repo dirty | update/migration 중단 | commit/stash 후 재실행 |
@@ -102,6 +115,7 @@ contract/fixture test
 - [ ] atomic write와 backup을 사용하는가
 - [ ] committed file에 runtime state, socket, browser history, token이 없는가
 - [ ] migration 실패 시 원본을 보존하는가
+- [ ] Windows native와 WSL state/path를 암묵적으로 합치지 않는가
 
 ## 2차 영향
 
@@ -137,6 +151,7 @@ Dashboard/Desktop UI는 trusted shell-only 환경보다 공격 surface를 넓힌
 | `fallback_invocations` | doctor/event log | 대표 project/Agent 사용 후 | legacy 제거 전 0 확인 |
 | `state_recovery_failures` | migration/reconcile test | schema 변경 시 | 0 |
 | `backend_launch_failures` | event log | cmux/tmux/shell smoke | 원인이 설명되지 않은 실패 0 |
+| `windows_backend_failures` | event log | WT native/WSL smoke | recovery guidance 없는 실패 0 |
 | `stale_agent_tasks` | `wb agents list` | Agent 종료/reconnect 후 | reconcile되지 않은 항목 0 |
 | `generated_config_drift` | cmux CI | config 변경 시 | 0 |
 
@@ -174,7 +189,7 @@ Dashboard/Desktop UI는 trusted shell-only 환경보다 공격 surface를 넓힌
 
 이 계획 패키지를 변경할 때 다음을 확인한다.
 
-- 범위: 네 repo, workbench core, cmux/tmux/LazyVim/Web UI, 장비 재개 절차 포함
+- 범위: 네 repo, workbench core, cmux/Windows Terminal/tmux/LazyVim/Web UI, 장비 재개 절차 포함
 - 근거: repository fact와 권고/미확인 구분
 - 결정: 기본안, 대안, 재검토 조건 명시
 - 실행: Phase별 dependency, 수용, rollback 명시

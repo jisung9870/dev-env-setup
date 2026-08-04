@@ -17,7 +17,7 @@ Phase 1  binbox 구조화 read API
    ↓
 Phase 2  workbench core
    ↓
-Phase 3  cmux/LazyVim clients와 Dashboard
+Phase 3  cmux/Windows Terminal/LazyVim clients와 Dashboard
    ↓
 Phase 4  중복 제거와 책임 정리
    ↓
@@ -40,6 +40,8 @@ Phase 5  별도 Desktop UI 필요성 평가
 6. bootstrap/update partial failure를 non-zero로 반환
 7. ADR-005에 따라 runtime link owner 정리
 8. cmux generated config와 sensitive scan CI 추가
+9. platform-aware repo selection과 doctor severity를 추가해 WSL/Linux에서 cmux setup을 자동 제외하고
+   missing cmux를 optional/skipped로 판정
 
 ### 구현 순서
 
@@ -48,6 +50,7 @@ contract fixtures
 → read-only checker
 → CI
 → failure semantics
+→ platform selector/doctor severity
 → link owner migration
 → repo snapshot doctor
 ```
@@ -69,6 +72,36 @@ cmux-config c8ce2688c625ea7a6b5d9d44e43f9b72554603bb
 - manifest에 없는 name, duplicate name, SHA 형식 오류는 검사 실패다.
 - snapshot mismatch는 report-only이며 checkout/reset하지 않는다.
 - Workbench repo가 Phase 2에서 추가되면 같은 형식으로 행을 추가한다.
+
+Platform 선택도 Phase 0에서 dependency 없이 읽을 수 있는 `platforms/<id>.repos`로 고정한다.
+
+```text
+# schema-version: 1
+binbox required
+nvim required
+cmux-config optional
+```
+
+지원 ID는 `macos`, `linux`, `windows-wsl`이다. macOS에서는 cmux가 `optional`, Linux와
+Windows/WSL에서는 `disabled`다.
+
+선택 우선순위:
+
+1. `--platform <id>` explicit option
+2. test/CI용 `WB_PLATFORM=<id>` environment
+3. `WSL_INTEROP` 또는 kernel release의 Microsoft marker로 `windows-wsl` 감지
+4. `uname -s`의 Darwin/Linux mapping
+5. 알 수 없으면 변경 없이 실패하고 지원 ID를 출력
+
+row 의미:
+
+- `required`: 선택하고 clone/setup/doctor 실패를 aggregate failure로 처리
+- `optional`: 기본 선택하지만 `--without <repo>`로 제외 가능; missing/unavailable은 warning
+- `disabled`: 기본 제외; explicit repo name으로 실행할 때만 시도하고 결과를 명시
+
+`bootstrap.sh`, `upgrade.sh`, `doctor.sh`는 하나의 read-only selector helper를 사용해 같은
+platform ID, repo set, severity를 계산한다. selector 결과는 `--show-selection`으로 command 실행 없이
+출력할 수 있어야 한다. platform file에 없는 repo, duplicate row, 잘못된 severity는 실패다.
 
 Contract harness는 `tests/contract-test.sh` 하나를 aggregate entrypoint로 사용한다. 내부에서 Python 3을
 JSON parse에 사용할 수 있으며, 필요한 child repo가 없으면 bootstrap guidance와 함께 실패한다.
@@ -99,10 +132,15 @@ Runtime link owner:
 - child setup 하나가 실패하면 bootstrap/update가 exit 0으로 끝나지 않음
 - doctor가 snapshot commit과 현재 checkout 차이를 표시
 - 기존 clean machine bootstrap dry-run 결과가 보존됨
+- WSL/Linux profile에서 cmux가 disabled/skipped로 보고되고 bootstrap 전체 실패를 만들지 않음
+- macOS에서도 cmux missing/unavailable은 warning이며 required aggregate failure가 아님
+- bootstrap/upgrade/doctor의 `--show-selection` 결과가 동일
+- Windows Terminal + WSL에서 cmux 없이 bootstrap/doctor와 baseline workflow가 동작
 
 ### 롤백
 
 - 기존 `repos.txt`와 child setup command를 compatibility mode로 유지
+- platform profile 적용 전 WSL 호환 경로로 `./bootstrap.sh binbox nvim` 유지
 - snapshot mismatch는 자동 checkout하지 않고 report-only
 - link owner 변경 전 기존 target을 timestamp backup
 
@@ -138,7 +176,7 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 - path에 공백, `~`, `=` direct entry, dead entry fixture 처리
 - tmux가 없을 때 sessions/agents command가 명확한 capability error 반환
 - JSON stdout에 log가 섞이지 않음
-- macOS와 Linux CI 통과
+- macOS와 Linux CI 및 Windows Terminal 안 WSL의 `bb` contract smoke 통과
 - LazyVim picker와 CLI project ID/path 집합이 같음
 - `bb`가 없거나 schema가 다른 경우 LazyVim이 fallback하고 이유 표시
 
@@ -152,7 +190,7 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 ### 고정 구현 기준
 
 - 언어: Go 1.25.11
-- 배포: macOS/Linux single binary
+- 배포: macOS/Linux/Windows single binary
 - initial schema version: 1
 - 초기 runtime: daemon 없는 CLI process
 - HTTP: standard library local server, loopback-only
@@ -178,9 +216,11 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 
 ### Slice 2B — backend와 open
 
+- headless adapter contract와 CLI behavior
 - shell backend
 - tmux backend
 - cmux backend
+- Windows Terminal/WSL backend
 - capability detection
 - `wb open`
 
@@ -188,6 +228,9 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 
 - explicit `--backend`가 auto/profile보다 우선
 - cmux가 없어도 shell/tmux 동작
+- Windows에서 cmux가 required capability로 판정되지 않음
+- Windows native `wt.exe`와 WSL Windows interop 경로를 구분
+- Windows Terminal profile이 없거나 이름이 다르면 shell/tmux fallback과 recovery guidance
 - SSH에서 cmux auto-select하지 않음
 - backend command 실패 시 stderr/exit/reference 보존
 
@@ -215,14 +258,14 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 수용 기준:
 
 - launch 직후 task registry에서 조회 가능
-- cmux와 tmux task가 같은 schema로 표시
+- cmux, tmux, Windows Terminal/WSL task가 같은 schema로 표시
 - 등록되지 않은 process를 stop하지 않음
 - legacy scraping state에는 source 표시
 
 ### 롤백
 
 - state migration backup
-- `wb` 실패 시 기존 `bb tm`, cmux action, direct Agent command 사용 가능
+- `wb` 실패 시 기존 `bb tm`, cmux action, Windows Terminal/WSL shell, direct Agent command 사용 가능
 - backend별 feature flag
 
 ## Phase 3 — Clients와 Dashboard
@@ -234,14 +277,23 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - project/workflow generated fragments
 - generated reference validation
 
-### Slice 3B — LazyVim
+### Slice 3B — Windows Terminal
+
+- Slice 2B adapter를 사용하는 user-facing action과 profile UX
+- machine-local profile name/GUID와 WSL distro 설정·오류 안내
+- native path와 explicit WSL path를 구분한 project open flow
+- new/existing window, tab, optional pane integration smoke
+- Dashboard default browser open
+- cmux 없는 Windows smoke test
+
+### Slice 3C — LazyVim
 
 - project/Agent/worktree/doctor picker
 - async command 실행
 - schema/error/fallback UX
 - help 문서와 keymap contract update
 
-### Slice 3C — Dashboard
+### Slice 3D — Dashboard
 
 - loopback local server
 - Projects, Agents, Worktrees, Changes, Doctor 화면
@@ -250,8 +302,9 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 
 ### 수용 기준
 
-- project 한 번 등록로 cmux와 LazyVim 양쪽 표시
+- project 한 번 등록로 사용 가능한 cmux, Windows Terminal, LazyVim client에 동일하게 표시
 - cmux/tmux Agent가 같은 task list에 표시
+- Windows Terminal/WSL Agent도 같은 task schema에 표시
 - Dashboard가 internal state file을 직접 parse하지 않음
 - Dashboard 종료 후 listener가 남지 않음
 - UI에서 arbitrary shell command를 만들 수 없음
@@ -260,6 +313,7 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 ### 롤백
 
 - generated cmux fragment 제거 후 committed known-good `cmux.json` 사용
+- Windows Terminal integration disable 후 PowerShell 또는 WSL tmux/shell 사용
 - LazyVim plugin/client disable
 - Dashboard 없이 CLI 사용
 

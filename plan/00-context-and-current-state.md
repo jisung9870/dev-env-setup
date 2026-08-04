@@ -10,6 +10,8 @@
 현재 기본 작업 환경:
 
 - macOS에서 cmux를 주요 desktop workbench로 사용
+- Windows에서는 cmux를 사용할 수 없어 Windows Terminal을 사용
+- Windows의 전체 개발 환경은 Windows Terminal에서 WSL을 여는 방식을 기본 경로로 설계
 - tmux를 지속 가능한 session과 SSH/장시간 작업에 사용
 - LazyVim을 사람이 직접 읽고 수정하는 기준 editor로 사용
 - Codex와 Claude Code를 coding/review Agent로 사용
@@ -18,6 +20,25 @@
 
 목표는 editor를 교체하는 것이 아니라, 프로젝트·세션·Agent·worktree 상태와 실행 진입점을 통합하는
 것이다. 다른 장비에서도 같은 명령과 데이터 모델로 작업을 재현해야 한다.
+
+## 필수 플랫폼 요구사항
+
+| 환경 | UI/terminal | Workbench 실행 위치 | 지원 수준 |
+|---|---|---|---|
+| macOS | cmux 또는 일반 terminal | macOS native | 전체 기능 |
+| Windows 권장 | Windows Terminal | WSL2 Linux | 전체 기능 |
+| Windows native | Windows Terminal/PowerShell | `wb.exe` | core 기능; Bash provider는 WSL bridge 또는 unavailable |
+| Linux/SSH | terminal + tmux | Linux native | 전체 기능 |
+
+**필수 조건:** cmux가 설치되지 않았거나 실행할 수 없어도 project, worktree, Agent registry, doctor,
+Dashboard, shell/tmux/Windows Terminal backend가 동작해야 한다. cmux unavailable은 전체 doctor 실패가
+아니라 macOS optional capability 상태다.
+
+**현재 baseline 제한:** 기존 `bootstrap.sh` 전체 실행은 `repos.txt`의 세 항목을 모두 처리하므로
+WSL에서도 `cmux-config` setup을 시도한다. Phase 0의 platform-aware manifest가 구현되기 전에는 WSL에서
+`./bootstrap.sh binbox nvim`으로 대상 repo를 명시한다. 현재 `doctor.sh`도 cmux repo/link가 없으면
+non-zero이므로 결과 중 binbox/nvim 상태는 확인할 수 있지만 전체 환경 정상 판정은 기대하지 않는다.
+이는 목표 상태가 아니라 임시 호환 절차다.
 
 ## 분석 대상과 기준 commit
 
@@ -149,6 +170,21 @@ git clone dev-env-setup ~/home/setup
 - 실행 중인 cmux/tmux session과 socket 상태
 - private project별 `.cmux/cmux.json`
 - 다른 장비의 macOS/WSL package 상태
+- Windows Terminal profile 이름, WSL distribution 이름, Windows native tool 상태
 - 기준 commit 이후 upstream cmux/Codex/Claude UI 변경
 
 이 미확인 범위는 목표 아키텍처를 뒤집지는 않지만, 구현 전 doctor와 smoke test 범위를 결정한다.
+
+## Windows 관련 공식 근거
+
+- Microsoft는 Windows Terminal을 `wt.exe`/`wt` command line으로 열고, tab, pane, profile,
+  starting directory를 지정하는 방법을 문서화한다:
+  <https://learn.microsoft.com/en-us/windows/terminal/command-line-arguments>
+- Windows Terminal은 설치된 WSL distribution과 PowerShell profile을 자동 생성한다:
+  <https://learn.microsoft.com/en-us/windows/terminal/dynamic-profiles>
+- WSL은 Windows에서 Linux application, utility, Bash command를 실행하는 공식 경로다:
+  <https://learn.microsoft.com/en-us/windows/wsl/install>
+- WSL 기본 명령은 distribution 선택과 PowerShell/CMD에서의 실행 방법을 제공한다:
+  <https://learn.microsoft.com/en-us/windows/wsl/basic-commands>
+
+문서 확인일: 2026-08-04.

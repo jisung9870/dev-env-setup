@@ -15,6 +15,7 @@ dev-env-setup      장비 provisioning, 호환 repo snapshot, 통합 doctor
        ▼
 workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
   ├─ cmux adapter  로컬 desktop workspace
+  ├─ wt adapter    Windows Terminal tab/pane과 WSL 진입
   ├─ tmux adapter  장시간 세션·SSH·재접속
   ├─ nvim client   LazyVim picker·상태·작업 실행
   ├─ dashboard     localhost Web UI, cmux browser에서도 사용 가능
@@ -24,7 +25,11 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 중요한 경계:
 
 - Workbench는 cmux 전용이 아니다.
-- cmux, tmux, 일반 shell, LazyVim, local Web UI는 모두 같은 `wb` core의 client/backend다.
+- cmux, Windows Terminal, tmux, 일반 shell, LazyVim, local Web UI는 모두 같은 `wb` core의
+  client/backend다.
+- Windows에서는 Windows Terminal + WSL을 전체 기능 기본 경로로 사용한다.
+- Windows native에서는 `wb.exe` core와 `wt.exe` backend를 지원하고, Bash 기반 binbox 기능은 WSL
+  adapter를 통해 실행하거나 unavailable capability로 명시한다.
 - 처음부터 별도 desktop 앱을 만들지 않는다.
 - 우선 headless CLI와 versioned JSON contract를 만든다.
 - UI는 localhost dashboard로 시작하고, 필요가 입증될 때만 Tauri/SwiftUI 앱으로 포장한다.
@@ -47,7 +52,7 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 1. [00-context-and-current-state.md](00-context-and-current-state.md) — 왜 이 계획이 생겼고 현재 무엇이 있는가
 2. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
 3. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
-4. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, LazyVim UI
+4. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
 5. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 구현 순서와 완료/롤백 조건
 6. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
 7. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
@@ -77,6 +82,21 @@ git -C binbox status --short
 git -C nvim status --short
 git -C cmux-config status --short
 ```
+
+Phase 0 이전 Windows/WSL에서는 cmux가 없는 것이 정상이다. 이때 공통 `doctor.sh`의 성공을 요구하지
+않고 다음을 baseline 증거로 남긴다.
+
+```bash
+./bootstrap.sh binbox nvim
+./binbox/bb list
+test -e "$HOME/.config/nvim"
+git -C binbox status --short
+git -C nvim status --short
+./doctor.sh  # cmux repo/link 누락만으로 non-zero인지 출력 확인
+```
+
+`bootstrap.sh` 출력에 binbox/nvim setup warning이 없어야 하고, `bb list`와 nvim link 검사가 성공해야
+한다. aggregate doctor의 cmux-only failure는 Phase 0에서 platform-aware selector가 들어갈 때 제거한다.
 
 그다음 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0 작업을 작은 commit으로
 나누어 수행한다. 아직 신규 `workbench` repo부터 만들지 않는다. 먼저 기존 producer/consumer 계약을

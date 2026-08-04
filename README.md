@@ -2,9 +2,16 @@
 
 여러 장비에서 **동일한 개인 개발 환경**을 재현하는 오케스트레이션 레이어.
 
+통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
+Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
+
+현재 Windows/WSL bootstrap은 `./bootstrap.sh binbox nvim`으로 cmux repo를 제외한다. platform-aware
+bootstrap과 doctor 자동 선택은 [통합 계획](plan/README.md)의 Phase 0 구현 대상이다.
+
 실제 설정은 3개의 독립 GitHub repo(**binbox · nvim · cmux-config**)에 있고, 이 폴더의 작은
 스크립트 3개가 그것들을 **의존 순서대로 clone·연결·셋업**하고 **점검·동기화**한다. 새 장비에서
-`git clone` 한 줄로 시작해 `./bootstrap.sh` 하나면 나머지가 제자리에 붙는다.
+`git clone` 한 줄로 시작한다. 현재 macOS 기본 경로는 `./bootstrap.sh` 하나로 처리하고,
+Windows/WSL은 아래의 cmux 제외 호환 명령을 사용한다.
 
 ```
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
@@ -52,12 +59,22 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 
 ## 빠른 시작
 
-### 새 장비
+### 새 macOS 장비
 
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup   # 진입점만 먼저
 cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 경량 셋업
 exec $SHELL -l                             # 셸 rc 재적용
+```
+
+Windows Terminal + WSL2의 현재 호환 명령은 다음과 같다. 현재 `doctor.sh`는 cmux가 없으면 점검 필요로
+종료하며, 이 동작을 platform-aware optional capability로 바꾸는 작업이 Phase 0에 포함되어 있다.
+
+```bash
+git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
+cd ~/home/setup
+./bootstrap.sh binbox nvim
+./doctor.sh
 ```
 
 무거운 툴 설치(neovim, ripgrep, asdf 툴 등)는 bootstrap 자동 실행에서 **제외**돼 있다.

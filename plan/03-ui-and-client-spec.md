@@ -6,7 +6,7 @@ UI는 별도 state owner가 아니다. 모든 UI는 `wb` command 또는 local AP
 
 구현 순서:
 
-1. cmux action과 LazyVim picker
+1. cmux/Windows Terminal action과 LazyVim picker
 2. `wb dashboard` localhost Web UI
 3. 필요가 검증되면 Tauri/SwiftUI wrapper
 
@@ -91,6 +91,7 @@ action:
 
 - Open with default backend
 - Open with cmux/tmux/shell
+- Open with Windows Terminal/WSL
 - Open LazyVim
 - Start Agent
 
@@ -173,6 +174,33 @@ Run Doctor
 
 cmux가 없을 때 core 동작이 실패해서는 안 된다. cmux action 생성과 `--backend cmux`만 unavailable로
 처리한다.
+
+## Windows Terminal client/backend
+
+Windows Terminal에서는 별도 embedded Workbench panel을 먼저 만들지 않는다. 다음 세 경로를 제공한다.
+
+```text
+PowerShell  → wb.exe command/TUI → wt.exe tab/pane
+WSL shell   → Linux wb command   → tmux 또는 wt.exe WSL profile
+Dashboard   → default Windows browser on localhost
+```
+
+제공 action:
+
+```text
+Open Project in Windows Terminal
+Open Project in WSL
+Open/attach tmux session in WSL
+Start Codex/Claude in selected profile
+Open Workbench Dashboard in browser
+Run Doctor
+```
+
+`wt.exe`는 UI backend일 뿐 source of truth가 아니다. Windows Terminal settings/profile을 Workbench가
+전면 관리하지 않고 profile name 또는 GUID를 machine-local profile 설정에서 참조한다.
+
+Windows에서는 cmux와 같은 in-app browser를 가정하지 않는다. `wb dashboard --open browser`가 기본
+browser를 사용하며, terminal에서는 Dashboard URL과 상태를 출력한다.
 
 ## LazyVim client
 

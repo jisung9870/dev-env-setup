@@ -8,7 +8,7 @@
 ## 결정 기준
 
 1. tmux와 LazyVim 중심 작업 습관을 보존한다.
-2. cmux가 없어도 일반 shell, tmux, SSH, LazyVim에서 동작한다.
+2. cmux가 없어도 Windows Terminal, 일반 shell, tmux, SSH, LazyVim에서 동작한다.
 3. 새 장비에서 재현할 수 있고 partial failure를 탐지할 수 있다.
 4. project/session/Agent/worktree의 source of truth를 하나로 만든다.
 5. UI가 바뀌어도 core state와 automation contract는 유지한다.
@@ -76,6 +76,7 @@ Neovim 안에서 project, Agent, worktree를 모두 관리한다.
                                   ▼
 ┌─────────────┐  JSON/commands  ┌──────────────────────┐  adapters  ┌─────────────┐
 │ cmux actions├────────────────►│ workbench core (`wb`)├──────────►│ cmux        │
+│ WT actions  ├────────────────►│ projects · agents    ├──────────►│ wt.exe/WSL  │
 │ LazyVim UI  ├────────────────►│ projects · agents    ├──────────►│ tmux        │
 │ Web UI      ├────────────────►│ sessions · worktrees ├──────────►│ git         │
 │ shell/TUI   ├────────────────►│ events · capabilities├──────────►│ binbox      │
@@ -98,6 +99,14 @@ Neovim 안에서 project, Agent, worktree를 모두 관리한다.
 - `wb`를 호출하는 action과 generated workspace
 - authoritative project/Agent state는 소유하지 않음
 
+### Windows Terminal
+
+- Windows의 desktop terminal backend
+- native Windows에서는 `wt.exe`로 tab, pane, profile, starting directory를 연다.
+- WSL에서는 `cmd.exe /c wt.exe ...` 또는 Windows interop adapter를 사용한다.
+- authoritative project/Agent state는 소유하지 않는다.
+- full Bash/LazyVim/binbox workflow는 Windows Terminal 안의 WSL에서 실행한다.
+
 ### tmux
 
 - 장시간 session, SSH, reconnect
@@ -119,7 +128,7 @@ Neovim 안에서 project, Agent, worktree를 모두 관리한다.
 ### Dashboard
 
 - `wb dashboard`가 `127.0.0.1`의 임시 port에서 제공하는 local Web UI
-- cmux in-app browser, 일반 browser 모두 사용 가능
+- cmux in-app browser 또는 macOS·Windows·Linux의 기본 browser에서 사용 가능
 - 나중에 필요하면 같은 local API를 Tauri/SwiftUI로 감쌈
 
 ## Backend 선택 규칙
@@ -129,6 +138,7 @@ Neovim 안에서 project, Agent, worktree를 모두 관리한다.
 ```bash
 wb open binbox --backend cmux
 wb open binbox --backend tmux
+wb open binbox --backend windows-terminal
 wb open binbox --backend shell
 ```
 
@@ -136,9 +146,10 @@ wb open binbox --backend shell
 
 1. project override
 2. active profile default
-3. `CMUX_*` 환경 또는 cmux capability 감지
-4. `TMUX` 또는 SSH 감지
-5. shell fallback
+3. Windows native에서 Windows Terminal capability 감지
+4. `CMUX_*` 환경 또는 cmux capability 감지
+5. `TMUX` 또는 SSH/WSL 감지
+6. shell fallback
 
 자동 감지가 실패해도 명시적 backend는 동작해야 한다.
 
@@ -149,7 +160,8 @@ wb open binbox --backend shell
 - 상태: 채택
 - 결정: core는 headless CLI이며 cmux는 optional backend/client다.
 - 이유: SSH, 다른 장비, tmux-only 환경에서도 동일한 project와 Agent 상태가 필요하다.
-- 결과: cmux API가 없어도 project list, worktree, doctor, shell backend는 동작해야 한다.
+- 결과: cmux API가 없어도 project list, worktree, Agent registry, doctor, Dashboard와
+  shell/tmux/Windows Terminal backend는 해당 platform capability 범위에서 동작해야 한다.
 
 ### ADR-002 — UI보다 versioned contract를 먼저 만든다
 
@@ -182,6 +194,21 @@ wb open binbox --backend shell
 - nvim child: `~/.config/nvim`, `~/.tmux.conf`, local template
 - cmux child: `~/.config/cmux/cmux.json`, Application Support files
 - 결과: `repos.txt` migration 후 nvim/cmux의 parent `link_target`은 비우고 child `setup_cmd`만 실행한다.
+
+### ADR-006 — Windows는 Windows Terminal + WSL을 전체 기능 기본 경로로 지원한다
+
+- 상태: 채택
+- 결정: Windows에서 cmux를 요구하지 않는다. Windows Terminal을 desktop terminal로 사용하고,
+  WSL2 안에서 Linux `wb`, tmux, LazyVim, binbox를 실행하는 구성을 Tier 1으로 지원한다.
+- Native: `wb.exe`는 project/worktree/Agent registry/doctor/Dashboard와 `wt.exe` backend를 지원한다.
+- State authority: Windows 전체 기능 경로에서는 WSL의 Linux `wb` state를 authoritative로 사용한다.
+  native `wb.exe`를 함께 쓸 때는 별도 profile/state로 취급하고 자동 병합하지 않는다.
+- Provider 경계: Bash 기반 binbox command는 native Windows에 재구현하지 않고 WSL adapter로 호출하거나
+  capability unavailable을 반환한다.
+- 이유: 현재 binbox와 LazyVim setup이 Bash/WSL 친화적이며, 동일 로직을 PowerShell로 복제하면
+  source of truth가 다시 분리된다.
+- 결과: Phase 0·1은 Windows Terminal 안 WSL의 bootstrap/doctor/`bb` contract smoke를 required matrix에
+  포함하고, `wt.exe` adapter smoke는 core가 생기는 Phase 2부터 포함한다.
 
 ## 재검토 조건
 
