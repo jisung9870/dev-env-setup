@@ -364,10 +364,17 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - compatibility: Workbench unavailable 장비용 기존 direct Codex/Claude, `bb doctor`, terminal/browser action 유지
 - 검증: `scripts/check-config.sh`, 2-project/6-action fixture, mismatched project command 거부,
   generated drift, JSON, sensitive scan 통과; WSL에서는 cmux CLI 단계만 명시적으로 skipped
-- 남은 Slice 3A: 아직 producer가 없는 `wb doctor`와 `wb dashboard` action은 노출하지 않음;
-  macOS에서 실제 generated project menu와 cmux Agent workspace smoke 필요
-- 다음 로컬 작업: upstream `wb doctor` provider contract 구현 후 Workbench Doctor action 연결;
+- Workbench `f2c2c17`: config/project/Agent/worktree state, Git/shell core, optional tool/backend,
+  platform-disabled provider를 구분하는 read-only `wb doctor [--profile] [--json] [--strict]`
+- doctor failure JSON도 수집된 capability data와 recovery를 유지하며 default는 core만, `--strict`는
+  applicable optional capability까지 요구; cmux는 non-macOS, Windows Terminal은 non-Windows/WSL에서 skipped
+- cmux-config `580cd26`: surface action `Workbench Doctor`를 exact `wb doctor` command로 연결하고
+  reference checker allowlist와 generated `cmux.json` 동기화
+- 검증: invalid Agent registry core failure, strict optional failure data 보존, WSL platform 분류,
+  Go race/vet와 Linux/macOS/Windows amd64·arm64 build, cmux config/reference/generation/sensitive 검사 통과
+- 남은 Slice 3A: 아직 producer가 없는 `wb dashboard` action과 macOS generated project/Agent/Doctor smoke;
   Dashboard action은 Slice 3D server 이후 연결
+- 다음 로컬 작업: Phase 3 Slice 3B Windows Terminal client/profile UX contract
 
 ### Slice 3B — Windows Terminal
 

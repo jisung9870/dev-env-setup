@@ -1,6 +1,6 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 3 Slice 3A cmux client 기반 로컬 구현 완료, 원격 CI·실장비 smoke 대기**
+- 상태: **Phase 3 Slice 3A cmux core action 로컬 구현 완료, Dashboard·원격 CI·실장비 smoke 대기**
 - 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
@@ -48,8 +48,8 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 | CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | push 후 macOS/Linux binbox CI 확인 |
 | Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
 | LazyVim UI 방향 | Phase 1 project client 완료 | Phase 2 core 이후 Agent/worktree picker 구현 |
-| Workbench core | Slice 2A~2D 로컬 구현 완료 | `wb doctor` provider contract 구현 |
-| cmux client | Slice 3A project/Agent action 생성 기반 완료 | `wb doctor`/Dashboard producer 이후 나머지 action 연결 |
+| Workbench core | Slice 2A~2D와 `wb doctor` 로컬 구현 완료 | Slice 3D `wb dashboard` 구현 |
+| cmux client | Slice 3A Project/Agent/Doctor action 완료 | Dashboard producer 이후 Open Dashboard 연결 |
 | 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A~2D·Slice 3A 기반 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
 
 ## 읽는 순서
@@ -86,10 +86,13 @@ schema-v1 project registry, strict TOML validation, XDG/Windows 경로, JSON rea
 backend contract, `wb open`, stable worktree registry와 safe create/list/remove, Agent task registry와
 Codex/Claude start/list/show/jump/stop이 있다. backend selector, argument-array, 실제 Git worktree lifecycle,
 등록 target 재검증을 test했고 Linux race/vet와 Linux/macOS/Windows cross-build를 통과했다.
+`f2c2c17`은 core/optional/disabled capability를 구분하는 read-only `wb doctor`, `--json`, `--strict`,
+상태 schema와 backend/tool recovery report를 추가한다.
 
 cmux-config `1c23d2a`에는 Workbench project JSON을 stable ID 기반 Open/Codex/Claude action으로 만드는
 generator, generated fragment merge, exact command/reference 검사, `Show Workbench Agents` action이 있다.
 machine-local project path는 생성물에 포함하지 않으며 기존 direct Codex/Claude와 `bb doctor` fallback을 유지한다.
+`580cd26`은 exact `wb doctor`만 허용하는 Workbench Doctor action을 추가한다.
 
 착수 전:
 
@@ -120,8 +123,8 @@ git -C nvim status --short
 `bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
 contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-다음 로컬 구현 단위는 Slice 3A의 남은 Workbench Doctor action을 위한 upstream `wb doctor` provider
-contract다. `wb dashboard` action은 Slice 3D의 loopback server가 구현된 뒤 연결한다. 다만 신규
+다음 로컬 구현 단위는 Phase 3 Slice 3B Windows Terminal client/profile UX contract다.
+cmux의 `Open Workbench Dashboard` action은 Slice 3D의 loopback server가 구현된 뒤 연결한다. 다만 신규
 `workbench` remote, platform manifest, `locks/repos.lock`은
 repo가 실제로 생성·push되기 전까지 연결하지 않는다. Phase 1과 Workbench의 원격 CI 결과가 없으므로
 formal completion 표시는 계속 보류한다.
