@@ -32,7 +32,7 @@ Phase 5  별도 Desktop UI 필요성 평가
 | 1 | 구현·검증 완료 | binbox JSON/LazyVim fallback 회귀 유지 |
 | 2 | 구현·검증 완료 | Workbench full Go matrix와 timeout 회귀 유지 |
 | 3 | 구현·검증 완료 | cmux/nvim/Dashboard isolated E2E 유지 |
-| 4 | 진입 가능, 미착수 | cleanup plan과 behavior-lock regression부터 시작 |
+| 4 | 진행 중, pass 1 완료 | fallback 사용 관찰 계약과 대표 workflow 주기 기록 |
 | 5 | 미착수 | Phase 4 관찰 후 필요성 평가 |
 
 ## Phase 0 — 기존 계약 고정
@@ -498,6 +498,17 @@ legacy path는 다음이 모두 충족될 때만 제거한다.
 
 대표 사용 주기는 고정 날짜가 아니라 실제 개인 workflow의 프로젝트 open, Agent 실행, tmux reconnect,
 새 장비 또는 clean profile smoke를 포함해야 한다.
+
+### 2026-08-05 cleanup pass 1 기록
+
+- cleanup plan과 fallback 분류를 `08-phase4-cleanup-plan.md`에 기록했다.
+- cmux `workspaceGroups.byCwd`의 7개 machine-local root를 삭제하고 global `afterCurrent` 배치는 유지했다.
+- generated Workbench project action을 유일한 cmux project registry로 고정하는 회귀 테스트를 추가했다.
+- LazyVim sessionizer와 binbox pane scraping은 primary 실패와 source를 노출하는 grounded compatibility
+  fallback으로 분류해 유지했다. 다음 pass는 삭제가 아니라 doctor 관찰 계약이다.
+- 검증: cmux generation/reference/config/sensitive 검사, root aggregate 14개 group, binbox Bats 267개,
+  Workbench 전체 Go test, aggregate doctor가 통과했다. 설치 config는 symlink와 config doctor로 확인했으나
+  runtime hot reload는 cmux socket `Broken pipe`로 실패해 앱 재시작 후 반영 확인이 남았다.
 
 ## Phase 5 — 별도 Desktop UI 평가
 

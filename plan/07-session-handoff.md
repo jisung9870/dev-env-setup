@@ -87,8 +87,8 @@ plan/README.md
 ## 현재 다음 작업 찾기
 
 `plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 기준선은 Phase 0~3
-구현·검증 완료 후 Phase 4 진입 가능 상태다. Phase 4 구현 자체는 미착수이며 이후 commit에서 상태가
-변경됐다면 최신 문서를 따른다.
+구현·검증 완료 후 Phase 4 진행 중 상태다. cmux의 중복 project root registry 제거는 끝났고, 다음 작업은
+LazyVim/sessionizer와 legacy Agent scraping을 삭제하기 전 fallback 사용 관찰 계약을 설계하는 것이다.
 
 확인 command:
 

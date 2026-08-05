@@ -167,14 +167,16 @@ git clone dev-env-setup ~/home/setup
 - Phase 3: cmux generated actions, Windows Terminal adapter, LazyVim async client, localhost Dashboard 구현 완료.
 - Phase 0 보강: shared platform selector, total severity profiles, compatible repo lock, aggregate contract test,
   required child failure non-zero, runtime link owner 정리, Workbench manifest/install 통합 구현·검증 완료.
-- 최신 검증: root contract 13개, binbox Bats 267개, nvim setup/headless, actual cmux config doctor,
+- 최신 검증: root contract 14개, binbox Bats 267개, nvim setup/headless, actual cmux config doctor,
   Workbench unit/vet/race/3회 반복, 6개 cross-build, Linux container smoke, installed binary isolated E2E
   10개, actual bootstrap/doctor 통과. independent code review `APPROVE`, architecture review `CLEAR`.
 - Phase 4 직전 보정: profile의 `prefer_current_tmux`/`backend_priority`를 추가하고 실제 격리 PTY에서
   `wb open`이 현재 tmux client를 목표 project session으로 전환함을 확인했다. 등록된 4개 project의
   explicit cmux action도 재생성했다.
+- Phase 4 pass 1: cmux `workspaceGroups.byCwd`의 machine-local project root 중복을 제거하고
+  Workbench-generated action을 유일한 cmux project registry로 고정했다. global workspace placement는 유지한다.
 - committed snapshot: nvim `6568e2fa97da9a9f7e01d5057b016c5318558f68`, cmux-config
-  `25dd88c8a16d8608bbd5bf00abeb0e7c0d1d3b55`, workbench
+  `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
   `50ba6a52e719ebd5f1a04d8708b70a6a67a83dc3`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 

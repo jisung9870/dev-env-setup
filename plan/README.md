@@ -1,6 +1,6 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 0~3 구현·검증 완료, Phase 4 진입 가능**
+- 상태: **Phase 0~3 구현·검증 완료, Phase 4 진행 중**
 - 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
@@ -49,7 +49,7 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 | Desktop/Web UI 방향 | Phase 3 localhost Dashboard 구현·검증 완료 | loopback/auth/origin/body-limit 유지 |
 | LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
 | Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
-| Phase 4 진입 | **가능, 미착수** | cleanup plan과 회귀 테스트를 먼저 고정 |
+| Phase 4 | **진행 중, cmux project registry 정리 완료** | fallback 사용 관찰 계약을 먼저 설계 |
 
 ## 읽는 순서
 
@@ -63,6 +63,7 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 6. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
 7. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
 8. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
+9. [08-phase4-cleanup-plan.md](08-phase4-cleanup-plan.md) — cleanup 범위, fallback 분류, pass별 gate
 
 ## Source of truth 규칙
 
@@ -75,8 +76,9 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 4 — 중복 제거와 책임 정리**다. readiness gate는 통과했으며 Phase 4 구현은
-아직 시작하지 않았다. cleanup plan을 먼저 작성하고 기존 동작을 회귀 테스트로 고정한 뒤 한 책임씩 정리한다.
+현재 다음 작업은 **Phase 4 — fallback 사용 관찰 계약**이다. cmux의 중복 project root registry는 제거했고
+Workbench-generated action을 cmux project source of truth로 고정했다. LazyVim sessionizer와 legacy Agent
+scraping은 grounded compatibility fallback이므로 사용 여부를 doctor가 관찰하기 전에는 제거하지 않는다.
 
 착수 전:
 
