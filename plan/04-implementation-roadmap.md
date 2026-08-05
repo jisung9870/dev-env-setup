@@ -520,6 +520,9 @@ legacy path는 다음이 모두 충족될 때만 제거한다.
 - fallback은 삭제하지 않았다. timestamp는 clock rollback과 미실행 장비 한계가 있는 advisory evidence다.
 - 검증: Workbench full test/race/vet, 6개 cross-build, isolated binary E2E, LazyVim setup/headless/StyLua,
   binbox Bats 267개가 통과했다. 다음 pass는 대표 사용 주기 실행과 관찰 결과 평가다.
+- 실제 `~/.local/bin/wb`를 새 commit으로 설치하고 Neovim project primary와 Workbench Agent registry primary를
+  한 차례 실행해 두 compatibility capability의 `available` 전환을 확인했다. 이는 point-in-time smoke이며
+  대표 사용 주기 완료나 fallback 삭제 근거로 간주하지 않는다.
 
 ## Phase 5 — 별도 Desktop UI 평가
 

@@ -90,6 +90,8 @@ plan/README.md
 구현·검증 완료 후 Phase 4 진행 중 상태다. cmux의 중복 project root registry 제거와 fallback 사용 관찰
 계약 구현은 끝났다. 다음 작업은 대표 project/Agent workflow 사용 주기를 실행하고 doctor의 두 compatibility
 capability가 primary `available`인지 평가하는 것이다. 관찰만으로 fallback을 자동 삭제하지 않는다.
+현재 장비의 설치 binary에서는 두 primary의 point-in-time smoke가 통과했지만, 여러 실제 작업에 걸친 대표
+사용 주기 증거는 아직 수집 전이다.
 
 확인 command:
 
