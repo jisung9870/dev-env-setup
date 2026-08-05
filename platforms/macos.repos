@@ -1,0 +1,5 @@
+# schema-version: 1
+binbox required
+nvim required
+cmux-config optional
+workbench required

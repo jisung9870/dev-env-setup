@@ -24,6 +24,17 @@ Phase 4  중복 제거와 책임 정리
 Phase 5  별도 Desktop UI 필요성 평가
 ```
 
+## 현재 구현 상태 (2026-08-05)
+
+| Phase | 상태 | 현재 gate |
+|---|---|---|
+| 0 | 구현·검증 완료 | aggregate contract와 committed child snapshot 유지 |
+| 1 | 구현·검증 완료 | binbox JSON/LazyVim fallback 회귀 유지 |
+| 2 | 구현·검증 완료 | Workbench full Go matrix와 timeout 회귀 유지 |
+| 3 | 구현·검증 완료 | cmux/nvim/Dashboard isolated E2E 유지 |
+| 4 | 진입 가능, 미착수 | cleanup plan과 behavior-lock regression부터 시작 |
+| 5 | 미착수 | Phase 4 관찰 후 필요성 평가 |
+
 ## Phase 0 — 기존 계약 고정
 
 ### 목적
@@ -189,7 +200,7 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 
 ### 고정 구현 기준
 
-- 언어: Go 1.25.11
+- 언어: Go 1.25.12
 - 배포: macOS/Linux/Windows single binary
 - initial schema version: 1
 - 초기 runtime: daemon 없는 CLI process

@@ -40,16 +40,13 @@ Windows Terminal의 WSL profile을 열고 Linux shell에서 실행한다.
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
 cd ~/home/setup
-./bootstrap.sh binbox nvim
+./bootstrap.sh
 exec "$SHELL" -l
 ./doctor.sh
 ```
 
-현재 전체 bootstrap은 macOS 전용 `cmux-config`도 처리하므로 WSL에서는 위와 같이 대상 repo를 제한한다.
-현재 `doctor.sh`는 cmux repo/link가 없으면 non-zero로 끝난다. 출력의 binbox/nvim 상태를 확인하되
-Phase 0 전에는 전체 환경 정상 판정으로 사용하지 않는다.
-Phase 0의 `windows-wsl.repos` selection이 구현된 뒤에는 인자 없는 `./bootstrap.sh`가 cmux를
-optional/skipped로 처리하고 `doctor.sh`도 이를 실패로 판정하지 않아야 한다.
+`windows-wsl.repos`가 cmux를 disabled/skipped로 처리하므로 인자 없는 bootstrap과 doctor를 사용한다.
+선택 결과는 `./bootstrap.sh --show-selection`으로 쓰기 없이 확인할 수 있다.
 
 현재 계획 단계에서는 native PowerShell에서 `bootstrap.sh`를 실행하지 않는다. native `wb.exe`가 구현된
 이후에는 project/worktree/doctor/dashboard와 Windows Terminal backend를 직접 사용할 수 있지만,
@@ -70,6 +67,7 @@ child repo 상태:
 git -C binbox status --short
 git -C nvim status --short
 git -C cmux-config status --short
+git -C workbench status --short
 ```
 
 dirty repo가 있으면 변경 주체와 목적을 먼저 확인한다. 다른 session/사용자의 변경을 자동으로 stash,
@@ -88,8 +86,9 @@ plan/README.md
 
 ## 현재 다음 작업 찾기
 
-`plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 baseline에서는 Phase 0이
-다음 작업이다. 이후 commit에서 상태가 변경됐다면 최신 문서를 따른다.
+`plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 기준선은 Phase 0~3
+구현·검증 완료 후 Phase 4 진입 가능 상태다. Phase 4 구현 자체는 미착수이며 이후 commit에서 상태가
+변경됐다면 최신 문서를 따른다.
 
 확인 command:
 
@@ -103,8 +102,7 @@ rg -n "현재 진행 상태|Phase [0-9]|미착수|진행 중|완료" plan
 1. 작업할 repo와 모든 consumer를 식별했는가.
 2. 현재 branch와 remote가 예상과 같은가.
 3. worktree가 clean하거나 기존 변경의 소유권을 확인했는가.
-4. baseline test가 통과하는가. Phase 0 이전 WSL이면 aggregate doctor의 cmux-only known failure와
-   `bootstrap.sh binbox nvim`, `bb list`, nvim link 성공 증거를 구분해 기록했는가.
+4. `tests/contract-test.sh`, aggregate doctor와 현재 platform selection이 통과하는가.
 5. producer contract를 먼저 고정했는가.
 6. compatibility/rollback path가 있는가.
 7. 변경 후 증명할 command를 정했는가.
@@ -119,7 +117,7 @@ dev-env-setup 저장소의 plan/README.md부터 plan/07-session-handoff.md까지
 기본 설치 경로는 ~/home/setup이지만 현재 checkout 경로가 다르면 repo root를 기준으로 하라.
 이전 대화나 memory는 없다고 가정하라.
 
-현재 repo와 child repo(binbox, nvim/lazyvim-config, cmux-config)의 git status,
+현재 repo와 child repo(binbox, nvim/lazyvim-config, cmux-config, workbench)의 git status,
 현재 commit, plan 문서에 기록된 baseline 이후 contract 변경을 먼저 확인하라.
 Windows 장비라면 native Windows인지 WSL인지 먼저 기록하고, cmux를 required dependency로 가정하지 마라.
 

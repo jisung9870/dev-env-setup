@@ -1,63 +1,154 @@
 #!/usr/bin/env bash
 #
-# doctor.sh — 개인 환경 상태 점검 (읽기 전용, 아무것도 바꾸지 않음)
+# doctor.sh — read-only aggregate environment health check
 #
-#   각 repo: 존재 / git / 브랜치 / 로컬변경 / 배포 링크 해석
-#   의존 계약: cmux 가 부르는 `bb <tool>` 이 binbox/libexec 에 있는지 대조
+# Usage:
+#   ./doctor.sh [--platform <id>] [--with <repo>] [--without <repo>] [repo ...]
+#   ./doctor.sh --show-selection [selection options]
 #
 set -uo pipefail
+
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$SETUP_DIR/repos.txt"
-expand(){ printf '%s' "${1/#\~/$HOME}"; }
+# shellcheck source=lib/repo-selector.sh
+source "$SETUP_DIR/lib/repo-selector.sh"
+# shellcheck source=lib/repo-lock.sh
+source "$SETUP_DIR/lib/repo-lock.sh"
+wb_selector_init
+SHOW_SELECTION=0
 
+require_value() {
+  [ "$#" -ge 2 ] && [ -n "$2" ] || { printf 'option requires a value: %s\n' "$1" >&2; exit 2; }
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --platform) require_value "$@"; WB_SELECTOR_PLATFORM_OPTION="$2"; shift 2 ;;
+    --with) require_value "$@"; wb_selector_add_unique with "$2"; shift 2 ;;
+    --without) require_value "$@"; wb_selector_add_unique without "$2"; shift 2 ;;
+    --show-selection) SHOW_SELECTION=1; shift ;;
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+    -*) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
+    *) wb_selector_add_unique positional "$1"; shift ;;
+  esac
+done
+
+wb_selector_resolve "$SETUP_DIR" || exit 2
+if [ "$SHOW_SELECTION" -eq 1 ]; then
+  wb_selector_show
+  exit 0
+fi
+
+expand() { printf '%s' "${1/#\~/$HOME}"; }
 G='\033[32m'; Y='\033[33m'; R='\033[31m'; B='\033[1;34m'; N='\033[0m'
 fail=0
 
-printf "${B}== repo 상태 ==${N}\n"
-printf "%-13s %-6s %-10s %-7s %s\n" "repo" "git" "branch" "dirty" "배포링크"
-while IFS='|' read -r name url link setup sync || [ -n "$name" ]; do
-  name="$(echo "$name" | xargs)"; [ -z "$name" ] && continue
+mark_issue() {
+  local name="$1" message="$2" severity
+  severity="$(wb_selector_effective_severity "$name")"
+  if [ "$severity" = "required" ]; then
+    printf '  %b✗%b %s\n' "$R" "$N" "$message"
+    fail=1
+  else
+    printf '  %b!%b %s\n' "$Y" "$N" "$message"
+  fi
+}
+
+printf "%b== repository state (%s) ==%b\n" "$B" "$WB_SELECTOR_PLATFORM" "$N"
+printf '%-13s %-9s %-10s %-7s %-9s %s\n' repo severity branch dirty selection link
+while IFS='|' read -r name _url link _setup _sync || [ -n "$name" ]; do
+  name="$(wb_selector_trim "$name")"
+  [ -z "$name" ] && continue
   case "$name" in \#*) continue ;; esac
-  link="$(echo "$link" | xargs)"
+  severity="$(wb_selector_effective_severity "$name")"
+  if ! wb_selector_selected "$name"; then
+    printf '%-13s %-9s %-10s %-7s %-9s %s\n' "$name" "$severity" - - skipped -
+    continue
+  fi
+  link="$(wb_selector_trim "$link")"
   dir="$SETUP_DIR/$name"
-
   if [ -d "$dir/.git" ]; then
-    br="$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)"
-    dr="$(git -C "$dir" status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-    gitcol="${G}yes${N}"
-  else
-    br="-"; dr="-"; gitcol="${R}no${N}"; fail=1
-  fi
-
-  if [ -n "$link" ]; then
-    tgt="$(expand "$link")"
-    if [ -L "$tgt" ] && [ -e "$tgt" ]; then lk="${G}$link${N}";
-    elif [ -e "$tgt" ]; then lk="${Y}$link (링크 아님)${N}";
-    else lk="${R}$link (없음/깨짐)${N}"; fail=1; fi
-  else
-    lk="-"
-  fi
-  printf "%-13s %-15b %-10s %-7s %b\n" "$name" "$gitcol" "$br" "$dr" "$lk"
-done < "$MANIFEST"
-
-printf "\n${B}== 의존 계약: cmux → binbox (bb 명령) ==${N}\n"
-CMX="$SETUP_DIR/cmux-config"; BBX="$SETUP_DIR/binbox/libexec"
-if [ -d "$CMX" ] && [ -d "$BBX" ]; then
-  # cmux config 에서 참조하는 `bb <tool>` 토큰 추출
-  cmds=$(grep -rhoE '\bbb [a-z0-9_-]+' "$CMX" 2>/dev/null | awk '{print $2}' | sort -u)
-  builtin_ok=" setup list help doctor check new upgrade "   # bb 내장/특수 명령
-  for c in $cmds; do
-    if [ -f "$BBX/$c" ] || [ -f "$BBX/binbox-$c" ] || [[ "$builtin_ok" == *" $c "* ]]; then
-      printf "  ${G}✓${N} bb %s\n" "$c"
+    if branch="$(git -C "$dir" rev-parse --abbrev-ref HEAD 2>/dev/null)" && status_output="$(git -C "$dir" status --porcelain 2>/dev/null)"; then
+      if [ -n "$status_output" ]; then
+        dirty="$(printf '%s\n' "$status_output" | wc -l | tr -d ' ')"
+      else
+        dirty=0
+      fi
+      repo_state=yes
     else
-      printf "  ${R}✗${N} bb %s  (binbox/libexec 에 없음 — 계약 깨짐 가능)\n" "$c"; fail=1
+      branch='?'; dirty='?'; repo_state=invalid
+      mark_issue "$name" "$name checkout is not a readable Git repository"
     fi
-  done
-  [ -z "$cmds" ] && echo "  (참조 없음)"
+  else
+    branch=-; dirty=-; repo_state=no
+    mark_issue "$name" "$name repository is missing"
+  fi
+  link_state=-
+  if [ -n "$link" ]; then
+    target="$(expand "$link")"
+    if [ -L "$target" ] && [ -e "$target" ]; then
+      link_state="$link"
+    elif [ -e "$target" ]; then
+      link_state="$link (not-link)"
+      mark_issue "$name" "$link exists but is not a symlink"
+    else
+      link_state="$link (missing)"
+      mark_issue "$name" "$link is missing or broken"
+    fi
+  fi
+  printf '%-13s %-9s %-10s %-7s %-9s %s\n' "$name" "$severity" "$branch" "$dirty" "$repo_state" "$link_state"
+done <"$MANIFEST"
+
+printf '\n%b== compatible repository snapshot (report-only) ==%b\n' "$B" "$N"
+if snapshot_output="$(wb_lock_report "$SETUP_DIR")"; then
+  printf '%s\n' "$snapshot_output"
+  if printf '%s\n' "$snapshot_output" | grep -Eq '^snapshot\|[^|]+\|(mismatch|missing)\|'; then
+    printf '  %b!%b snapshot differs from the compatible baseline; no checkout was changed\n' "$Y" "$N"
+  fi
 else
-  echo "  (cmux-config 또는 binbox 없음 — 건너뜀)"
+  printf '  %b✗%b repository lock schema is invalid\n' "$R" "$N"
+  fail=1
 fi
 
-printf "\n"
-if [ "$fail" -eq 0 ]; then printf "${G}환경 정상${N}\n"; else printf "${Y}점검 필요 항목 있음 (위 표시) → ./bootstrap.sh 로 복구${N}\n"; fi
-exit $fail
+printf '\n%b== dependency contract: cmux → binbox ==%b\n' "$B" "$N"
+if wb_selector_selected cmux-config; then
+  CMX="$SETUP_DIR/cmux-config"
+  BBX="$SETUP_DIR/binbox/libexec"
+  if [ -d "$CMX" ] && [ -d "$BBX" ]; then
+    commands="$(grep -rhoE '\bbb [a-z0-9_-]+' "$CMX" 2>/dev/null | awk '{print $2}' | sort -u)"
+    builtin_ok=' setup list help doctor check new upgrade '
+    for command_name in $commands; do
+      if [ -f "$BBX/$command_name" ] || [ -f "$BBX/binbox-$command_name" ] || [[ "$builtin_ok" == *" $command_name "* ]]; then
+        printf '  %b✓%b bb %s\n' "$G" "$N" "$command_name"
+      else
+        mark_issue cmux-config "bb $command_name is referenced but absent from binbox/libexec"
+      fi
+    done
+    [ -n "$commands" ] || printf '  (no bb references)\n'
+  else
+    mark_issue cmux-config 'cmux-config or binbox/libexec is unavailable'
+  fi
+else
+  printf '  skipped by platform selection\n'
+fi
+
+printf '\n%b== Workbench CLI ==%b\n' "$B" "$N"
+if wb_selector_selected workbench; then
+  wb_path="$(command -v wb 2>/dev/null || true)"
+  [ -n "$wb_path" ] || [ ! -x "$HOME/.local/bin/wb" ] || wb_path="$HOME/.local/bin/wb"
+  if [ -x "$wb_path" ]; then
+    printf '  %b✓%b %s\n' "$G" "$N" "$wb_path"
+  else
+    mark_issue workbench 'wb is not installed; install Go 1.25.12, then run: make -C workbench install'
+  fi
+else
+  printf '  skipped by platform selection\n'
+fi
+
+printf '\n'
+if [ "$fail" -eq 0 ]; then
+  printf '%benvironment healthy%b\n' "$G" "$N"
+else
+  printf '%brequired health checks failed; inspect above%b\n' "$Y" "$N"
+fi
+exit "$fail"

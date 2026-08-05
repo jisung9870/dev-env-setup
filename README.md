@@ -5,13 +5,10 @@
 통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
 Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
 
-현재 Windows/WSL bootstrap은 `./bootstrap.sh binbox nvim`으로 cmux repo를 제외한다. platform-aware
-bootstrap과 doctor 자동 선택은 [통합 계획](plan/README.md)의 Phase 0 구현 대상이다.
-
-실제 설정은 3개의 독립 GitHub repo(**binbox · nvim · cmux-config**)에 있고, 이 폴더의 작은
+실제 구현은 4개의 독립 GitHub repo(**binbox · nvim · cmux-config · workbench**)에 있고, 이 폴더의 작은
 스크립트 3개가 그것들을 **의존 순서대로 clone·연결·셋업**하고 **점검·동기화**한다. 새 장비에서
-`git clone` 한 줄로 시작한다. 현재 macOS 기본 경로는 `./bootstrap.sh` 하나로 처리하고,
-Windows/WSL은 아래의 cmux 제외 호환 명령을 사용한다.
+`git clone` 한 줄로 시작한다. macOS와 Windows/WSL 모두 `./bootstrap.sh`를 사용하며 platform profile이
+cmux의 optional/disabled 상태를 자동 계산한다.
 
 ```
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
@@ -31,6 +28,10 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
    (bb 명령)   (nvim 실행)
         ▼        ▼
      binbox      nvim         ← nvim 은 binbox 'tm' 레이아웃 포맷을 느슨히 참조
+        │         │
+        └────┬────┘
+             ▼
+         workbench             ← project/session/Agent/worktree source of truth
 ```
 
 | repo | 원격 | 하는 일 | 배포 링크 |
@@ -38,8 +39,9 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 | **binbox** | `binbox` | `bb` CLI 툴킷 (tmux/git/k8s/aws/terraform/docker/secret). 기반 레이어. | `~/binbox`, `~/.local/bin/bb` |
 | **nvim** | `lazyvim-config` | DevOps용 LazyVim 설정 (+ tmux 설정). | `~/.config/nvim`, `~/.tmux.conf` |
 | **cmux-config** | `cmux-config` | cmux 워크스페이스 정의. 패널에서 `bb`·`nvim` 을 직접 호출 → 둘 다 필요. | `~/.config/cmux/*` |
+| **workbench** | `workbench` | `wb` core, backend adapters, worktree/Agent registry, localhost Dashboard. | `~/.local/bin/wb` |
 
-**설치 순서: binbox → nvim → cmux-config** (`repos.txt` 줄 순서 = 의존 순서).
+**설치 순서: binbox → nvim → cmux-config → workbench** (`repos.txt` 줄 순서 = 의존 순서).
 
 ---
 
@@ -51,6 +53,9 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 | `upgrade.sh` | **최신 동기화**(쓰기). 각 repo 를 `sync_cmd` 로 최신화 (git pull + nvim 플러그인 복원 등). |
 | `doctor.sh` | **상태 점검**(읽기 전용). repo·링크·의존계약 검사. 아무것도 안 바꿈. |
 | `repos.txt` | **매니페스트**. 관리 대상 repo 목록 (한 줄 = 한 repo). |
+| `platforms/*.repos` | platform별 required/optional/disabled 선택과 severity. |
+| `locks/repos.lock` | 검증된 child repo commit snapshot. mismatch는 report-only. |
+| `tests/contract-test.sh` | root/child aggregate contract test entrypoint. |
 | `DEPENDENCIES.md` | 상세 레퍼런스 (동작 흐름, 자동 실행 범위, 계약, repo 추가 방법). |
 | `plan/` | 프로젝트·세션·AI Agent 환경의 self-contained 통합 계획 패키지. |
 | `WORKBENCH-PLAN.md` | 기존 링크를 `plan/README.md`로 안내하는 호환용 진입점. |
@@ -63,21 +68,22 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup   # 진입점만 먼저
-cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 경량 셋업
+cd ~/home/setup && ./bootstrap.sh          # 나머지 4개 clone + 연결 + 경량 셋업
 exec $SHELL -l                             # 셸 rc 재적용
 ```
 
-Windows Terminal + WSL2의 현재 호환 명령은 다음과 같다. 현재 `doctor.sh`는 cmux가 없으면 점검 필요로
-종료하며, 이 동작을 platform-aware optional capability로 바꾸는 작업이 Phase 0에 포함되어 있다.
+Windows Terminal + WSL2에서는 platform selector가 cmux를 자동으로 disabled 처리한다.
 
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup
 cd ~/home/setup
-./bootstrap.sh binbox nvim
+./bootstrap.sh
 ./doctor.sh
 ```
 
-무거운 툴 설치(neovim, ripgrep, asdf 툴 등)는 bootstrap 자동 실행에서 **제외**돼 있다.
+Workbench build에는 Go 1.25.12가 prerequisite다. bootstrap은 Go 자체를 설치하지 않으며, 없으면
+workbench setup을 required failure로 보고한다. neovim, ripgrep, asdf 툴 같은 무거운 툴 설치도
+bootstrap 자동 실행에서 **제외**돼 있다.
 새 장비에서 한 번만:
 
 ```bash
@@ -89,7 +95,7 @@ cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-t
 ```bash
 cd ~/home/setup
 ./doctor.sh            # 상태 점검 (읽기 전용)
-./upgrade.sh           # 세 repo 를 최신으로 동기화 — 평소 업데이트는 이거면 충분
+./upgrade.sh           # 네 repo 를 최신으로 동기화 — 평소 업데이트는 이거면 충분
 ```
 
 ---
@@ -103,7 +109,11 @@ cd ~/home/setup
 | `./bootstrap.sh --no-setup` | setup_cmd 생략 (clone/pull/link 만) |
 | `./bootstrap.sh --link-only` | 심볼릭 링크만 재생성 (경로 이동 후 복구용, 안전) |
 | `./bootstrap.sh binbox nvim` | 지정한 repo만 처리 |
-| `./upgrade.sh` | 세 repo 를 의존 순서로 최신화 |
+| `./bootstrap.sh --show-selection` | 현재 platform과 repo severity/선택 결과만 표시(쓰기 없음) |
+| `./bootstrap.sh --platform linux --show-selection` | CI/검증용 platform 선택 결과 표시 |
+| `./bootstrap.sh --with cmux-config` | optional/disabled repo를 명시적으로 required 실행 |
+| `./bootstrap.sh --without cmux-config` | optional repo 제외(required 제외는 오류) |
+| `./upgrade.sh` | 네 repo 를 의존 순서로 최신화 |
 | `./upgrade.sh binbox` | 지정한 repo만 최신화 |
 | `./doctor.sh` | repo/링크/의존계약 점검 (문제 있으면 종료코드 ≠ 0) |
 

@@ -34,11 +34,9 @@
 Dashboard, shell/tmux/Windows Terminal backend가 동작해야 한다. cmux unavailable은 전체 doctor 실패가
 아니라 macOS optional capability 상태다.
 
-**현재 baseline 제한:** 기존 `bootstrap.sh` 전체 실행은 `repos.txt`의 세 항목을 모두 처리하므로
-WSL에서도 `cmux-config` setup을 시도한다. Phase 0의 platform-aware manifest가 구현되기 전에는 WSL에서
-`./bootstrap.sh binbox nvim`으로 대상 repo를 명시한다. 현재 `doctor.sh`도 cmux repo/link가 없으면
-non-zero이므로 결과 중 binbox/nvim 상태는 확인할 수 있지만 전체 환경 정상 판정은 기대하지 않는다.
-이는 목표 상태가 아니라 임시 호환 절차다.
+**현재 baseline:** shared platform selector가 `platforms/<id>.repos`를 검증한다. WSL/Linux에서는
+`cmux-config`를 disabled/skipped, macOS에서는 optional로 처리하며 bootstrap/upgrade/doctor의
+`--show-selection` 결과가 동일하다.
 
 ## 분석 대상과 기준 commit
 
@@ -161,6 +159,20 @@ git clone dev-env-setup ~/home/setup
 - `cmux-config`: generated config check와 JSON parse 통과
 - `dev-env-setup`: `bootstrap.sh`, `upgrade.sh`, `doctor.sh` Bash syntax 통과
 - `lazyvim-config`: setup/doctor 관련 Bash syntax 통과
+
+## 2026-08-05 구현·검증 기준선
+
+- Phase 1: binbox structured read API와 LazyVim legacy fallback 구현 완료.
+- Phase 2: Go 1.25.12 Workbench project/backend/worktree/Agent/doctor core 구현 완료.
+- Phase 3: cmux generated actions, Windows Terminal adapter, LazyVim async client, localhost Dashboard 구현 완료.
+- Phase 0 보강: shared platform selector, total severity profiles, compatible repo lock, aggregate contract test,
+  required child failure non-zero, runtime link owner 정리, Workbench manifest/install 통합 구현·검증 완료.
+- 최신 검증: root contract 13개, binbox Bats 267개, nvim setup/headless, actual cmux config doctor,
+  Workbench unit/vet/race/3회 반복, 6개 cross-build, Linux container smoke, installed binary isolated E2E
+  10개, actual bootstrap/doctor 통과. independent code review `APPROVE`, architecture review `CLEAR`.
+- committed snapshot: nvim `57cb08e7ab1d2f61447f2b97402734d70d54ef0c`, workbench
+  `c3f4d2096d225ee25341da0e8bd14ae395cc16e9`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+- 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위
 

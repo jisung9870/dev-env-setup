@@ -12,7 +12,7 @@ dev-env-setup/             existing; provisioning and compatibility owner
 binbox/                    existing; execution provider
 cmux-config/               existing; cmux client/config
 lazyvim-config/            existing; editor client/config
-workbench/                 new in Phase 2; headless core and Dashboard
+workbench/                 existing; headless core and Dashboard
 ```
 
 `tmux-config`와 `workbench.nvim`을 당장 별도 repo로 만들지 않는다. 독립 release/test 필요가 반복될 때만
@@ -225,8 +225,7 @@ producer와 consumer를 같은 날 무조건 latest로 pull해야만 동작하�
 ### `dev-env-setup`
 
 - 현재 Bash bootstrap은 Windows Terminal 안 WSL에서 실행하는 경로를 Tier 1으로 유지한다.
-- platform-aware manifest 전에는 WSL에서 `./bootstrap.sh binbox nvim`을 사용한다. 구현 후에는
-  `windows-wsl.repos`가 cmux child setup을 자동 제외한다.
+- WSL에서는 `windows-wsl.repos`가 cmux child setup을 자동 제외한다.
 - Phase 0에 Windows Terminal + WSL doctor/profile smoke를 추가한다.
 - native PowerShell bootstrap을 Bash와 별도 구현해 즉시 복제하지 않는다.
 - `wb.exe` release가 안정화된 뒤 native Windows bootstrap wrapper 필요성을 재검토한다.

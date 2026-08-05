@@ -1,7 +1,7 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **계획 기준선 확정, 구현 미착수**
-- 최종 갱신일: 2026-08-04
+- 상태: **Phase 0~3 구현·검증 완료, Phase 4 진입 가능**
+- 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
 
@@ -45,10 +45,11 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | 계획 완료 | Phase 0 계약 테스트 후 Phase 1 구현 |
-| Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
-| LazyVim UI 방향 | 계획 완료 | JSON API 이후 thin client 구현 |
-| 실제 소스 변경 | 미착수 | [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0부터 시작 |
+| CLI/API와 데이터 경계 | Phase 1~2 구현·검증 완료 | Phase 4에서 중복 책임만 정리 |
+| Desktop/Web UI 방향 | Phase 3 localhost Dashboard 구현·검증 완료 | loopback/auth/origin/body-limit 유지 |
+| LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
+| Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
+| Phase 4 진입 | **가능, 미착수** | cleanup plan과 회귀 테스트를 먼저 고정 |
 
 ## 읽는 순서
 
@@ -74,7 +75,8 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 0 — 기존 계약 고정**이다.
+현재 다음 작업은 **Phase 4 — 중복 제거와 책임 정리**다. readiness gate는 통과했으며 Phase 4 구현은
+아직 시작하지 않았다. cleanup plan을 먼저 작성하고 기존 동작을 회귀 테스트로 고정한 뒤 한 책임씩 정리한다.
 
 착수 전:
 
@@ -86,26 +88,24 @@ git pull --ff-only
 git -C binbox status --short
 git -C nvim status --short
 git -C cmux-config status --short
+git -C workbench status --short
 ```
 
-Phase 0 이전 Windows/WSL에서는 cmux가 없는 것이 정상이다. 이때 공통 `doctor.sh`의 성공을 요구하지
-않고 다음을 baseline 증거로 남긴다.
+Windows/WSL에서는 cmux가 없는 것이 정상이며 platform selector가 자동으로 disabled 처리한다.
 
 ```bash
-./bootstrap.sh binbox nvim
+./bootstrap.sh --platform windows-wsl --show-selection
 ./binbox/bb list
 test -e "$HOME/.config/nvim"
 git -C binbox status --short
 git -C nvim status --short
-./doctor.sh  # cmux repo/link 누락만으로 non-zero인지 출력 확인
+./doctor.sh --platform windows-wsl
 ```
 
-`bootstrap.sh` 출력에 binbox/nvim setup warning이 없어야 하고, `bb list`와 nvim link 검사가 성공해야
-한다. aggregate doctor의 cmux-only failure는 Phase 0에서 platform-aware selector가 들어갈 때 제거한다.
-
-그다음 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0 작업을 작은 commit으로
-나누어 수행한다. 아직 신규 `workbench` repo부터 만들지 않는다. 먼저 기존 producer/consumer 계약을
-테스트로 고정해야 한다.
+2026-08-05 readiness gate에서 root 13개 contract와 child aggregate, Workbench full Go matrix,
+설치 binary 10개 isolated E2E, actual bootstrap/doctor, independent code `APPROVE`와 architecture `CLEAR`를
+확인했다. 물리 Windows/WSL 장비 smoke는 cross-build/profile fixture/Linux runtime smoke로 대체했으며
+후속 장비 검증을 residual risk로 남긴다.
 
 ## 범위 제외
 

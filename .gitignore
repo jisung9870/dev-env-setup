@@ -2,5 +2,6 @@
 /binbox/
 /nvim/
 /cmux-config/
+/workbench/
 
 .DS_Store

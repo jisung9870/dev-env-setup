@@ -9,6 +9,7 @@
 #                   ./upgrade.sh 가 이 컬럼을 의존 순서대로 실행한다 (git pull + 플러그인 복원 등).
 # 편집 후 ./bootstrap.sh (프로비저닝) 또는 ./upgrade.sh (최신 동기화) 재실행하면 반영됨.
 
-binbox      | https://github.com/jisung9870/binbox.git        | ~/binbox        | ./bb setup                      | ./bb upgrade
-nvim        | https://github.com/jisung9870/lazyvim-config.git | ~/.config/nvim  | ./scripts/setup.sh --link --yes | ./scripts/setup.sh --sync --sync-plugins
-cmux-config | https://github.com/jisung9870/cmux-config.git    | ~/.config/cmux/cmux.json  | bash scripts/bootstrap.sh       | git pull --ff-only
+binbox      | https://github.com/jisung9870/binbox.git        | ~/binbox | ./bb setup                      | ./bb upgrade
+nvim        | https://github.com/jisung9870/lazyvim-config.git |          | ./scripts/setup.sh --link --yes | ./scripts/setup.sh --sync --sync-plugins
+cmux-config | https://github.com/jisung9870/cmux-config.git    |          | bash scripts/bootstrap.sh       | git pull --ff-only
+workbench   | https://github.com/jisung9870/workbench.git      |          | make install                    | git pull --ff-only && make install

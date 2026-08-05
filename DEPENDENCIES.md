@@ -1,7 +1,7 @@
 # setup — 개인 환경 repo 오케스트레이션
 
 `~/home/setup/` (원격: `dev-env-setup`) 은 여러 장비에서 **동일한 개인 환경**을 재현하는
-오케스트레이션 레이어다. 실제 설정은 3개의 독립 GitHub repo(binbox·nvim·cmux-config)에 있고,
+오케스트레이션 레이어다. 실제 구현은 4개의 독립 GitHub repo(binbox·nvim·cmux-config·workbench)에 있고,
 이 폴더의 스크립트가 그것들을 **의존 순서대로 clone·연결·셋업**하고 **점검**한다.
 
 | 파일 | 역할 |
@@ -10,8 +10,11 @@
 | `upgrade.sh` | 최신 동기화 (쓰기). 각 repo 를 `sync_cmd` 로 최신화 (git pull + 플러그인 복원 등). |
 | `doctor.sh` | 상태 점검 (읽기 전용). repo·링크·의존계약 검사, 아무것도 안 바꿈. |
 | `repos.txt` | 매니페스트. 관리 대상 repo 목록 (한 줄 = 한 repo). |
+| `platforms/*.repos` | platform별 repo severity와 기본 선택. |
+| `locks/repos.lock` | 검증된 child commit snapshot(report-only). |
+| `tests/contract-test.sh` | aggregate contract test entrypoint. |
 
-하위 3개 repo는 `.gitignore` 로 제외된다(각자 독립 repo이므로). 이 레이어는 "어떤 repo를 어디에
+하위 4개 repo는 `.gitignore` 로 제외된다(각자 독립 repo이므로). 이 레이어는 "어떤 repo를 어디에
 연결하고 무엇으로 셋업하는가"만 관리한다.
 
 ---
@@ -26,6 +29,10 @@
      binbox      nvim
         ▲         ╎
         ╰┈┈┈┈┈┈┈┈┈╯  nvim → binbox 'tm' 포맷 참조 (약함)
+        │         │
+        └────┬────┘
+             ▼
+         workbench
 ```
 
 - **binbox** (기반, repo: binbox) — `bb` 디스패처 툴킷. 의존 없음. `bb setup` 이 `~/.local/bin/bb`
@@ -33,8 +40,9 @@
 - **nvim** (repo: lazyvim-config) — 에디터 설정. binbox 의 `tm`(tmux 레이아웃) 포맷을 느슨하게 참조.
 - **cmux-config** (repo: cmux-config) — cmux 워크스페이스 정의. 패널에서 `bb <tool>` 과 `nvim` 을
   직접 호출 → **둘 다 필요**.
+- **workbench** (repo: workbench) — `wb` CLI, backend adapters, worktree/Agent state, localhost Dashboard.
 
-**설치 순서: binbox → nvim → cmux-config** (repos.txt 줄 순서 = 의존 순서).
+**설치 순서: binbox → nvim → cmux-config → workbench** (repos.txt 줄 순서 = 의존 순서).
 
 ---
 
@@ -45,6 +53,7 @@ cd ~/home/setup
 ./doctor.sh            # 상태 점검 (읽기 전용)
 ./bootstrap.sh         # 프로비저닝·셋업 — 새 장비/복구 (멱등)
 ./upgrade.sh           # 최신으로 동기화 — 평소 업데이트는 이거면 충분
+./bootstrap.sh --show-selection  # platform 선택만 확인(쓰기 없음)
 ```
 
 | 명령 | 하는 일 |
@@ -55,7 +64,7 @@ cd ~/home/setup
 | `./bootstrap.sh --link-only` | 심볼릭 링크만 재생성 (경로 이동 후 복구 등, 안전) |
 | `./bootstrap.sh binbox nvim` | 지정한 repo만 처리 |
 | `./bootstrap.sh -h` | 도움말 |
-| `./upgrade.sh` | 세 repo 를 의존 순서로 최신화 (binbox pull → nvim pull+plugin → cmux pull) |
+| `./upgrade.sh` | 네 repo 를 의존 순서로 최신화 (마지막에 wb 재빌드/설치) |
 | `./upgrade.sh binbox nvim` | 지정한 repo만 최신화 |
 | `./upgrade.sh -h` | 도움말 |
 
@@ -66,6 +75,10 @@ cd ~/home/setup
 ---
 
 ## bootstrap.sh 동작 흐름
+
+실행 전에 `lib/repo-selector.sh`가 `platforms/<id>.repos`를 검증한다. macOS의 cmux는 optional,
+Linux/WSL의 cmux는 disabled다. positional repo 또는 `--with`로 명시한 항목은 실패 시 required로
+승격되며, `--without`은 optional/disabled에만 사용할 수 있다.
 
 `repos.txt` 를 **줄 순서(=의존 순서)** 로 읽어, repo마다 아래 3단계를 수행한다:
 
@@ -94,7 +107,8 @@ repo 한 줄:  name | url | link_target | setup_cmd | sync_cmd
 
 **setup 규칙**
 - repo당 `setup_cmd` **한 줄만** 실행한다(아래 "자동 실행" 참고).
-- 출력은 억제되고, 실패해도 경고만 남기고 **다음 repo로 계속**한다(전체가 멈추지 않음).
+- 실패해도 다음 repo 처리는 계속하지만 selected required 실패가 하나라도 있으면 최종 종료코드는 non-zero다.
+- optional 실패는 warning이며, positional repo/`--with`로 명시하면 required로 승격된다.
 - 매 bootstrap 마다 실행되므로 setup_cmd 는 **멱등·경량**이어야 한다.
 
 ---
@@ -109,6 +123,7 @@ bootstrap 은 repo 안의 모든 스크립트를 도는 게 아니라, **repos.t
 | binbox | `./bb setup` (bb 링크 + 셸 rc 등록) | `./bb upgrade` (git pull) | 나머지 `bb <tool>` 들 — `tm`, `assume`, `kx`, `tfx`, `gx`, `dx`, `wenv`, `sec`, … |
 | nvim | `./scripts/setup.sh --link --yes` (설정 링크) | `./scripts/setup.sh --sync --sync-plugins` (git pull + 플러그인 복원) | `--install`, `test-setup.sh` |
 | cmux-config | `bash scripts/bootstrap.sh` (cmux 설정 링크) | `git pull --ff-only` | `build-config.py`, `check-config.sh`, `pull-local.sh` (역방향 캡처) |
+| workbench | `make install` (`~/.local/bin/wb`) | `git pull --ff-only && make install` | full Go test/race/cross-build/E2E |
 
 **pull-local 은 upgrade 가 아니다** — `cmux-config/scripts/pull-local.sh` 는 라이브(`~/.config/cmux/*`,
 ghostty)를 repo 로 **캡처(역방향, 커밋 준비용)** 한다. "최신으로 당겨오기"와 방향이 반대라 `upgrade.sh`
@@ -132,18 +147,19 @@ upgrade 는 `--sync --sync-plugins` 만 넘긴다:
 
 ```bash
 git clone https://github.com/jisung9870/dev-env-setup.git ~/home/setup   # 진입점만 먼저
-cd ~/home/setup && ./bootstrap.sh          # 나머지 3개 clone + 연결 + 경량 셋업
+cd ~/home/setup && ./bootstrap.sh          # 나머지 4개 clone + 연결 + 경량 셋업
 exec $SHELL -l                             # 셸 rc 재적용
 ```
 
-**툴 설치는 1회성** — 무거운 패키지/런타임(neovim, ripgrep, asdf 툴 등)은 bootstrap 자동 실행에서
-제외돼 있다(멱등하지 않고 asdf 미설치 시 실패). 새 장비에서 한 번만:
+**툴 설치는 1회성** — Workbench build prerequisite인 Go 1.25.12와 무거운 패키지/런타임(neovim,
+ripgrep, asdf 툴 등)은 bootstrap이 설치하지 않는다. Go가 없으면 clone은 보존하고 workbench setup을
+required failure로 반환한다. 새 장비에서 toolchain을 준비한 뒤:
 
 ```bash
 cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-tmux-plugins --yes
 ```
 
-이후 평소 업데이트는 `cd ~/home/setup && ./upgrade.sh` 한 줄이면 세 repo 가 최신으로 맞춰진다
+이후 평소 업데이트는 `cd ~/home/setup && ./upgrade.sh` 한 줄이면 네 repo 가 최신으로 맞춰진다
 (git pull + nvim 플러그인 lock 복원 포함).
 
 ---
@@ -179,3 +195,4 @@ cd ~/home/setup/nvim && ./scripts/setup.sh --install --link --with-font --with-t
 | binbox | `~/home/setup/binbox` | `~/binbox`, `~/.local/bin/bb` |
 | nvim | `~/home/setup/nvim` | `~/.config/nvim`, `~/.tmux.conf` |
 | cmux-config | `~/home/setup/cmux-config` | `~/.config/cmux/*`, `~/Library/Application Support/com.cmuxterm.app/*` |
+| workbench | `~/home/setup/workbench` | `~/.local/bin/wb` |
