@@ -3,5 +3,10 @@
 /nvim/
 /cmux-config/
 /workbench/
+/oh-my-zsh-config/
+
+# 로컬 agent/runtime 상태
+/.omc/
+/.omx/
 
 .DS_Store

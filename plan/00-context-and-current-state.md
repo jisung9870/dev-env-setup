@@ -173,9 +173,9 @@ git clone dev-env-setup ~/home/setup
 - Phase 4 직전 보정: profile의 `prefer_current_tmux`/`backend_priority`를 추가하고 실제 격리 PTY에서
   `wb open`이 현재 tmux client를 목표 project session으로 전환함을 확인했다. 등록된 4개 project의
   explicit cmux action도 재생성했다.
-- committed snapshot: nvim `57cb08e7ab1d2f61447f2b97402734d70d54ef0c`, cmux-config
-  `73bc8f606c1a8f25dbc2d784a2d0cfb71c35369d`, workbench
-  `093fcf4a20bcf3c8681cb724fbff37091e34e9f6`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+- committed snapshot: nvim `f81e193f3aa114a05d58897bd1efe8c29292055a`, cmux-config
+  `25dd88c8a16d8608bbd5bf00abeb0e7c0d1d3b55`, workbench
+  `50ba6a52e719ebd5f1a04d8708b70a6a67a83dc3`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위
