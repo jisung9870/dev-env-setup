@@ -61,9 +61,9 @@ Repo snapshot은 dependency 없이 Bash에서 읽을 수 있는 `locks/repos.loc
 
 ```text
 # schema-version: 1
-binbox 00b4f61433a8d095db919df303dbdfc5b0d35d5c
-nvim 426093864a32e23a095ebd1418b3425ff378d3cb
-cmux-config c8ce2688c625ea7a6b5d9d44e43f9b72554603bb
+binbox 25f20c24fe07d79dfbaa5e11f574b28cdba02210
+nvim f12e9c0963aef7fe136381841be9a1de5b627a79
+cmux-config 042074805d0faf85a15ba641261051bb70589450
 ```
 
 규칙:
@@ -185,11 +185,19 @@ LazyVim project picker는 JSON API를 우선 사용하고 기존 sessionizer par
 - LazyVim feature flag로 API client 비활성화
 - 기존 parser와 `bb agents` text UI 유지
 
+### 2026-08-04 구현 기록
+
+- binbox `25f20c2`: projects/sessions/agents/doctor schema v1 JSON read API
+- nvim `bfca6e7`, `f12e9c0`: 비동기 JSON 우선 project picker와 help 문서
+- WSL 검증: `tests/json-contract-test.sh`, `tests/contract-test.sh`, `bb check`, Stylua 통과
+- compatibility: 기존 text UI와 sessionizer fallback 유지
+- 완료 대기: 기존 binbox macOS/Linux CI는 원격 push 이후 새 `tests/json.bats`를 실행해야 함
+
 ## Phase 2 — Workbench core
 
 ### 고정 구현 기준
 
-- 언어: Go 1.25.11
+- 언어: Go 1.25.12
 - 배포: macOS/Linux/Windows single binary
 - initial schema version: 1
 - 초기 runtime: daemon 없는 CLI process
@@ -214,6 +222,18 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - remove가 repo를 삭제하지 않음
 - migration 전 backup과 dry-run diff 제공
 
+### 2026-08-04 Slice 2A 로컬 구현 기록
+
+- workbench `84ba289`: Go 1.25.12 module, supported target, BurntSushi TOML v1.4.0 선택 근거와 checksum 고정
+- workbench `7ddc5d3`: schema-v1 project registry, config/profile validation, JSON read envelope,
+  sessionizer `--check`/`--apply`, atomic replacement와 state backup
+- 검증: `go test -race ./...`, `go vet ./...`, Linux build, macOS amd64/arm64 및 Windows amd64 cross-build 통과
+- safety: canonical path/ID conflict는 exit 4, remove는 registry만 변경, migration source와 이전 registry backup 유지
+- 원격 상태: 사용자가 push를 추후 수행하기로 하여 remote 생성, GitHub Actions, setup platform manifest와
+  `locks/repos.lock` 연결은 보류
+- 계획 차이: Phase 1 원격 CI 게이트를 완료 처리하지 않았지만, 사용자 명시 승인으로 Slice 2A 로컬 구현만 선행
+- 다음 로컬 작업: Slice 2B adapter contract와 shell backend
+
 ### Slice 2B — backend와 open
 
 - headless adapter contract와 CLI behavior
@@ -234,6 +254,22 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - SSH에서 cmux auto-select하지 않음
 - backend command 실패 시 stderr/exit/reference 보존
 
+### 2026-08-05 Slice 2B 로컬 구현 기록
+
+- workbench `6712279`: capability-oriented adapter contract, `wb open`, shell/tmux/cmux/Windows Terminal·WSL adapter
+- 선택 규칙: explicit option → project override → active profile → native Windows Terminal → non-SSH cmux →
+  tmux/SSH/WSL → shell; configured preference의 preflight 실패만 경고 후 fallback
+- process safety: shell interpolation 없이 argument array 사용, launch 직전 project path 재검증,
+  cmux/Windows Terminal 15초와 version probe 2초 timeout, stderr/exit/reference 보존
+- Windows/WSL: native starting directory와 `wsl.exe --cd`를 분리하고, native-to-WSL은 explicit
+  `windows_wsl.distro`/`wsl_path`만 사용; Windows Terminal JSONC profile preflight와 recovery guidance 제공
+- 검증: `go test -race ./...`, `go vet ./...`, shell `/bin/true` smoke, explicit cmux exit 3,
+  macOS arm64 cross-test, macOS amd64 build, Windows amd64 cross-test/build 통과
+- 실장비 대기: macOS cmux workspace, 실제 tmux attach/switch, native Windows Terminal profile open은
+  해당 장비에서 원격 push 이후 smoke 필요
+- 원격 상태: remote 생성, GitHub Actions, setup platform manifest와 `locks/repos.lock` 연결은 계속 보류
+- 다음 로컬 작업: Slice 2C worktree registry와 dirty/conflict safety
+
 ### Slice 2C — worktree
 
 - list/create/remove
@@ -246,6 +282,23 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - dirty remove 거부
 - Git porcelain 결과와 target path 일치 확인
 - branch 삭제는 별도 option과 확인 필요
+
+### 2026-08-05 Slice 2C 로컬 구현 기록
+
+- workbench `ac5028c`: Git porcelain adapter, schema-v1 `worktrees.json`, stable worktree ID,
+  `wb worktrees list|create|remove`
+- 생성: `repo_root`와 Git top-level 일치 확인, branch/base validation, 같은 branch 중복 차단,
+  메인 repo 밖 `<repo-parent>/.worktrees/<project-id>/<id>`에 생성 후 porcelain 재검증
+- 목록: 메인 worktree 제외, dirty/locked/prunable/detached/managed/drifted 상태 표시;
+  외부 worktree는 `managed=false`로 관찰만 허용
+- 삭제: Workbench 등록 ID, managed root, 현재 porcelain path/branch, lock, dirty를 실행 직전 재검증;
+  force를 사용하지 않고 기본적으로 branch 보존
+- branch 삭제: `--delete-branch`에서 정확한 branch 이름 확인 후 `git branch -d`만 사용하며,
+  unmerged branch 또는 registry 후속 실패는 exit 5 partial result로 보존
+- 검증: 실제 임시 Git repo create/list/duplicate/dirty/remove/delete-branch smoke,
+  `go test -race ./...`, `go vet ./...`, macOS arm64/Windows amd64 cross-test와 cross-build 통과
+- 원격 상태: remote 생성, GitHub Actions, setup platform manifest와 `locks/repos.lock` 연결은 계속 보류
+- 다음 로컬 작업: Slice 2D Agent registry, state transition, launch/jump/stop safety
 
 ### Slice 2D — Agent registry
 
@@ -262,6 +315,27 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - 등록되지 않은 process를 stop하지 않음
 - legacy scraping state에는 source 표시
 
+### 2026-08-05 Slice 2D 로컬 구현 기록
+
+- workbench `c725c98`: schema-v1 `agents.json`, 검증된 state transition,
+  `wb agents list|show|start|jump|stop`, Codex/Claude allowlist
+- launch lifecycle: backend 실행 전에 `starting` task를 atomic write하고, process/pane/workspace/tab 생성 직후
+  backend reference와 함께 `running`으로 갱신; launch 실패도 `failed` task로 조회 가능
+- target safety: tmux pane의 `@workbench_task_id` exact match 후에만 jump/kill하며, cmux 전용 workspace가
+  현재 JSON 목록에 exact reference로 존재한 뒤에만 select/close
+- capability boundary: attached shell PID와 Windows Terminal launch-only tab은 안정적인 소유권 재검증이
+  불가능하므로 jump/stop을 exit 3으로 거부하고, process/PID 추측 종료를 사용하지 않음
+- worktree 연계: Workbench managed ID를 현재 Git porcelain과 재검증하고 drifted/prunable/external worktree
+  launch를 거부
+- compatibility: registry task는 `state_source=registry`; 기존 binbox legacy 관찰은
+  `legacy:*`/`state_source=scrape` 계약을 그대로 유지하며 기존 direct Agent/cmux/`bb` command를 제거하지 않음
+- 검증: `go test -race ./...`, `go vet ./...`, Linux/macOS/Windows amd64·arm64 6개 target cross-build 통과;
+  tmux/cmux destructive target mismatch와 shell/Windows Terminal unsafe stop 거부를 fake executor로 검증
+- 실장비 대기: macOS cmux socket 접근 모드와 workspace/surface launch, 실제 tmux attach/switch,
+  native Windows Terminal/WSL Agent launch smoke는 해당 장비에서 수행 필요
+- 원격 상태: 사용자가 push를 추후 수행하기로 하여 local commit만 생성; setup manifest/lock과 CI 연결은 보류
+- 다음 로컬 작업: Phase 3 Slice 3A cmux client action과 generated reference contract
+
 ### 롤백
 
 - state migration backup
@@ -277,6 +351,31 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - project/workflow generated fragments
 - generated reference validation
 
+### 2026-08-05 Slice 3A 기반 로컬 구현 기록
+
+- cmux-config `1c23d2a`: `wb projects list --json` schema-v1 기반 project action generator,
+  `config.d/generated/workbench.json` merge, `Show Workbench Agents` action
+- generated action: project마다 `wb open <id> --backend cmux`, Codex/Claude
+  `wb agents start <id> --agent <kind> --backend cmux`만 허용하고 New Workspace menu에는 Open action만 추가
+- data boundary: stable project ID와 표시 이름만 사용하며 machine-local project path, prompt, 임의 shell
+  fragment를 generated output에 포함하지 않음
+- contract validation: action ID의 project/operation과 exact `wb` command 일치, generated menu reference,
+  기존 workspace `commandName`, UI action reference를 CI에서 함께 검사
+- compatibility: Workbench unavailable 장비용 기존 direct Codex/Claude, `bb doctor`, terminal/browser action 유지
+- 검증: `scripts/check-config.sh`, 2-project/6-action fixture, mismatched project command 거부,
+  generated drift, JSON, sensitive scan 통과; WSL에서는 cmux CLI 단계만 명시적으로 skipped
+- Workbench `f2c2c17`: config/project/Agent/worktree state, Git/shell core, optional tool/backend,
+  platform-disabled provider를 구분하는 read-only `wb doctor [--profile] [--json] [--strict]`
+- doctor failure JSON도 수집된 capability data와 recovery를 유지하며 default는 core만, `--strict`는
+  applicable optional capability까지 요구; cmux는 non-macOS, Windows Terminal은 non-Windows/WSL에서 skipped
+- cmux-config `580cd26`: surface action `Workbench Doctor`를 exact `wb doctor` command로 연결하고
+  reference checker allowlist와 generated `cmux.json` 동기화
+- 검증: invalid Agent registry core failure, strict optional failure data 보존, WSL platform 분류,
+  Go race/vet와 Linux/macOS/Windows amd64·arm64 build, cmux config/reference/generation/sensitive 검사 통과
+- 남은 Slice 3A: 아직 producer가 없는 `wb dashboard` action과 macOS generated project/Agent/Doctor smoke;
+  Dashboard action은 Slice 3D server 이후 연결
+- 다음 로컬 작업: Phase 3 Slice 3B Windows Terminal client/profile UX contract
+
 ### Slice 3B — Windows Terminal
 
 - Slice 2B adapter를 사용하는 user-facing action과 profile UX
@@ -286,6 +385,26 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - Dashboard default browser open
 - cmux 없는 Windows smoke test
 
+### 2026-08-05 Slice 3B 기반 로컬 구현 기록
+
+- Workbench `6d64f4f`: profile에 machine-local Windows Terminal profile name/GUID, WSL distro,
+  target window와 launch mode를 추가하고 strict validation/default를 제공
+- per-open UX: `wb open <id> --backend windows-terminal --window <last|new|id/name>
+  --terminal-mode <tab|split-auto|split-horizontal|split-vertical>`
+- official CLI mapping: `--window`, `new-tab`, `split-pane`, `--horizontal`, `--vertical`을 free-form
+  shell fragment 없이 argument array로 생성하며 project open과 Agent launch가 같은 helper를 사용
+- profile preflight: Windows Terminal settings JSONC의 visible profile name과 GUID를 case-insensitive로
+  확인하고, 불일치 시 available profile과 shell/tmux recovery guidance 제공
+- WSL contract: distro는 explicit project overlay → active profile → `WSL_DISTRO_NAME`; native path는
+  `--startingDirectory`, WSL path는 명시적 `wsl.exe -d ... --cd ...`만 사용하며 추론하지 않음
+- 실제 WSL `wb doctor --json`에서 Windows Terminal과 new-window/tab/split capability available 확인;
+  visible terminal window를 생성하는 `wt.exe` launch는 자동 실행하지 않음
+- 검증: profile/GUID, window/tab/pane, distro precedence/missing recovery, native/WSL exact argument,
+  backend option boundary test와 Go race/vet, Linux/macOS/Windows amd64·arm64 build 통과
+- 남은 Slice 3B: native Windows와 WSL 실제 tab/pane interactive smoke; Dashboard browser open은 Slice 3D
+  loopback server와 함께 구현
+- 다음 로컬 작업: Phase 3 Slice 3C LazyVim client picker/async UX
+
 ### Slice 3C — LazyVim
 
 - project/Agent/worktree/doctor picker
@@ -293,12 +412,41 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - schema/error/fallback UX
 - help 문서와 keymap contract update
 
+### 2026-08-05 Slice 3C 기반 로컬 구현 기록
+
+- nvim `c3e03a8`: `vim.system({ "wb", ... })` argument array와 5초 timeout을 공유하는 schema-v1
+  async client, `WorkbenchProjects/Agents/Worktrees/Doctor` user command 추가
+- project picker는 `wb projects list --json` → `bb tm projects --json` → sessionizer parser 순서로
+  fallback하며, 다른 picker는 legacy state를 직접 읽지 않고 unavailable을 명시
+- Agent picker는 registry task details/jump/stop만 제공하고 active task stop을 재확인; worktree picker는
+  project와 linked worktree를 순서대로 선택; Doctor는 scope/status/reason/recovery 표시
+- 첫 release는 기존 `<leader>fp` 외 새 default keymap을 추가하지 않으며 `:help nvim-workbench`에 계약 기록
+- 검증: StyLua, headless async/schema/fallback/command smoke, help tags, ShellCheck, setup test 통과
+- 남은 Slice 3C: macOS/WSL Snacks UI에서 실제 picker와 tmux/cmux jump/stop interactive smoke
+
 ### Slice 3D — Dashboard
 
 - loopback local server
 - Projects, Agents, Worktrees, Changes, Doctor 화면
 - selected task detail와 jump/test/stop action
 - responsive/keyboard accessibility
+
+### 2026-08-05 Slice 3D 기반 로컬 구현 기록
+
+- Workbench `435bb80`: `wb dashboard [--open auto|cmux|browser|none] [--port <0-65535>]`, foreground
+  lifecycle, `127.0.0.1` bind, port 0, signal shutdown과 embedded HTML/CSS/JS 구현
+- snapshot API는 project, reconciled Agent, Git-verified worktree, porcelain change summary, Doctor report를
+  schema-v1 envelope로 제공하고 browser는 state file을 직접 parse하지 않음
+- action API는 random per-process token, same-origin, no CORS, CSP/no-store/frame deny, JSON size/unknown
+  field 검증을 적용하고 typed project open 및 Agent start/jump/stop 외 입력을 거부
+- interactive shell이 HTTP request를 점유하지 않도록 project open은 cmux/Windows Terminal만, Agent start는
+  detached tmux/cmux/Windows Terminal만 허용; stop은 UI confirm 후 backend ownership 재검증 사용
+- cmux-config `b331c5d`: surface action `wb dashboard --open cmux`, exact reference allowlist, generated
+  `cmux.json`, server terminal tab lifecycle 문서 연결
+- 검증: handler envelope/token/origin/unknown-field, listener shutdown, browser/cmux opener, Git argument
+  test, JS syntax, Go race/vet, Linux/macOS/Windows amd64·arm64 build, cmux config/generation/sensitive scan 통과
+- 남은 Slice 3D: target browser의 responsive/keyboard/action visual smoke; registered test workflow schema가
+  없으므로 Run tests는 disabled이며 arbitrary command 추론 없이 후속 계약으로 유지
 
 ### 수용 기준
 

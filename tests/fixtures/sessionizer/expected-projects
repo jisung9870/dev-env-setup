@@ -1,0 +1,3 @@
+@ROOT@/direct project
+@ROOT@/parent projects/alpha project
+@ROOT@/parent projects/beta

@@ -1,7 +1,7 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **계획 기준선 확정, 구현 미착수**
-- 최종 갱신일: 2026-08-04
+- 상태: **Phase 3 Slice 3C LazyVim client·Slice 3D Dashboard 기반 로컬 구현 완료, 원격 CI·실장비 UI smoke 대기**
+- 최종 갱신일: 2026-08-05
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
 
@@ -45,10 +45,13 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | 계획 완료 | Phase 0 계약 테스트 후 Phase 1 구현 |
-| Desktop/Web UI 방향 | 계획 완료 | core 이후 `wb dashboard` 구현 |
-| LazyVim UI 방향 | 계획 완료 | JSON API 이후 thin client 구현 |
-| 실제 소스 변경 | 미착수 | [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0부터 시작 |
+| CLI/API와 데이터 경계 | Phase 1 구현 완료·CI 대기 | push 후 macOS/Linux binbox CI 확인 |
+| Desktop/Web UI 방향 | Slice 3D loopback Dashboard 기반 완료 | 실제 browser 반응형/action smoke |
+| LazyVim UI 방향 | Slice 3C Project/Agent/Worktree/Doctor client 완료 | macOS/WSL interactive picker smoke |
+| Workbench core | Slice 2A~2D, doctor, Windows Terminal, Dashboard 로컬 구현 완료 | push/CI와 target-machine smoke |
+| cmux client | Slice 3A action과 Dashboard action 완료 | macOS cmux browser smoke |
+| Windows Terminal client | Slice 3B profile/window/tab/pane·native/WSL path contract 완료 | native Windows/WSL interactive smoke |
+| 실제 소스 변경 | Phase 0 완료, Phase 1 CI 대기, Slice 2A~2D·Slice 3A~3D 기반 로컬 완료 | push/CI 후 remote·manifest·lock 연결 |
 
 ## 읽는 순서
 
@@ -74,7 +77,38 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 0 — 기존 계약 고정**이다.
+현재 원격 완료 게이트는 **Phase 1 — 구조화 read API의 CI 완료 판정**이다. binbox JSON API와 LazyVim의
+비동기 JSON 우선/fallback client는 구현·로컬 commit됐고 WSL contract test가 통과했다. 원격 push 후
+기존 binbox macOS/Linux CI에서 새 Bats JSON test를 확인해야 Phase 1을 완료로 판정한다.
+
+사용자가 push를 추후 직접 하기로 결정하고 로컬 진행을 명시 승인하여, 이 게이트를 완료 처리하지 않은 채
+`workbench` Slice 2A~2D를 선행 구현했다. 로컬 repo의 `84ba289`, `7ddc5d3`, `6712279`, `ac5028c`, `c725c98`에 Go baseline,
+schema-v1 project registry, strict TOML validation, XDG/Windows 경로, JSON read API, sessionizer migration,
+backend contract, `wb open`, stable worktree registry와 safe create/list/remove, Agent task registry와
+Codex/Claude start/list/show/jump/stop이 있다. backend selector, argument-array, 실제 Git worktree lifecycle,
+등록 target 재검증을 test했고 Linux race/vet와 Linux/macOS/Windows cross-build를 통과했다.
+`f2c2c17`은 core/optional/disabled capability를 구분하는 read-only `wb doctor`, `--json`, `--strict`,
+상태 schema와 backend/tool recovery report를 추가한다.
+
+cmux-config `1c23d2a`에는 Workbench project JSON을 stable ID 기반 Open/Codex/Claude action으로 만드는
+generator, generated fragment merge, exact command/reference 검사, `Show Workbench Agents` action이 있다.
+machine-local project path는 생성물에 포함하지 않으며 기존 direct Codex/Claude와 `bb doctor` fallback을 유지한다.
+`580cd26`은 exact `wb doctor`만 허용하는 Workbench Doctor action을 추가한다.
+
+Workbench `6d64f4f`는 Windows Terminal profile name/GUID, WSL distro, target window와 tab/pane mode를
+typed profile/CLI 값으로 추가한다. project overlay → profile → `WSL_DISTRO_NAME` 순서의 distro 선택,
+native `--startingDirectory`와 explicit WSL `wsl.exe -d ... --cd ...` 경계, profile JSONC preflight,
+Agent launch의 동일 argument contract를 구현했다. WSL의 실제 `wb doctor --json`에서 Windows Terminal과
+new window/tab/split capability가 감지됐고 fake executor argument test, Go race/vet, Linux/macOS/Windows
+amd64·arm64 build가 통과했다. 실제 창을 만드는 native Windows/WSL interactive smoke는 남아 있다.
+
+Workbench `435bb80`은 foreground `wb dashboard`와 loopback-only versioned snapshot/action API, embedded
+responsive UI, browser/cmux opener, listener shutdown을 구현한다. project/Agent/worktree/change/Doctor를
+같은 core에서 수집하며 action은 per-process token과 same-origin 확인 후 typed project open 및 Agent
+start/jump/stop만 허용한다. nvim `c3e03a8`은 `:WorkbenchProjects`, `:WorkbenchAgents`,
+`:WorkbenchWorktrees`, `:WorkbenchDoctor` 비동기 picker와 schema/timeout 안내, project의
+wb → binbox → sessionizer fallback을 추가한다. cmux-config `b331c5d`는 exact
+`wb dashboard --open cmux` action과 generated config/reference 검사를 연결한다.
 
 착수 전:
 
@@ -88,24 +122,30 @@ git -C nvim status --short
 git -C cmux-config status --short
 ```
 
-Phase 0 이전 Windows/WSL에서는 cmux가 없는 것이 정상이다. 이때 공통 `doctor.sh`의 성공을 요구하지
-않고 다음을 baseline 증거로 남긴다.
+Windows/WSL에서는 cmux가 없는 것이 정상이며 `windows-wsl` profile이 자동으로 disabled/skipped 처리한다.
+다음을 공통 baseline 증거로 남긴다.
 
 ```bash
-./bootstrap.sh binbox nvim
+./bootstrap.sh --show-selection
+./bootstrap.sh --no-pull
 ./binbox/bb list
 test -e "$HOME/.config/nvim"
 git -C binbox status --short
 git -C nvim status --short
-./doctor.sh  # cmux repo/link 누락만으로 non-zero인지 출력 확인
+./doctor.sh
+./tests/contract-test.sh
 ```
 
-`bootstrap.sh` 출력에 binbox/nvim setup warning이 없어야 하고, `bb list`와 nvim link 검사가 성공해야
-한다. aggregate doctor의 cmux-only failure는 Phase 0에서 platform-aware selector가 들어갈 때 제거한다.
+`bootstrap.sh` 출력에 required setup warning이 없어야 하고, `bb list`, nvim link, aggregate doctor,
+contract test가 성공해야 한다. cmux disabled/skipped는 failure가 아니다.
 
-그다음 [04-implementation-roadmap.md](04-implementation-roadmap.md)의 Phase 0 작업을 작은 commit으로
-나누어 수행한다. 아직 신규 `workbench` repo부터 만들지 않는다. 먼저 기존 producer/consumer 계약을
-테스트로 고정해야 한다.
+다음 완료 게이트는 macOS/Windows/WSL의 실제 Dashboard browser, LazyVim picker, cmux/Windows Terminal
+action smoke와 push 후 원격 CI다. Dashboard의 Run tests는 arbitrary command 추론을 피하기 위해
+등록 workflow schema가 정의될 때까지 비활성 상태다. Phase 4 legacy 제거는 이 실제 사용 주기가 지난 뒤
+착수한다. 신규
+`workbench` remote, platform manifest, `locks/repos.lock`은
+repo가 실제로 생성·push되기 전까지 연결하지 않는다. Phase 1과 Workbench의 원격 CI 결과가 없으므로
+formal completion 표시는 계속 보류한다.
 
 ## 범위 제외
 

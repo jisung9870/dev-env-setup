@@ -5,8 +5,8 @@
 `wb`는 UI가 없어도 사용할 수 있는 headless control plane이다. cmux, tmux, LazyVim, Dashboard는
 이 문서의 command와 JSON contract를 통해서만 project/session/Agent/worktree 상태를 다룬다.
 
-초기 구현 언어는 **Go**로 고정한다. 분석 기준 toolchain의 `lazyvim-config/.tool-versions`가
-`golang 1.25.11`을 사용하므로 첫 baseline도 Go 1.25.11로 맞춘다. 같은 source에서 macOS, Linux,
+초기 구현 언어는 **Go**로 고정한다. 구현 착수 기준 toolchain의 `lazyvim-config/.tool-versions`가
+`golang 1.25.12`를 사용하므로 첫 baseline도 Go 1.25.12로 맞춘다. 같은 source에서 macOS, Linux,
 Windows binary를 build한다.
 
 선택 근거:
@@ -181,6 +181,26 @@ Windows Terminal adapter는 `wt.exe`의 profile/starting-directory/tab/pane comm
 
 `doctor`와 `list` 계열은 일부 provider를 읽지 못해도 수집 가능한 data를 반환할 수 있다. 이 경우
 `ok=false`, exit `5`, `warnings`와 `error.details`에 누락 provider를 표시한다.
+
+## Phase 1 binbox compatibility API
+
+Workbench core 이전의 producer/consumer 계약은 다음 네 명령으로 고정한다.
+
+```bash
+bb tm projects --json
+bb tm sessions --json
+bb agents --json
+bb doctor --json
+```
+
+네 명령 모두 위 schema v1 envelope를 사용한다. `projects`, `sessions`, `agents`, `capabilities` 배열은
+각각 `data` 아래에 위치한다. `agents`의 legacy pane 관찰 결과는 stable Workbench task로 오해하지 않도록
+`id=legacy:<pane-id>`와 `state_source=scrape`를 포함한다. tmux/Python encoder가 없으면 exit `3`과
+`CAPABILITY_UNAVAILABLE`, JSON mode의 잘못된 argument는 exit `2`와 `INVALID_ARGUMENT`을 반환한다.
+
+LazyVim client는 `projects` 배열의 `path`만 소비하며 5초 timeout, JSON parse 실패, non-zero exit,
+schema mismatch를 설명한 뒤 기존 sessionizer parser로 fallback한다. schema version이 다르면 부분
+해석하지 않고 binbox와 LazyVim의 동시 update를 안내한다.
 
 ## 핵심 데이터 모델
 

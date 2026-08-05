@@ -1,0 +1,5 @@
+# parent root, direct project, dead path, blank line, and spaces are intentional.
+@ROOT@/parent projects
+=@ROOT@/direct project
+@ROOT@/dead path
+
