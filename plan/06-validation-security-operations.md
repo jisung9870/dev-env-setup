@@ -24,7 +24,7 @@ contract/fixture test
 | bootstrap/update | clean, dirty, offline, child failure | partial failure가 성공으로 보고되지 않음 |
 | binbox JSON | fixture, stdout purity, exit code | schema fixture와 완전 일치 |
 | project migration | `~`, 공백, `=`, dead path | dry-run과 apply 결과 일치 |
-| backend detect | cmux/tmux/shell/SSH 조합 | explicit option 우선, safe fallback |
+| backend detect | cmux/tmux/shell/SSH 조합 | explicit/fixed backend 우선, current tmux 보존, configurable safe fallback |
 | Windows backend | `wt.exe`, WSL interop, missing profile, path | cmux 없이 open/fallback/recovery 동작 |
 | worktree | duplicate, dirty, conflict, remove | unsafe operation 거부 |
 | Agent registry | launch/list/jump/stop/crash | stable task ID, stale state 탐지 |
@@ -45,6 +45,8 @@ contract/fixture test
 ### macOS/Linux + tmux
 
 - tmux session create/reuse
+- cmux가 설치돼 있어도 tmux 내부의 `wb open`은 현재 client를 project session으로 전환
+- `prefer_current_tmux = false`이면 profile `backend_priority` 순서를 따름
 - pane metadata
 - detach/attach 후 task/session correlation
 - cmux 없이 doctor와 project/worktree 사용

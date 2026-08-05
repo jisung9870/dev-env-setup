@@ -170,8 +170,12 @@ git clone dev-env-setup ~/home/setup
 - 최신 검증: root contract 13개, binbox Bats 267개, nvim setup/headless, actual cmux config doctor,
   Workbench unit/vet/race/3회 반복, 6개 cross-build, Linux container smoke, installed binary isolated E2E
   10개, actual bootstrap/doctor 통과. independent code review `APPROVE`, architecture review `CLEAR`.
-- committed snapshot: nvim `57cb08e7ab1d2f61447f2b97402734d70d54ef0c`, workbench
-  `c3f4d2096d225ee25341da0e8bd14ae395cc16e9`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+- Phase 4 직전 보정: profile의 `prefer_current_tmux`/`backend_priority`를 추가하고 실제 격리 PTY에서
+  `wb open`이 현재 tmux client를 목표 project session으로 전환함을 확인했다. 등록된 4개 project의
+  explicit cmux action도 재생성했다.
+- committed snapshot: nvim `57cb08e7ab1d2f61447f2b97402734d70d54ef0c`, cmux-config
+  `73bc8f606c1a8f25dbc2d784a2d0cfb71c35369d`, workbench
+  `093fcf4a20bcf3c8681cb724fbff37091e34e9f6`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위

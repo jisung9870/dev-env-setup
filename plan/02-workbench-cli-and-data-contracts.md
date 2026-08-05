@@ -257,6 +257,20 @@ ${XDG_STATE_HOME:-~/.local/state}/workbench/
 └─ backups/
 ```
 
+Profile의 auto backend 정책은 machine별로 조정할 수 있다. 명시적 CLI/project/profile backend가 항상
+우선하며, 기본값은 현재 tmux client를 보존한 뒤 platform fallback을 적용한다.
+
+```toml
+schema_version = 1
+default_backend = "auto"
+prefer_current_tmux = true
+backend_priority = ["cmux", "tmux", "shell"]
+```
+
+`backend_priority`에는 concrete backend만 중복 없이 기록한다. `prefer_current_tmux = false`일 때는
+목록 순서가 tmux 내부에서도 적용된다. unavailable 항목은 built-in platform fallback으로 이어지며,
+SSH의 cmux 제외 같은 platform safety guard는 유지한다.
+
 Windows native path는 Go의 사용자 config/cache directory API를 사용해 다음 logical location에 둔다.
 
 ```text
