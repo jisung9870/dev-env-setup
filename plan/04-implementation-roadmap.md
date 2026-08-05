@@ -510,6 +510,17 @@ legacy path는 다음이 모두 충족될 때만 제거한다.
   Workbench 전체 Go test, aggregate doctor가 통과했다. 설치 config는 symlink와 config doctor로 확인했으나
   runtime hot reload는 cmux socket `Broken pipe`로 실패해 앱 재시작 후 반영 확인이 남았다.
 
+### 2026-08-05 cleanup pass 2 기록
+
+- Workbench에 다섯 tuple allowlist와 per-tuple atomic state, external-only observe CLI를 추가했다.
+- `wb agents list`는 registry source를 내부 기록하고, LazyVim project picker와 binbox Agent JSON은 선택한
+  fallback source를 비동기·best-effort로 기록한다.
+- doctor의 `compatibility:nvim-projects`, `compatibility:agents`는 미관찰 `skipped`, 최신 primary
+  `available`, 최신 fallback optional `unavailable`로 제거 준비도를 표시한다.
+- fallback은 삭제하지 않았다. timestamp는 clock rollback과 미실행 장비 한계가 있는 advisory evidence다.
+- 검증: Workbench full test/race/vet, 6개 cross-build, isolated binary E2E, LazyVim setup/headless/StyLua,
+  binbox Bats 267개가 통과했다. 다음 pass는 대표 사용 주기 실행과 관찰 결과 평가다.
+
 ## Phase 5 — 별도 Desktop UI 평가
 
 다음 신호를 기록한다.

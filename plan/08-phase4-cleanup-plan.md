@@ -2,9 +2,9 @@
 
 ## 목표와 범위
 
-Phase 4의 첫 pass는 project source of truth 중복만 제거한다. Workbench project registry와 생성된 cmux
-action의 동작은 유지하고, cmux가 별도로 보관하는 machine-local project root 목록을 제거한다. Agent와
-LazyVim compatibility path는 관찰 조건이 충족되기 전까지 변경하지 않는다.
+Phase 4의 첫 pass는 project source of truth 중복을 제거했다. 두 번째 pass는 Agent와 LazyVim
+compatibility path를 삭제하지 않고, 실제 선택 source를 Workbench doctor가 판단할 수 있는 bounded local
+observation으로 기록한다.
 
 ## Behavior lock
 
@@ -51,3 +51,17 @@ cmux fragment와 생성된 `cmux.json` commit을 revert하면 경로별 group me
 - LazyVim direct parser: doctor가 fallback 사용 여부를 표시하고 대표 workflow 주기 동안 사용이 없어야 한다.
 - legacy Agent scraping: Workbench registry가 지원 장비의 Agent 목록을 모두 제공하고 scrape 사용이 없어야 한다.
 - installer 책임 이전: macOS/WSL clean-profile fixture에서 dev-env profile과 child installer의 소유권을 먼저 고정한다.
+
+## Pass 2 — fallback 관찰 계약
+
+- Workbench는 `nvim/projects/{workbench,binbox,sessionizer}`와
+  `{workbench/agents/registry,binbox/agents/scrape}` 다섯 tuple만 저장한다.
+- 외부 CLI는 네 consumer tuple만 허용하고 internal registry tuple은 `wb agents list` 성공 후 Workbench가 직접 기록한다.
+- 각 tuple은 `${XDG_STATE_HOME}/workbench/compatibility` 아래 별도 mode-0600 JSON으로 atomic replace하며
+  directory는 mode 0700이다. backup, daemon, network telemetry는 만들지 않는다.
+- Neovim과 binbox observer는 비동기·출력 억제·best effort이며 기존 workflow 결과를 바꾸지 않는다.
+- doctor는 미관찰을 `skipped`, 최신 primary를 `available`, 최신 fallback을 optional `unavailable`로 표시한다.
+- timestamp는 advisory evidence다. clock rollback과 미실행 장비가 있으므로 자동 삭제 근거로 사용하지 않는다.
+
+Pass 2 구현 후에도 fallback은 유지한다. 다음 pass에서 대표 사용 주기를 실제로 수행하고 두 compatibility
+capability가 primary `available`인지 확인한 뒤에만 제거 후보를 다시 평가한다.

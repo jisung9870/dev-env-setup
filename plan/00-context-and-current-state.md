@@ -175,9 +175,12 @@ git clone dev-env-setup ~/home/setup
   explicit cmux action도 재생성했다.
 - Phase 4 pass 1: cmux `workspaceGroups.byCwd`의 machine-local project root 중복을 제거하고
   Workbench-generated action을 유일한 cmux project registry로 고정했다. global workspace placement는 유지한다.
-- committed snapshot: nvim `6568e2fa97da9a9f7e01d5057b016c5318558f68`, cmux-config
+- Phase 4 pass 2: Workbench가 LazyVim project source와 Agent registry/scrape source의 최신 관찰을
+  bounded local state로 기록하고 doctor에 제거 준비도를 표시한다. fallback 자체는 유지한다.
+- committed snapshot: binbox `b7e4bc99f9e2286ed7556c6c1a7c20ab859fb6f1`, nvim
+  `90d7386d1aa392e5a935dc8b575f4ccb2058dc43`, cmux-config
   `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
-  `50ba6a52e719ebd5f1a04d8708b70a6a67a83dc3`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+  `f47ccb0264fe284803bf0eceb411c8c88e7ab4af`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위

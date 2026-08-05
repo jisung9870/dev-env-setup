@@ -12,7 +12,7 @@ printf '%s\n=%s\n' "$tmp_root/projects" "$tmp_root/direct" >"$tmp_root/config/tm
 
 XDG_CONFIG_HOME="$tmp_root/config" "$repo_root/binbox/bb" tm projects --json >"$tmp_root/projects.json"
 "$repo_root/binbox/bb" tm sessions --json >"$tmp_root/sessions.json"
-"$repo_root/binbox/bb" agents --json >"$tmp_root/agents.json"
+XDG_STATE_HOME="$tmp_root/state" "$repo_root/binbox/bb" agents --json >"$tmp_root/agents.json"
 
 set +e
 "$repo_root/binbox/bb" doctor --json >"$tmp_root/doctor.json"

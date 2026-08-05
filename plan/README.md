@@ -49,7 +49,7 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 | Desktop/Web UI 방향 | Phase 3 localhost Dashboard 구현·검증 완료 | loopback/auth/origin/body-limit 유지 |
 | LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
 | Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
-| Phase 4 | **진행 중, cmux project registry 정리 완료** | fallback 사용 관찰 계약을 먼저 설계 |
+| Phase 4 | **진행 중, 관찰 계약 구현 완료** | 대표 사용 주기 후 fallback 제거 여부 평가 |
 
 ## 읽는 순서
 
@@ -76,9 +76,10 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 4 — fallback 사용 관찰 계약**이다. cmux의 중복 project root registry는 제거했고
-Workbench-generated action을 cmux project source of truth로 고정했다. LazyVim sessionizer와 legacy Agent
-scraping은 grounded compatibility fallback이므로 사용 여부를 doctor가 관찰하기 전에는 제거하지 않는다.
+현재 다음 작업은 **Phase 4 — 대표 사용 주기 관찰**이다. cmux의 중복 project root registry 제거와
+Workbench doctor의 fallback 관찰 계약 구현은 완료했다. project picker와 Agent list를 실제 workflow에서
+사용한 뒤 `compatibility:nvim-projects`, `compatibility:agents`의 최신 source를 평가한다. LazyVim
+sessionizer와 legacy Agent scraping은 관찰 결과만으로 자동 삭제하지 않는다.
 
 착수 전:
 
