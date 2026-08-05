@@ -39,7 +39,7 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 | **binbox** | `binbox` | `bb` CLI 툴킷 (tmux/git/k8s/aws/terraform/docker/secret). 기반 레이어. | `~/binbox`, `~/.local/bin/bb` |
 | **nvim** | `lazyvim-config` | DevOps용 LazyVim 설정 (+ tmux 설정). | `~/.config/nvim`, `~/.tmux.conf` |
 | **cmux-config** | `cmux-config` | cmux 워크스페이스 정의. 패널에서 `bb`·`nvim` 을 직접 호출 → 둘 다 필요. | `~/.config/cmux/*` |
-| **workbench** | `workbench` | `wb` core, backend adapters, worktree/Agent registry, localhost Dashboard. | `~/.local/bin/wb` |
+| **workbench** | `workbench` | `wb` core, backend adapters, worktree/Agent registry, localhost Dashboard와 내장 Guide. | `~/.local/bin/wb` |
 
 **설치 순서: binbox → nvim → cmux-config → workbench** (`repos.txt` 줄 순서 = 의존 순서).
 

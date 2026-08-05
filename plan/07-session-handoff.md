@@ -93,6 +93,10 @@ capability가 primary `available`인지 평가하는 것이다. 관찰만으로 
 현재 장비의 설치 binary에서는 두 primary의 point-in-time smoke가 통과했지만, 여러 실제 작업에 걸친 대표
 사용 주기 증거는 아직 수집 전이다.
 
+Workbench 사용 구조와 명령·설정·운영 계약은 `wb dashboard` 실행 후 상단 **Guide** 또는 loopback
+`/guide`에서 확인할 수 있다. Dashboard와 Guide는 System/Light/Dark 테마를 공유하며 테마 선택은 해당
+브라우저에만 저장된다.
+
 확인 command:
 
 ```bash

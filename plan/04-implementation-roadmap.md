@@ -456,8 +456,21 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
   `cmux.json`, server terminal tab lifecycle 문서 연결
 - 검증: handler envelope/token/origin/unknown-field, listener shutdown, browser/cmux opener, Git argument
   test, JS syntax, Go race/vet, Linux/macOS/Windows amd64·arm64 build, cmux config/generation/sensitive scan 통과
-- 남은 Slice 3D: target browser의 responsive/keyboard/action visual smoke; registered test workflow schema가
-  없으므로 Run tests는 disabled이며 arbitrary command 추론 없이 후속 계약으로 유지
+- target browser에서 Light/Dark 전환·재로딩 영속화, Guide 검색, 좁은 viewport와 가로 overflow,
+  색상 대비를 검증했다. 실제 등록 project의 typed action visual smoke는 장비별 수동 확인 범위로 남는다.
+  registered test workflow schema가 없으므로 Run tests는 disabled이며 arbitrary command 추론 없이 후속
+  계약으로 유지한다.
+
+### 2026-08-05 Dashboard 테마·Guide 보강 기록
+
+- `db86343`: Dashboard와 Guide가 공유하는 System/Light/Dark semantic token과 localStorage preference를
+  추가하고, 첫 paint 전에 테마를 적용한다.
+- `/guide`와 `/docs` alias는 현재 바이너리에 embed된 한국어 문서를 제공한다. overview/quickstart,
+  architecture/components, projects/profiles/backends/worktrees/Agents, Dashboard/Doctor/security,
+  CLI/config/data/API reference, troubleshooting, glossary를 포함한다.
+- Guide 검색, Escape reset, active navigation, 모바일 table/code overflow, 인쇄용 light token을 구현했다.
+- 검증: JS behavior 6개, Go full/race/vet, 6개 cross-build, root contract, isolated E2E 10개,
+  실제 브라우저 theme/search/responsive/contrast smoke, 설치 binary `/guide` smoke가 통과했다.
 
 ### 수용 기준
 

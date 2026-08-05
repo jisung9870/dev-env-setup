@@ -177,10 +177,13 @@ git clone dev-env-setup ~/home/setup
   Workbench-generated action을 유일한 cmux project registry로 고정했다. global workspace placement는 유지한다.
 - Phase 4 pass 2: Workbench가 LazyVim project source와 Agent registry/scrape source의 최신 관찰을
   bounded local state로 기록하고 doctor에 제거 준비도를 표시한다. fallback 자체는 유지한다.
+- Dashboard 보강: System/Light/Dark 테마와 device-local preference, 검색·section navigation·모바일·인쇄를
+  지원하는 `/guide` 내장 문서를 추가했다. Guide는 현재 구현된 아키텍처, 구성 요소, 운영, CLI/config/API,
+  troubleshooting만 설명하며 원격 asset이나 별도 state owner를 만들지 않는다.
 - committed snapshot: binbox `b7e4bc99f9e2286ed7556c6c1a7c20ab859fb6f1`, nvim
   `90d7386d1aa392e5a935dc8b575f4ccb2058dc43`, cmux-config
   `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
-  `f47ccb0264fe284803bf0eceb411c8c88e7ab4af`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+  `db86343fcfde19f0c95a96bf30fa29ce70480548`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위

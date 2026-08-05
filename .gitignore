@@ -10,3 +10,4 @@
 /.omx/
 
 .DS_Store
+/nvim.log
