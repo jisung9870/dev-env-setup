@@ -179,11 +179,12 @@ git clone dev-env-setup ~/home/setup
   bounded local state로 기록하고 doctor에 제거 준비도를 표시한다. fallback 자체는 유지한다.
 - Dashboard 보강: System/Light/Dark 테마와 device-local preference, 검색·section navigation·모바일·인쇄를
   지원하는 `/guide` 내장 문서를 추가했다. Guide는 현재 구현된 아키텍처, 구성 요소, 운영, CLI/config/API,
-  troubleshooting만 설명하며 원격 asset이나 별도 state owner를 만들지 않는다.
+  troubleshooting만 설명하며 원격 asset이나 별도 state owner를 만들지 않는다. Dashboard 공간 구성을
+  설명하는 실제 UI 이미지는 격리된 문서 fixture로 촬영해 project/home/task 정보를 제거하고 바이너리에 embed했다.
 - committed snapshot: binbox `b7e4bc99f9e2286ed7556c6c1a7c20ab859fb6f1`, nvim
   `90d7386d1aa392e5a935dc8b575f4ccb2058dc43`, cmux-config
   `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
-  `11da9b6e0215d0c0d755f91fd2606b56d97a66d0`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+  `cfb2eec6da03a76b24c4edcd10dbc63cbbdea13d`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위
