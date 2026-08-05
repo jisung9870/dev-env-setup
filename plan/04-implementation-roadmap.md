@@ -475,6 +475,9 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
 - `cfb2eec`: Dashboard의 왼쪽 project 탐색, 가운데 project 상태/action, 오른쪽 task detail 전환을 설명하는
   실제 UI 이미지를 `/guide`에 추가했다. 이미지는 격리된 documentation fixture에서 생성해 사용자 project,
   home path, task ID를 포함하지 않으며 원격 요청 없이 Workbench 바이너리에 embed된다.
+- `6bca9f9`: Dashboard의 Active Agents와 접힌 Task history를 분리하고 resolved `agents.json` 경로를 표시한다.
+  Terminal task action은 비활성화하며, clear는 확인 당시 exact task ID만 대상으로 stale set을 409로 거부한다.
+  Registry mutation은 Unix `flock`/Windows `LockFileEx`로 직렬화하고 변경 전 backup 경로를 반환한다.
 - 검증: JS behavior 6개, Go full/race/vet, 6개 cross-build, root contract, isolated E2E 10개,
   실제 브라우저 theme/search/responsive/contrast smoke, 설치 binary `/guide` smoke가 통과했다.
 
