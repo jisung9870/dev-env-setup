@@ -183,7 +183,7 @@ git clone dev-env-setup ~/home/setup
 - committed snapshot: binbox `b7e4bc99f9e2286ed7556c6c1a7c20ab859fb6f1`, nvim
   `90d7386d1aa392e5a935dc8b575f4ccb2058dc43`, cmux-config
   `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
-  `db86343fcfde19f0c95a96bf30fa29ce70480548`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
+  `11da9b6e0215d0c0d755f91fd2606b56d97a66d0`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
 
 ## 미확인 범위

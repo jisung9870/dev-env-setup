@@ -469,6 +469,9 @@ core architecture를 다시 결정하는 단계가 아니라 고정 기준을 �
   architecture/components, projects/profiles/backends/worktrees/Agents, Dashboard/Doctor/security,
   CLI/config/data/API reference, troubleshooting, glossary를 포함한다.
 - Guide 검색, Escape reset, active navigation, 모바일 table/code overflow, 인쇄용 light token을 구현했다.
+- `11da9b6`: Dashboard `Open project`의 `auto`가 interactive tmux/shell을 선택한 뒤 거부하던 문제를
+  수정했다. Dashboard 전용 선택은 cmux/Windows Terminal만 후보로 사용하며 SSH cmux priority 안전 규칙을
+  유지한다. 프로젝트 선택 후 중앙 empty state가 남던 CSS `hidden` 충돌도 함께 수정했다.
 - 검증: JS behavior 6개, Go full/race/vet, 6개 cross-build, root contract, isolated E2E 10개,
   실제 브라우저 theme/search/responsive/contrast smoke, 설치 binary `/guide` smoke가 통과했다.
 
