@@ -7,13 +7,17 @@
 
 ## 지금 알아야 할 결론
 
+현재 기능, 제품 경계, 남은 갭, 단계별 향후 방향을 한 번에 보려면
+[09-product-plan.md](09-product-plan.md)를 먼저 읽는다. 이 문서는 제품 방향의 기준서이고,
+아래 `00`~`08` 문서는 배경·세부 계약·구현 이력을 보존한다.
+
 현재 `tmux + LazyVim + cmux + binbox` 환경은 폐기하지 않는다. 다음 구조로 점진 진화한다.
 
 ```text
 dev-env-setup      장비 provisioning, 호환 repo snapshot, 통합 doctor
        │
        ▼
-workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
+workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend 진입
   ├─ cmux adapter  로컬 desktop workspace
   ├─ wt adapter    Windows Terminal tab/pane과 WSL 진입
   ├─ tmux adapter  장시간 세션·SSH·재접속
@@ -55,19 +59,21 @@ workbench (`wb`)   프로젝트·세션·Agent·worktree의 source of truth
 
 새 세션이나 새 장비에서는 다음 순서로 읽는다.
 
-1. [00-context-and-current-state.md](00-context-and-current-state.md) — 왜 이 계획이 생겼고 현재 무엇이 있는가
-2. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
-3. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
-4. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
-5. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 구현 순서와 완료/롤백 조건
-6. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
-7. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
-8. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
-9. [08-phase4-cleanup-plan.md](08-phase4-cleanup-plan.md) — cleanup 범위, fallback 분류, pass별 gate
+1. [09-product-plan.md](09-product-plan.md) — 현재 기능, 제품 경계, 갭, 단계별 향후 방향
+2. [00-context-and-current-state.md](00-context-and-current-state.md) — 왜 이 계획이 생겼고 초기·현재 상태가 어떻게 달라졌는가
+3. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
+4. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
+5. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
+6. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 구현 순서와 완료/롤백 조건
+7. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
+8. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
+9. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
+10. [08-phase4-cleanup-plan.md](08-phase4-cleanup-plan.md) — cleanup 범위, fallback 분류, pass별 gate
 
 ## Source of truth 규칙
 
-- 이 디렉터리의 계획은 `plan/README.md`에서 연결된 파일을 기준으로 한다.
+- 현재 기능과 제품 방향은 [09-product-plan.md](09-product-plan.md)를 기준으로 하고, 세부 계약과 구현
+  이력은 `plan/README.md`에서 연결된 문서를 기준으로 한다.
 - 루트 `WORKBENCH-PLAN.md`는 호환용 진입점이며 내용을 중복 보관하지 않는다.
 - 구현 중 결정이 바뀌면 관련 문서와 [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md)의
   결정 기록을 함께 갱신한다.

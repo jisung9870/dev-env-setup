@@ -2,6 +2,12 @@
 
 여러 장비에서 **동일한 개인 개발 환경**을 재현하는 오케스트레이션 레이어.
 
+이 환경의 제품 방향은 **terminal-first 개인 개발환경 운영 콘솔**이다. tmux와 LazyVim이 계속
+주 작업 공간을 맡고, binbox(`bb`)는 자주 쓰는 명령을 제공하는 toolbox로 유지한다. Workbench
+Core는 프로젝트·작업 상태와 관찰 결과를 정규화하고, Dashboard는 전체 현황과 복귀 지점을 보여주는
+operations console이다. Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의 기본 흐름은
+계속 동작해야 한다.
+
 통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
 Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
 
@@ -22,16 +28,16 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 
 ## 구성
 
-```
-        cmux-config          ← 오케스트레이션 (워크스페이스/패널에서 bb·nvim 실행)
-        │        │
-   (bb 명령)   (nvim 실행)
-        ▼        ▼
-     binbox      nvim         ← nvim 은 binbox 'tm' 레이아웃 포맷을 느슨히 참조
-        │         │
-        └────┬────┘
-             ▼
-         workbench             ← project/session/Agent/worktree source of truth
+```text
+tmux + LazyVim        주 작업 공간: 분할·탐색·편집·실행
+       │
+       ├── binbox     toolbox: tmux/Git/AWS/Kubernetes/Terraform/보안 명령
+       │
+       └── Workbench Core      observer/state: project·Task·health 정규화
+                    └── Dashboard      ops console: 현황·이상·복귀·제한된 제어
+
+cmux-config           macOS에서 위 구성요소를 여는 선택적 client/backend
+dev-env-setup         설치·업데이트·호환 snapshot·통합 검증
 ```
 
 | repo | 원격 | 하는 일 | 배포 링크 |
@@ -39,7 +45,7 @@ cd ~/home/setup && ./bootstrap.sh && exec $SHELL -l
 | **binbox** | `binbox` | `bb` CLI 툴킷 (tmux/git/k8s/aws/terraform/docker/secret). 기반 레이어. | `~/binbox`, `~/.local/bin/bb` |
 | **nvim** | `lazyvim-config` | DevOps용 LazyVim 설정 (+ tmux 설정). | `~/.config/nvim`, `~/.tmux.conf` |
 | **cmux-config** | `cmux-config` | cmux 워크스페이스 정의. 패널에서 `bb`·`nvim` 을 직접 호출 → 둘 다 필요. | `~/.config/cmux/*` |
-| **workbench** | `workbench` | `wb` core, backend adapters, worktree/Agent registry, localhost Dashboard와 내장 Guide. | `~/.local/bin/wb` |
+| **workbench** | `workbench` | 선택적 `wb` observer/state core, backend adapters, localhost 운영 Dashboard와 내장 Guide. | `~/.local/bin/wb` |
 
 **설치 순서: binbox → nvim → cmux-config → workbench** (`repos.txt` 줄 순서 = 의존 순서).
 

@@ -14,6 +14,7 @@ pass() { pass_count=$((pass_count + 1)); printf '[PASS] %s\n' "$1"; }
 die() { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 assert_contains() { printf '%s\n' "$1" | grep -Fq "$2" || die "$3 (missing: $2)"; }
 assert_same() { [ "$1" = "$2" ] || die "$3"; }
+assert_file_contains() { grep -Fq -- "$2" "$1" || die "$3 (missing: $2)"; }
 
 for file in bootstrap.sh upgrade.sh doctor.sh lib/repo-selector.sh lib/repo-lock.sh; do
   bash -n "$ROOT/$file"
@@ -186,6 +187,31 @@ pass 'runtime link ownership and Workbench manifest integration'
 for child in binbox nvim cmux-config workbench; do
   [ -d "$ROOT/$child/.git" ] || die "missing child repository '$child'; run ./bootstrap.sh"
 done
+
+tmux_config="$ROOT/nvim/scripts/config/.tmux.conf"
+assert_file_contains "$tmux_config" 'bind | split-window -h -c "#{pane_current_path}"' 'tmux horizontal split binding changed'
+assert_file_contains "$tmux_config" 'bind - split-window -v -c "#{pane_current_path}"' 'tmux vertical split binding changed'
+assert_file_contains "$tmux_config" 'bind c new-window -c "#{pane_current_path}"' 'tmux new-window binding changed'
+assert_file_contains "$tmux_config" 'bind f run-shell "tmux neww '\''bb tm'\''"' 'tmux project sessionizer binding changed'
+assert_file_contains "$tmux_config" 'bind a display-popup -E -w 85% -h 70% "bb agents"' 'tmux Agent popup binding changed'
+pass 'terminal-first tmux keybindings remain stable'
+
+assert_file_contains "$ROOT/nvim/lua/plugins/terminal.lua" '"<leader>tp",' 'LazyVim tmux project keybinding changed'
+assert_file_contains "$ROOT/nvim/lua/plugins/terminal.lua" 'cmd = "bb tm",' 'LazyVim tmux project command changed'
+assert_file_contains "$ROOT/nvim/lua/plugins/editor.lua" '"<leader>fp",' 'LazyVim Workbench project keybinding changed'
+assert_file_contains "$ROOT/nvim/lua/plugins/editor.lua" 'require("workbench.projects").pick()' 'LazyVim Workbench project picker changed'
+pass 'LazyVim project entrypoints remain stable'
+
+bb_tools="$($ROOT/binbox/bb list)"
+for tool in tm agents gx kx assume assm tfx tvx dx portcheck md2jira wenv sec; do
+  assert_contains "$bb_tools" "$tool" "binbox toolbox command '$tool' unavailable"
+  [ -x "$ROOT/binbox/libexec/$tool" ] || die "binbox toolbox command '$tool' is not executable"
+done
+pass 'binbox toolbox entrypoints remain available without Workbench'
+
+assert_file_contains "$ROOT/README.md" 'Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의 기본 흐름은' 'Workbench optionality is undocumented'
+assert_file_contains "$ROOT/plan/09-product-plan.md" 'terminal-first 개인' 'terminal-first product direction is undocumented'
+pass 'operations-console ownership and Workbench optionality are documented'
 
 session_root="$tmp_dir/sessionizer"
 mkdir -p "$session_root/parent/alpha" "$session_root/parent/space project" "$session_root/parent/.hidden" "$session_root/direct"
