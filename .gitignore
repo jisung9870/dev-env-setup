@@ -3,6 +3,7 @@
 /nvim/
 /cmux-config/
 /workbench/
+/feature-catalog/
 /oh-my-zsh-config/
 
 # 로컬 agent/runtime 상태
