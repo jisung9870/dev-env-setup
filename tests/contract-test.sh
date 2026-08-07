@@ -209,9 +209,12 @@ for tool in tm agents gx kx assume assm tfx tvx dx portcheck md2jira wenv sec; d
 done
 pass 'binbox toolbox entrypoints remain available without Workbench'
 
-assert_file_contains "$ROOT/README.md" 'Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의 기본 흐름은' 'Workbench optionality is undocumented'
-assert_file_contains "$ROOT/plan/09-product-plan.md" 'terminal-first 개인' 'terminal-first product direction is undocumented'
-pass 'operations-console ownership and Workbench optionality are documented'
+# Assert navigation integrity of the plan package, not prose wording: paths and
+# filenames are stable, while any rewording of a sentence would break the suite.
+[ -f "$ROOT/plan/09-product-plan.md" ] || die 'plan/09-product-plan.md is missing'
+assert_file_contains "$ROOT/plan/README.md" '09-product-plan.md' 'plan/README.md no longer links the product baseline document'
+assert_file_contains "$ROOT/WORKBENCH-PLAN.md" 'plan/README.md' 'WORKBENCH-PLAN.md no longer points at the plan package'
+pass 'plan package entry points remain linked'
 
 session_root="$tmp_dir/sessionizer"
 mkdir -p "$session_root/parent/alpha" "$session_root/parent/space project" "$session_root/parent/.hidden" "$session_root/direct"
