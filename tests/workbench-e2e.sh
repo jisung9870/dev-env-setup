@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-WB="${WB_BINARY:-/Users/al02524164/.local/bin/wb}"
+WB="${WB_BINARY:-$HOME/.local/bin/wb}"
 RUN_DIR="${1:-}"
 [ -x "$WB" ] || { printf 'installed wb not executable: %s\n' "$WB" >&2; exit 1; }
 [ -n "$RUN_DIR" ] && [ -d "$RUN_DIR/.wb-e2e-owned" ] || {
