@@ -48,9 +48,9 @@ exec "$SHELL" -l
 `windows-wsl.repos`가 cmux를 disabled/skipped로 처리하므로 인자 없는 bootstrap과 doctor를 사용한다.
 선택 결과는 `./bootstrap.sh --show-selection`으로 쓰기 없이 확인할 수 있다.
 
-현재 계획 단계에서는 native PowerShell에서 `bootstrap.sh`를 실행하지 않는다. native `wb.exe`가 구현된
-이후에는 project/worktree/doctor/dashboard와 Windows Terminal backend를 직접 사용할 수 있지만,
-binbox/LazyVim 전체 기능은 WSL을 기준으로 한다.
+native PowerShell에서 `bootstrap.sh`를 실행하지 않는다. native `wb.exe` artifact는 cross-compile되며
+project/worktree/doctor/dashboard와 Windows Terminal backend 계약이 구현돼 있다. 다만 물리 Windows에서의
+interactive smoke는 미실행이므로 Tier 1 완료 근거로 사용하지 않는다. binbox/LazyVim 전체 기능은 WSL을 기준으로 한다.
 
 ## 기존 장비에서 재개
 
@@ -86,12 +86,11 @@ plan/README.md
 
 ## 현재 다음 작업 찾기
 
-`plan/README.md`의 진행 상태와 `04-implementation-roadmap.md`를 확인한다. 현재 기준선은 Phase 0~3
-구현·검증 완료 후 Phase 4 진행 중 상태다. cmux의 중복 project root registry 제거와 fallback 사용 관찰
-계약 구현은 끝났다. 다음 작업은 대표 project/Agent workflow 사용 주기를 실행하고 doctor의 두 compatibility
-capability가 primary `available`인지 평가하는 것이다. 관찰만으로 fallback을 자동 삭제하지 않는다.
-현재 장비의 설치 binary에서는 두 primary의 point-in-time smoke가 통과했지만, 여러 실제 작업에 걸친 대표
-사용 주기 증거는 아직 수집 전이다.
+`plan/README.md`와 `09-product-plan.md`의 진행 상태를 확인한다. `04-implementation-roadmap.md`의 Phase 번호는
+초기 이력이다. 현재 기준선은 Phase 0~5 구현 완료, Phase 6 다음이다. 현재 HEAD `39100f2` 통합 E2E는
+Environment/Secret/workflow/Contexts와 cleanup까지 통과했다. 다음으로 대표 project/Agent workflow와
+physical Linux/Windows/WSL/cmux smoke를 수집한다. 그 근거로 compatibility path를 warning → shim → 제거
+순서로 평가하며 관찰만으로 자동 삭제하지 않는다.
 
 Workbench 사용 구조와 명령·설정·운영 계약은 `wb dashboard` 실행 후 상단 **Guide** 또는 loopback
 `/guide`에서 확인할 수 있다. Dashboard와 Guide는 System/Light/Dark 테마를 공유하며 테마 선택은 해당

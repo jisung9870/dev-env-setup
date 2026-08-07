@@ -1,7 +1,7 @@
 # Personal Workbench 제품 기획
 
-- 결과 상태: **Phase 0~4 구현 완료 — Phase 5~6 대기**
-- 기준일: 2026-08-06
+- 결과 상태: **Phase 0~5 구현 완료 — Phase 6 다음**
+- 기준일: 2026-08-07
 - 적용 범위: `dev-env-setup`, `workbench`, `binbox`, `lazyvim-config`, `cmux-config`
 - 대상 독자: 사용자, 유지보수자, 후속 구현 Agent
 - 문서 역할: 현재 제품 기능과 향후 방향의 기준서. 세부 계약과 구현 이력은 `plan/00`~`08` 및 각 저장소 문서를 따른다.
@@ -31,7 +31,7 @@ Phase 0의 회귀 조건은 다음과 같다.
 2. LazyVim의 `<leader>tp`(`bb tm`)와 `<leader>fp`(Workbench project picker)를 유지한다.
 3. 주요 `bb` 도구의 실행 진입점을 유지한다.
 4. Workbench 장애나 부재가 terminal 작업을 막지 않는다.
-5. 현재 구현되지 않은 session 관찰과 통합 Task 기능을 이미 제공하는 것처럼 표현하지 않는다.
+5. Session 관찰과 통합 Task의 provenance·confidence·소유권 구분을 유지하고, 관찰만으로 성공·실패를 단정하지 않는다.
 
 ## 제품 정의
 
@@ -108,23 +108,32 @@ terminal workspace의 의존 방향은 Workbench를 통과하지 않는다. tmux
 | 프로젝트 열기 | 제공 | shell, tmux, cmux, Windows Terminal/WSL backend 선택과 명시적 override | backend별 session inventory는 없음 |
 | Worktree core | 제공 | Git-verified list/create/remove, stable managed ID, dirty/lock/branch 안전장치 | client에서는 list/open 중심; create/remove UI 없음 |
 | Agent core | 제공 | Codex/Claude start/list/show/jump/stop, task registry, tmux/cmux ownership 재검증 | `bb agents` scrape와 direct Agent launch fallback이 남음 |
-| Dashboard | 제공 | operations Overview, project/Task/session/worktree/Git/Doctor/binbox health, typed open/start/jump/stop/history/workflow action, 내장 Guide | Environment/Secret context와 common cross-backend session lifecycle은 미제공 |
+| Dashboard | 제공 | operations Overview, project/Task/session/worktree/Git/Doctor/binbox health, typed open/start/jump/stop/history/workflow action, 내장 Guide, 선택 project의 read-only Contexts | Environment/Secret 수정, kube context 변경, common cross-backend session lifecycle은 미제공 |
 | LazyVim client | 제공 | Projects, Agents, Worktrees, Doctor 비동기 picker; Agent jump/stop; worktree 파일 열기 | project 조회에 `bb`와 sessionizer fallback 유지 |
 | cmux client | 부분 제공 | generated Open/Start Agent action, Dashboard/Agents/Doctor, DevOps 작업판 | action 재생성이 수동이고 현재 검증 장비에는 cmux 실행 파일 없음 |
 | binbox provider | 제공 | tmux/Git/Kubernetes/AWS/Terraform/secret/Trivy/Docker workflow와 자체 doctor/check | project/Agent 명령 일부가 Workbench와 과도기 중복 |
 | Session 관찰 | 제공 | `wb sessions list/jump`, tmux session/window/pane read-only snapshot, stable pane 복귀, optional unavailable 처리 | backend 공통 session registry/lifecycle은 미제공; tmux가 실제 lifecycle owner |
 | 통합 Task | 제공 | Workbench managed Agent/workflow와 tmux에서 직접 실행한 Codex/Claude/OMC/OMX observed Task 통합, provenance/confidence/ownership 구분 | Terraform·Trivy 등 non-AI direct process classifier는 미제공 |
 | Typed workflow | 제공 | allowlisted project test/Trivy scan/Terraform plan, detached tmux worker, metadata-only bounded history, ownership-verified jump | arbitrary command와 apply/destroy/Secret 평문 작업은 의도적으로 미제공 |
+| Environment registry | 제공 | schema-v1 `wb env` list/show/add/remove/health/export, `wenv.d` check/apply migration, AWS·일반 변수 export | kube context/namespace mutation과 expiry 정책은 미제공 |
+| Local Secret | 제공 | age Go library 기반 `wb secrets` init/list/set/get/remove, 명시적 replace·확인·backup·cross-process lock, legacy `sec` check/apply migration | passphrase identity, clipboard/editor, Dashboard 평문 접근은 미제공 |
+| Project Environment 연결 | 제공 | project의 optional `environment_id`, 실행 시 override/disable, registry reference 검증 | Dashboard에서 연결을 변경하는 UI는 미제공 |
+| Workflow 환경 주입 | 제공 | detached worker가 실행 직전 environment를 재조회하고 opt-in Secret을 memory에서 해석·redact하여 subprocess에 주입 | 변형·인코딩·파일·network 유출을 막는 sandbox는 아님 |
+| Context health | 제공 | 선택 project의 Environment metadata, export key 이름, Secret 변수 이름과 available/missing 상태만 표시 | raw reference/service/field/path/평문 및 mutation action은 의도적으로 미제공 |
 | 공개 배포 | 미제공 | local source build와 setup 설치 | tagged release, versioned compatibility 문서, public distribution 미정 |
 
-### 2026-08-06 현재 운영 확인
+### 2026-08-07 현재 운영 확인
 
-- `./doctor.sh`는 4개 repo의 clean checkout, lock SHA 일치, cmux→binbox 명령 계약, 설치된 `wb`를 확인하고 성공했다.
-- `wb doctor --json`은 core unavailable 0건을 보고했다.
-- compatibility 최신 source는 project가 `nvim/projects/workbench`, Agent가 `workbench/agents/registry`였다.
-- 현재 장비에서는 `backend:cmux`만 optional unavailable이고 shell/tmux는 available이다.
-- 등록 project는 4개이며, managed worktree는 현재 0개다. 이는 기능 부재가 아니라 현재 local state다.
-- 2026-08-05 기록상 전체 child/contract 검증은 통과했다. 다음 fallback 제거 또는 release 전에는 현재 HEAD에서 다시 완주해야 한다.
+- Workbench 구현 이력은 `2ad89cd`(Phase 0~4), `dfaa40b`(Environment migration),
+  `8fd7c96`(local Secret), `f96e9a9`(project Secret reference), `cc5b340`(workflow 환경 주입),
+  `39100f2`(Dashboard Context health)다.
+- 각 구현 시점에 full tests, race, vet, Windows cross-compile, root contract를 통과했다.
+- 실제 detached workflow와 browser Contexts 동작도 별도 수용 확인을 통과했다.
+- 현재 HEAD `39100f2` 통합 E2E는 wenv check 무변경/apply+backup, Secret init/set/health/pipe resolve,
+  project 기본 Environment, detached tmux Environment+Secret 주입, 성공 상태, stdout/stderr exact-value redaction,
+  `--no-environment`, Secret 제거 후 pre-start 거부, Dashboard metadata-only Contexts와 cleanup/git clean을 확인했다.
+- 변형·인코딩된 값, file/network 채널의 유출 방지는 sandbox 범위가 아니며 검증 완료로 간주하지 않는다.
+- 물리 Linux/Windows/WSL 및 실제 cmux 장비 smoke는 아직 수행하지 않았다.
 
 ## 현재 문제와 제품 기회
 
@@ -185,6 +194,8 @@ core의 안전장치는 구현됐지만 LazyVim과 cmux는 list/open 또는 proj
 | Workbench optionality | 채택 | 관찰 계층 장애가 terminal 작업을 막지 않음 |
 | cmux action sync를 cmux-config가 소유 | 제안 | client 설정 ownership을 지키면서 registry drift를 탐지·복구 |
 | arbitrary workflow 실행 | 기각 | local UI의 보안·예측 가능성 경계를 훼손 |
+| 외부 Vault 전환 | 기각 | 개인 도구의 관리 지점을 늘리지 않고 Workbench-owned local encrypted store 유지 |
+| Dashboard Contexts read-only | 채택 | 상태 가독성은 높이되 평문·mutation 경계는 browser 밖에 유지 |
 
 저장소 합병은 다음 조건이 반복적으로 확인될 때만 재검토한다.
 
@@ -207,11 +218,12 @@ core의 안전장치는 구현됐지만 LazyVim과 cmux는 list/open 또는 proj
 | 2 | 완료 | managed/observed Task 통합 | provenance·confidence 보존, 직접 실행 AI CLI 관찰, exit 미상 상태의 정직한 표현 |
 | 3 | 완료 | Overview와 Tool health | 작업 위치·이상 상태 요약, `bb doctor --json` optional provider 집계 |
 | 4 | 완료 | allowlisted typed workflow | 임의 shell 금지, tests/scan/plan의 detached tmux 실행과 metadata-only 결과 기록 |
-| 5 | 대기 | Environment와 local Secret | `wenv`·`sec` 호환 migration, 평문은 CLI/TTY에만 노출 |
-| 6 | 대기 | fallback 정리와 배포 판정 | 관찰 증거가 있는 shim만 제거하고 physical cross-platform smoke를 별도 기록 |
+| 5 | 완료 | Environment와 local Secret | `wenv`·`sec` migration, project 연결, workflow 주입, read-only Context health와 평문 비노출 계약 |
+| 6 | 다음 | fallback 정리와 배포 판정 | 관찰 증거가 있는 shim만 제거하고 physical cross-platform smoke를 별도 기록 |
 
 Observed Task의 exit code를 알 수 없으면 성공·실패를 확정하지 않는다. Phase 4 이후에도 Dashboard에
-arbitrary command runner를 만들지 않으며 Environment/Secret 통합은 Phase 5 완료 전까지 제공으로 쓰지 않는다.
+arbitrary command runner를 만들지 않는다. Phase 5 완료는 CLI store·migration·선택적 subprocess 주입과
+read-only Context health까지이며, kube mutation·expiry·Dashboard mutation은 포함하지 않는다.
 
 ## 실패 모드와 호환성 원칙
 
@@ -257,6 +269,8 @@ arbitrary command runner를 만들지 않으며 Environment/Secret 통합은 Pha
 | cmux config drift | `generate-workbench.py --check`, config check | cmux-config 유지보수자 | project registry 변경·upgrade 후 | generated action 최신, reference 검사 성공 |
 | Worktree 안전 | CLI/client contract test | Workbench·client 구현자 | mutation UI 변경 후 | dirty/locked/unmerged와 외부 worktree 거부 유지 |
 | Windows/WSL 지원 | physical smoke 기록 | 환경 유지보수자 | Tier 1 지원 완료 판정 전 | bootstrap/doctor/editor/tmux/Agent/worktree 대표 흐름 성공 |
+| Environment/Secret 비노출 | Workbench tests + browser Context 확인 | Workbench 유지보수자 | 관련 contract 변경 후 | argv/history/Dashboard JSON/browser에 평문 0건 |
+| 현재 HEAD 통합 E2E | aggregate suite | 환경 유지보수자 | Phase 6 착수·release 판정 전 | `39100f2` Environment/Secret/workflow/Contexts suite 성공 |
 
 관찰 기간은 고정 일수가 아니라 위 대표 흐름의 완주 여부로 정한다. 월간·배치성 기능이 아닌 개인
 개발환경이므로, 각 지원 client/backend에서 실제 project·Agent·worktree 흐름을 최소 한 번 끝까지 수행한
@@ -272,8 +286,9 @@ arbitrary command runner를 만들지 않으며 Environment/Secret 통합은 Pha
 | 4 | managed/observed Task 통합 | 완료 | Workbench 구현자 | Phase 2 provenance·confidence 계약 통과 |
 | 5 | Dashboard Overview와 Tool health | 완료 | Workbench/binbox 구현자 | Phase 3 optional provider 계약 통과 |
 | 6 | allowlisted typed workflow | 완료 | Workbench 구현자 | detached tmux worker·보안·metadata-only history 계약 통과 |
-| 7 | Environment와 local Secret 통합 | 다음 | Workbench/binbox 구현자 | Phase 5 migration·평문 비노출·CLI/TTY 계약 통과 |
-| 8 | fallback 정리와 배포 판정 | 대기 | 환경 유지보수자 | Phase 6 관찰 근거와 physical Windows/WSL smoke 확보 |
+| 7 | Environment와 local Secret 통합 | 완료 | Workbench/binbox 구현자 | migration·project 연결·workflow 주입·read-only Context·평문 비노출 계약 통과 |
+| 8 | 현재 HEAD 통합 E2E 결과 확정 | 완료 | 환경 유지보수자 | `39100f2` aggregate 성공과 cleanup/git clean 기록 |
+| 9 | fallback 정리와 배포 판정 | 다음 | 환경 유지보수자 | Phase 6 관찰 근거와 physical Linux/Windows/WSL/cmux smoke 확보 |
 
 ## 가정과 미확인 사항
 
@@ -281,7 +296,8 @@ arbitrary command runner를 만들지 않으며 Environment/Secret 통합은 Pha
 - 사용 빈도와 release cadence의 정량 데이터는 아직 없다. 저장소 합병과 daemon 도입 근거로 사용하지 않는다.
 - 현재 장비의 compatibility primary 관찰은 긍정적이지만 다른 장비의 사용을 증명하지 않는다.
 - cmux config 구현과 tests는 존재하지만 현재 검증 장비에는 cmux executable이 없어 live backend 동작은 미확인이다.
-- 물리 Windows/WSL smoke는 미확인이다. cross-build나 fixture 결과로 대체하지 않는다.
+- 물리 Linux/Windows/WSL smoke는 미확인이다. cross-build나 fixture 결과로 대체하지 않는다.
+- 물리 cmux smoke도 미확인이다. browser fixture나 config test로 대체하지 않는다.
 
 ## 근거 문서
 

@@ -5,6 +5,10 @@
 이 문서는 이전 대화를 모르는 독자가 현재 환경, 네 저장소의 책임, 실제 결합 지점, 확인된 위험과
 분석 한계를 복원할 수 있게 한다. 여기의 **사실**과 이후 문서의 **권고**를 구분한다.
 
+> **현재 상태 우선순위:** 아래 “분석 대상과 기준 commit” 및 초기 책임 설명은 2026-08-04의 역사적
+> snapshot이다. 현재 기능·Phase·다음 행동은 [09-product-plan.md](09-product-plan.md)를 기준으로 한다.
+> 2026-08-07 현재 Phase 0~5가 구현됐고 Phase 6이 다음이다.
+
 ## 사용자 환경과 목표
 
 현재 기본 작업 환경:
@@ -61,8 +65,9 @@ Dashboard, shell/tmux/Windows Terminal backend가 동작해야 한다. cmux unav
 **사실:** `bootstrap.sh`는 repo마다 clone/pull → runtime link → child `setup_cmd`를 실행한다.
 `upgrade.sh`는 각 `sync_cmd`를 같은 순서로 실행한다.
 
-**사실:** `doctor.sh`는 repo/link 상태와 cmux가 참조하는 `bb <tool>` 존재 여부를 확인하지만,
-LazyVim의 sessionizer 계약, cmux action reference, 호환 commit 조합까지 검증하지 않는다.
+**분석 당시 사실:** `doctor.sh`는 repo/link 상태와 cmux가 참조하는 `bb <tool>` 존재 여부까지만 확인했다.
+**현재 사실:** root contract와 aggregate doctor가 sessionizer·cmux action·호환 commit 등 cross-repo 계약을
+검증한다. 세부 현재 근거는 이 문서의 구현·검증 기준선과 `09-product-plan.md`를 따른다.
 
 ### `binbox`
 
@@ -160,7 +165,7 @@ git clone dev-env-setup ~/home/setup
 - `dev-env-setup`: `bootstrap.sh`, `upgrade.sh`, `doctor.sh` Bash syntax 통과
 - `lazyvim-config`: setup/doctor 관련 Bash syntax 통과
 
-## 2026-08-05 구현·검증 기준선
+## 2026-08-07 구현·검증 기준선
 
 - Phase 1: binbox structured read API와 LazyVim legacy fallback 구현 완료.
 - Phase 2: Go 1.25.12 Workbench project/backend/worktree/Agent/doctor core 구현 완료.
@@ -189,6 +194,16 @@ git clone dev-env-setup ~/home/setup
   `f5e51957c1bd4775f6113f6326abed2b667bce7a`, workbench
   `6bca9f9efd5f1949f3653e55338370f07cee40ae`; 전체 child SHA는 `locks/repos.lock`이 기준이다.
 - 물리 Windows/WSL 장비 smoke는 미실행이며 cross-build/profile fixture로 대체했다.
+- Phase 0~4 console 기준 구현은 Workbench `2ad89cd`에, Phase 5 증분은 `dfaa40b`(Environment),
+  `8fd7c96`(local Secret), `f96e9a9`(project Secret reference), `cc5b340`(workflow 환경 주입),
+  `39100f2`(Dashboard read-only Context health)에 기록돼 있다.
+- Phase 5는 `wb env`, `wb secrets`, project `environment_id`, opt-in workflow Secret 주입과 read-only
+  Dashboard Contexts를 제공한다. kube mutation, expiry, Dashboard mutation은 의도적으로 연기했다.
+- 각 구현 시점의 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 현재 HEAD `39100f2`
+  통합 E2E도 Environment/Secret migration·lifecycle·detached 주입/redaction·pre-start 거부·metadata-only
+  Contexts와 cleanup/git clean을 확인했다.
+- exact known value redaction은 검증했지만 변형·file/network 채널은 sandbox 범위가 아니다.
+- 물리 Linux/Windows/WSL/cmux smoke는 계속 미확인이다.
 
 ## 미확인 범위
 

@@ -1,7 +1,7 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 0~3 구현·검증 완료, Phase 4 진행 중**
-- 최종 갱신일: 2026-08-05
+- 상태: **Phase 0~5 구현 완료, Phase 6 다음**
+- 최종 갱신일: 2026-08-07
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
 
@@ -49,11 +49,13 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 |---|---|---|
 | 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
 | 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | Phase 1~2 구현·검증 완료 | Phase 4에서 중복 책임만 정리 |
+| CLI/API와 데이터 경계 | Phase 1~5 구현 완료 | Phase 6에서 관찰 근거가 있는 호환 경로만 정리 |
 | Desktop/Web UI 방향 | Phase 3 localhost Dashboard 구현·검증 완료 | loopback/auth/origin/body-limit 유지 |
 | LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
 | Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
-| Phase 4 | **진행 중, 관찰 계약 구현 완료** | 대표 사용 주기 후 fallback 제거 여부 평가 |
+| Phase 4 | 완료 | typed workflow와 metadata-only history 계약 유지 |
+| Phase 5 | 완료 | Environment·local Secret·project 연결·workflow 주입·read-only Contexts 계약 유지 |
+| Phase 6 | **다음** | 대표 사용 관찰과 물리 장비 smoke 후 fallback·배포 판정 |
 
 ## 읽는 순서
 
@@ -64,7 +66,7 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 3. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
 4. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
 5. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
-6. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 구현 순서와 완료/롤백 조건
+6. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 초기 구현 로드맵과 완료/롤백 이력(legacy Phase 번호)
 7. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
 8. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
 9. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
@@ -82,10 +84,11 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 4 — 대표 사용 주기 관찰**이다. cmux의 중복 project root registry 제거와
-Workbench doctor의 fallback 관찰 계약 구현은 완료했다. project picker와 Agent list를 실제 workflow에서
-사용한 뒤 `compatibility:nvim-projects`, `compatibility:agents`의 최신 source를 평가한다. LazyVim
-sessionizer와 legacy Agent scraping은 관찰 결과만으로 자동 삭제하지 않는다.
+현재 다음 작업은 **Phase 6 — 호환 경로 정리와 배포 판정**이다. 현재 HEAD `39100f2` 통합 E2E는
+Environment/Secret/workflow/Contexts 계약과 cleanup/git clean까지 통과했다. 다음으로 project picker와
+Agent list의 대표 사용 주기, physical Linux/Windows/WSL/cmux smoke를
+근거로 `compatibility:nvim-projects`, `compatibility:agents`, `bb wenv`, `bb sec` 경로를 warning → shim →
+제거 순서로 평가한다. 관찰 결과만으로 자동 삭제하지 않는다.
 
 착수 전:
 
@@ -111,10 +114,10 @@ git -C nvim status --short
 ./doctor.sh --platform windows-wsl
 ```
 
-2026-08-05 readiness gate에서 root 13개 contract와 child aggregate, Workbench full Go matrix,
-설치 binary 10개 isolated E2E, actual bootstrap/doctor, independent code `APPROVE`와 architecture `CLEAR`를
-확인했다. 물리 Windows/WSL 장비 smoke는 cross-build/profile fixture/Linux runtime smoke로 대체했으며
-후속 장비 검증을 residual risk로 남긴다.
+Phase 0~5 구현 시점에는 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 현재 HEAD
+`39100f2` 통합 E2E도 wenv migration, Secret lifecycle/resolve, project default Environment, detached tmux
+주입/redaction, pre-start 거부, metadata-only Contexts와 cleanup/git clean까지 통과했다. 변형·file/network
+유출 방지는 sandbox 범위가 아니며 물리 Linux/Windows/WSL/cmux smoke는 residual risk로 남긴다.
 
 ## 범위 제외
 
