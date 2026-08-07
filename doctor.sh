@@ -134,10 +134,18 @@ fi
 
 printf '\n%b== Workbench CLI ==%b\n' "$B" "$N"
 if wb_selector_selected workbench; then
+  wb_managed="$HOME/.local/bin/wb"
   wb_path="$(command -v wb 2>/dev/null || true)"
-  [ -n "$wb_path" ] || [ ! -x "$HOME/.local/bin/wb" ] || wb_path="$HOME/.local/bin/wb"
+  [ -n "$wb_path" ] || [ ! -x "$wb_managed" ] || wb_path="$wb_managed"
   if [ -x "$wb_path" ]; then
     printf '  %b✓%b %s\n' "$G" "$N" "$wb_path"
+    # 'make install' owns $wb_managed. If PATH resolves wb to a different file,
+    # the managed build is shadowed and later installs silently go unused.
+    if [ ! -x "$wb_managed" ]; then
+      mark_issue workbench "wb resolves to $wb_path but the managed install $wb_managed is missing; run: make -C workbench install"
+    elif ! [ "$wb_path" -ef "$wb_managed" ]; then
+      mark_issue workbench "wb resolves to $wb_path and shadows the managed install $wb_managed; remove the shadowing copy or fix PATH order"
+    fi
   else
     mark_issue workbench 'wb is not installed; install Go 1.25.12, then run: make -C workbench install'
   fi
