@@ -2,8 +2,7 @@
 
 > **역사 문서:** 이 문서는 2026-08-05까지 사용한 초기 구현 순서와 수용·rollback 근거를 보존한다.
 > 여기의 Phase 5 “Desktop UI 필요성 평가”는 현재 제품 Phase 5(Environment/Secrets)와 번호가 다르다.
-> 현재 상태와 다음 Phase는 [09-product-plan.md](09-product-plan.md)와
-> [마스터 플랜](../.omx/plans/personal-development-operations-console.md)을 기준으로 한다.
+> 현재 상태와 다음 Phase는 [09-product-plan.md](../09-product-plan.md)를 기준으로 한다.
 
 ## 실행 원칙
 

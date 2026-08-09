@@ -68,11 +68,15 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 3. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
 4. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
 5. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
-6. [04-implementation-roadmap.md](04-implementation-roadmap.md) — 초기 구현 로드맵과 완료/롤백 이력(legacy Phase 번호)
-7. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo에서 바꿀 파일과 책임
-8. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
-9. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
-10. [08-phase4-cleanup-plan.md](08-phase4-cleanup-plan.md) — cleanup 범위, fallback 분류, pass별 gate
+6. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo의 책임과 변경 surface
+7. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
+8. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
+
+### 완료 기록
+
+- [초기 구현 로드맵](archive/04-implementation-roadmap.md) — 완료·rollback 이력과 legacy Phase 번호
+- [Phase 4 cleanup plan](archive/08-phase4-cleanup-plan.md) — 완료된 cleanup pass와 fallback 분류
+- [Unified Workbench/tmux 로드맵](archive/09-unified-workbench-tmux-roadmap.md) — 초기 통합 방향과 구현 이력
 
 ## Source of truth 규칙
 

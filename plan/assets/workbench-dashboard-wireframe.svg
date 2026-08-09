@@ -108,7 +108,7 @@
   <rect x="874" y="575" width="656" height="342" rx="16" class="card"/>
   <text x="902" y="615" class="h2">Changes</text><text x="1448" y="615" class="small">View diff ↗</text>
   <path d="M902 636H1502" class="rule"/>
-  <text x="902" y="674" class="mono">plan/04-implementation-roadmap.md</text>
+  <text x="902" y="674" class="mono">plan/archive/04-implementation-roadmap.md</text>
   <rect x="902" y="693" width="600" height="44" rx="8" fill="#0f2e27"/>
   <text x="920" y="720" class="mono" fill="#86efac">+ Windows/WSL platform selector and doctor severity</text>
   <rect x="902" y="747" width="600" height="44" rx="8" fill="#2b1c24"/>

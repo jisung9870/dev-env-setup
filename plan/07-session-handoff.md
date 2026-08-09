@@ -86,7 +86,7 @@ plan/README.md
 
 ## 현재 다음 작업 찾기
 
-`plan/README.md`와 `09-product-plan.md`의 진행 상태를 확인한다. `04-implementation-roadmap.md`의 Phase 번호는
+`plan/README.md`와 `09-product-plan.md`의 진행 상태를 확인한다. `archive/04-implementation-roadmap.md`의 Phase 번호는
 초기 이력이다. 현재 기준선은 Phase 0~5 구현 완료와 그 이후 추가 구현 반영, Phase 6 다음이다. 기준 구현
 workbench `371cdd0`에서 vet, 단위·통합 test, Windows cross-compile, cross-repo contract 18 group, aggregate
 doctor, 통합 E2E 11 group이 통과했다.
@@ -104,7 +104,7 @@ Workbench 사용 구조와 명령·설정·운영 계약은 `wb dashboard` 실�
 
 ```bash
 git log --oneline --decorate -10
-rg -n "현재 진행 상태|Phase [0-9]|미착수|진행 중|완료" plan
+rg -n --glob '!archive/**' "현재 진행 상태|Phase [0-9]|미착수|진행 중|완료" plan
 ```
 
 통합 E2E는 기본적으로 설치본 `~/.local/bin/wb`를 검증한다. 현재 checkout을 검증하려면 먼저 빌드한 뒤 그
@@ -140,8 +140,8 @@ dev-env-setup 저장소의 plan/README.md부터 plan/07-session-handoff.md까지
 현재 commit, plan 문서에 기록된 baseline 이후 contract 변경을 먼저 확인하라.
 Windows 장비라면 native Windows인지 WSL인지 먼저 기록하고, cmux를 required dependency로 가정하지 마라.
 
-plan/04-implementation-roadmap.md에서 가장 앞의 미완료 Phase를 찾고,
-그 Phase의 사전 조건·수용 기준·rollback을 유지한 최소 변경 계획을 제시하라.
+plan/09-product-plan.md의 **즉시 실행할 다음 행동**에서 가장 앞의 미완료 항목을 찾고,
+관련 현재 계약 문서의 사전 조건·수용 기준·rollback을 유지한 최소 변경 계획을 제시하라.
 사용자의 명시적 구현 요청이 없다면 소스를 변경하지 말고 현황과 다음 작업만 보고하라.
 구현 요청이 있으면 targeted test부터 추가하고 변경·검증을 완료하라.
 ```

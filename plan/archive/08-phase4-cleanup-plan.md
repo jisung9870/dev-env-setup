@@ -1,5 +1,7 @@
 # Phase 4 cleanup plan
 
+> **아카이브:** Phase 4 cleanup pass의 완료 기록이다. 현재 상태와 다음 작업은 [제품 계획](../09-product-plan.md)을 기준으로 한다.
+
 ## 목표와 범위
 
 Phase 4의 첫 pass는 project source of truth 중복을 제거했다. 두 번째 pass는 Agent와 LazyVim
