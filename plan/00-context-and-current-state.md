@@ -197,11 +197,13 @@ git clone dev-env-setup ~/home/setup
 - Phase 0~4 console 기준 구현은 Workbench `2ad89cd`에, Phase 5 증분은 `dfaa40b`(Environment),
   `8fd7c96`(local Secret), `f96e9a9`(project Secret reference), `cc5b340`(workflow 환경 주입),
   `39100f2`(Dashboard read-only Context health)에 기록돼 있다.
-- Phase 5는 `wb env`, `wb secrets`, project `environment_id`, opt-in workflow Secret 주입과 read-only
-  Dashboard Contexts를 제공한다. kube mutation, expiry, Dashboard mutation은 의도적으로 연기했다.
-- 각 구현 시점의 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 현재 HEAD `39100f2`
+- Phase 5 수용 시점의 범위는 `wb env`, `wb secrets`, project `environment_id`, opt-in workflow Secret
+  주입과 read-only Dashboard Contexts였고 kube mutation, expiry, Dashboard mutation은 연기했다. 이후
+  expiry와 Dashboard typed 편집은 [09-product-plan.md](09-product-plan.md)의 `5+` 범위로 구현됐다.
+- 각 구현 시점의 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 당시 HEAD `39100f2`
   통합 E2E도 Environment/Secret migration·lifecycle·detached 주입/redaction·pre-start 거부·metadata-only
-  Contexts와 cleanup/git clean을 확인했다.
+  Contexts와 cleanup/git clean을 확인했다. 현재 기준 구현과 그 검증 결과는
+  [09-product-plan.md](09-product-plan.md)를 기준으로 한다.
 - exact known value redaction은 검증했지만 변형·file/network 채널은 sandbox 범위가 아니다.
 - 물리 Linux/Windows/WSL/cmux smoke는 계속 미확인이다.
 

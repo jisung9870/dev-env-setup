@@ -87,9 +87,13 @@ plan/README.md
 ## 현재 다음 작업 찾기
 
 `plan/README.md`와 `09-product-plan.md`의 진행 상태를 확인한다. `04-implementation-roadmap.md`의 Phase 번호는
-초기 이력이다. 현재 기준선은 Phase 0~5 구현 완료, Phase 6 다음이다. 현재 HEAD `39100f2` 통합 E2E는
-Environment/Secret/workflow/Contexts와 cleanup까지 통과했다. 다음으로 대표 project/Agent workflow와
-physical Linux/Windows/WSL/cmux smoke를 수집한다. 그 근거로 compatibility path를 warning → shim → 제거
+초기 이력이다. 현재 기준선은 Phase 0~5 구현 완료와 그 이후 추가 구현 반영, Phase 6 다음이다. 기준 구현
+workbench `371cdd0`에서 vet, 단위·통합 test, Windows cross-compile, cross-repo contract 18 group, aggregate
+doctor, 통합 E2E 11 group이 통과했다.
+
+Phase 6보다 먼저 처리할 단일 작업은 session 생성 실패 시 provider의 stdout과 exit code가 전달되지 않는
+문제의 판정이다. 상세는 `09-product-plan.md`의 문제 6번에 있다. 그 뒤에 대표 project/Agent workflow와
+physical Linux/Windows/WSL/cmux smoke를 수집하고, 그 근거로 compatibility path를 warning → shim → 제거
 순서로 평가하며 관찰만으로 자동 삭제하지 않는다.
 
 Workbench 사용 구조와 명령·설정·운영 계약은 `wb dashboard` 실행 후 상단 **Guide** 또는 loopback
@@ -101,6 +105,15 @@ Workbench 사용 구조와 명령·설정·운영 계약은 `wb dashboard` 실�
 ```bash
 git log --oneline --decorate -10
 rg -n "현재 진행 상태|Phase [0-9]|미착수|진행 중|완료" plan
+```
+
+통합 E2E는 기본적으로 설치본 `~/.local/bin/wb`를 검증한다. 현재 checkout을 검증하려면 먼저 빌드한 뒤 그
+바이너리를 명시한다. `RUN_DIR`은 `.wb-e2e-owned` sentinel이 있는 전용 디렉터리여야 한다.
+
+```bash
+go build -o /tmp/wb-head ./cmd/wb          # workbench checkout에서 실행
+mkdir -p /tmp/wb-e2e/.wb-e2e-owned
+WB_BINARY=/tmp/wb-head ./tests/workbench-e2e.sh /tmp/wb-e2e
 ```
 
 ## 작업 착수 전 체크

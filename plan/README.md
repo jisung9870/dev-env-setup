@@ -1,7 +1,8 @@
 # Personal Workbench 계획 패키지
 
-- 상태: **Phase 0~5 구현 완료, Phase 6 다음**
-- 최종 갱신일: 2026-08-07
+- 상태: **Phase 0~5 구현 완료, Phase 5 이후 추가 구현 반영, Phase 6 다음**
+- 최종 갱신일: 2026-08-10
+- 기준 구현: workbench `371cdd0`
 - 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
 - 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
 
@@ -54,8 +55,9 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 | LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
 | Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
 | Phase 4 | 완료 | typed workflow와 metadata-only history 계약 유지 |
-| Phase 5 | 완료 | Environment·local Secret·project 연결·workflow 주입·read-only Contexts 계약 유지 |
-| Phase 6 | **다음** | 대표 사용 관찰과 물리 장비 smoke 후 fallback·배포 판정 |
+| Phase 5 | 완료 | Environment·local Secret·project 연결·workflow 주입·Contexts 계약 유지 |
+| Phase 5 이후 추가 구현 | 완료 | tmux session 소유권, 백그라운드 server와 scheduler, activity history, Dashboard의 Environment·Secret·Profile typed 편집 |
+| Phase 6 | **다음** | provider 진단 정보 판정 후 대표 사용 관찰과 물리 장비 smoke로 fallback·배포 판정 |
 
 ## 읽는 순서
 
@@ -84,11 +86,13 @@ workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend �
 
 ## 즉시 시작할 작업
 
-현재 다음 작업은 **Phase 6 — 호환 경로 정리와 배포 판정**이다. 현재 HEAD `39100f2` 통합 E2E는
-Environment/Secret/workflow/Contexts 계약과 cleanup/git clean까지 통과했다. 다음으로 project picker와
-Agent list의 대표 사용 주기, physical Linux/Windows/WSL/cmux smoke를
-근거로 `compatibility:nvim-projects`, `compatibility:agents`, `bb wenv`, `bb sec` 경로를 warning → shim →
-제거 순서로 평가한다. 관찰 결과만으로 자동 삭제하지 않는다.
+다음 작업은 두 단계다. 먼저 **session 생성 실패 시 provider 진단 정보 판정**을 끝내고
+([09-product-plan.md](09-product-plan.md)의 문제 6번), 그다음 **Phase 6 — 호환 경로 정리와 배포 판정**으로
+넘어간다. 기준 구현 `371cdd0`에서 vet, 단위·통합 test, Windows cross-compile, cross-repo contract 18 group,
+aggregate doctor, 통합 E2E 11 group이 모두 통과했다. Phase 6에서는 project picker와 Agent list의 대표 사용
+주기, physical Linux/Windows/WSL/cmux smoke를 근거로 `compatibility:nvim-projects`,
+`compatibility:agents`, `bb wenv`, `bb sec` 경로를 warning → shim → 제거 순서로 평가한다. 관찰 결과만으로
+자동 삭제하지 않는다.
 
 착수 전:
 
@@ -114,9 +118,10 @@ git -C nvim status --short
 ./doctor.sh --platform windows-wsl
 ```
 
-Phase 0~5 구현 시점에는 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 현재 HEAD
-`39100f2` 통합 E2E도 wenv migration, Secret lifecycle/resolve, project default Environment, detached tmux
-주입/redaction, pre-start 거부, metadata-only Contexts와 cleanup/git clean까지 통과했다. 변형·file/network
+Phase 0~5 구현 시점에는 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 기준 구현
+`371cdd0`에서는 `make vet`, `make test`, Windows cross-compile, `./tests/contract-test.sh` 18 group,
+`./doctor.sh`, `tests/workbench-e2e.sh` 11 group이 통과했고 race detector는 이번 회차에 실행하지 않았다.
+통합 E2E는 가짜 tmux fixture 위에서 동작하므로 실제 tmux server 동작을 증명하지 않는다. 변형·file/network
 유출 방지는 sandbox 범위가 아니며 물리 Linux/Windows/WSL/cmux smoke는 residual risk로 남긴다.
 
 ## 범위 제외
