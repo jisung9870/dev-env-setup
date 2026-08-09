@@ -3,6 +3,7 @@
 > 상태: **Phase 0 결정 명세 — 구현 전**
 > 기준일: 2026-08-10
 > 제품 방향: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
+> 목표 구조·stage: [ARCHITECTURE.md](ARCHITECTURE.md) · [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md)
 > 현재 구현 계약: [`workbench/docs/dashboard.md`](../workbench/docs/dashboard.md)
 
 ## 1. 목적과 범위
@@ -19,7 +20,8 @@ Dashboard는 폐기하거나 새 애플리케이션으로 대체하지 않는다
 ### 고정 불변식
 
 1. Dashboard와 `wb`는 **Workbench Core의 client**이며 두 번째 state owner가 아니다.
-2. 사용자 작성 task·note·decision은 Markdown이 canonical이고 SQLite는 삭제 후 재구축 가능한 projection이다.
+2. 사용자 작성 task·note·decision과 중요한 receipt는 Markdown/portable journal이 canonical이고, SQLite는
+   provider에서 다시 받는 O2 cache와 C1–C3/O1/O2에서 재생성하는 O3 derived projection만 가진다.
 3. 외부 원문은 provider가 소유하며 Core는 stable reference, 허용된 cached metadata, provenance와 cursor만 가진다.
 4. Orca가 기본 terminal workspace와 Agent runtime이다. Workbench는 Orca lifecycle을 복제하지 않는다.
 5. Windows Terminal과 iTerm2는 각 OS의 native fallback, tmux는 Orca worktree별 human-work partition,
@@ -36,7 +38,7 @@ Dashboard는 폐기하거나 새 애플리케이션으로 대체하지 않는다
 
 | Surface | 기본 역할 | 실행·소유권 계약 |
 |---|---|---|
-| Dashboard | Today/review 권장 UI, triage, health, 제한된 typed action | Core API만 사용; browser-local theme 외 상태 소유 금지 |
+| Dashboard | Today/review 권장 UI, triage, health, 제한된 typed action | client-neutral application service만 사용; browser-local theme 외 상태 소유 금지 |
 | `wb` CLI | capture/action/resume의 terminal-first 경로, 장애 시 복구 | Dashboard와 같은 Core service·schema·policy 사용 |
 | Orca | 기본 workspace, worktree·terminal·Agent·Run/Task/Dispatch lifecycle | provider runtime의 유일한 owner; Core에는 opaque ref와 관찰 시각만 투영 |
 | tmux | Orca worktree마다 사람의 shell/editor 작업을 분리·복귀 | human work partition; Agent를 tmux registry로 재소유하지 않음 |
@@ -134,7 +136,7 @@ Run과 provider Agent를 억지로 하나의 lifecycle로 합치지 않고, 관�
 adapter별로 provider, capability(read/write), account/context, auth reference availability, granted scope, cursor,
 last attempt/success, stale reason과 next retry를 표시한다. Secret 값과 raw token은 표시하지 않는다.
 
-- Phase 1은 file/Git health와 provenance만 지원한다.
+- S2/S3은 file/Git health와 provenance만 지원하고 S5 전에는 external provider를 노출하지 않는다.
 - GitHub read-only를 첫 외부 connector로, 계약 재사용 gate를 통과한 뒤 Slack read-only를 추가한다.
 - disconnect는 remote data를 지우는 action과 분리한다. cached metadata preserve/delete와 export를 명시적으로 고른다.
 - sync 실패는 전역 Dashboard 실패가 아니라 해당 adapter의 retryable/blocked/partial 상태다.
@@ -146,7 +148,9 @@ backup history와 restore drill 결과를 한곳에서 보여준다.
 
 - Markdown canonical store가 readable이면 SQLite projection 장애 중에도 read-only 목록과 rebuild action을 제공한다.
 - rebuild는 canonical files를 바꾸지 않고 새 DB를 만든 뒤 schema/count 검증 후 교체한다.
-- restore는 source, captured time, encryption/unlock availability, included/excluded 범위와 destination을 preview한다.
+- restore는 source, captured time, encryption/unlock availability, included/excluded 범위와 destination을 같은
+  Core plan으로 preview한다. 안전한 completion을 보장할 수 있는 platform에서는 foreground approval 뒤 같은
+  action을 실행하고, 그렇지 않으면 같은 `action_id`의 exact CLI handoff를 제공한다.
 - GitHub history와 OneDrive encrypted snapshot의 역할, 마지막 검증과 충돌 경고를 별도 카드로 표시한다.
 - 설치/repair shell command는 정보로만 제공하며 Dashboard가 임의 실행하지 않는다.
 
@@ -218,7 +222,9 @@ SQLite 또는 provider registry를 해석하지 않는다. Core query/action은 
 code를 가지며 JSON은 unknown field와 trailing value를 거부한다.
 
 현재 `GET /api/v1/snapshot`과 `POST /api/v1/actions`는 호환 baseline이다. 이행 중에는 하나의 거대 snapshot을
-유지할 수 있지만 target은 area query가 공통 envelope를 쓰는 것이다.
+유지할 수 있지만 target은 area query가 공통 envelope를 쓰는 것이다. 아래 v2 이름과 field는 architecture를
+설명하는 **비규범 예시**이며 S2 schema와 S3 application-service contract가 acceptance를 통과하기 전에
+frontend와 backend가 서로 독립적으로 고정하지 않는다.
 
 ```json
 {
@@ -242,7 +248,9 @@ path를 제외한다.
 | Domain | canonical owner | Core projection | 금지 |
 |---|---|---|---|
 | task/note/decision | Markdown file | search/index/link row | SQLite row만 수정, browser draft를 별도 truth로 sync |
-| project config/policy | versioned Core config/Markdown | effective view | UI 전용 registry |
+| project config/policy | versioned TOML/JSON/Markdown(C3) | effective view | UI 전용 registry |
+| important receipt | append-oriented Markdown/portable journal(C2) | searchable receipt view | SQLite/activity history에만 approval·plan hash·checkpoint 저장 |
+| pending mutation/fencing | transactional portable journal(O1) + C2 receipt link | pending/reconcile view | rebuild 가능한 cache로 오분류 |
 | Git/worktree | Git porcelain/repository | cached status + observed time | projection만 보고 delete |
 | Orca runtime | Orca | opaque ref, capability, observed time, result pointer | Run/Dispatch lifecycle 복제·추측 |
 | human tmux partition | tmux + explicit Core link | pane/session evidence | title/process-name 기반 ownership 부여 |
@@ -251,28 +259,35 @@ path를 제외한다.
 | backup snapshot | encrypted OneDrive archive | catalog/restore evidence | plaintext Secret 포함, backup을 live state로 편집 |
 | theme | browser localStorage | 없음 | Core config나 cross-device state로 승격 |
 
-SQLite가 없어지거나 손상돼도 canonical Markdown과 provider references로 재구축할 수 있어야 한다. projection
-schema migration은 dry-run, backup, count/reference validation과 last-known-good 복구를 제공한다.
+SQLite가 없어지거나 손상돼도 C1–C3, O1 durable journal과 O2 provider facts로 O2 cache/O3 projection을
+재구축할 수 있어야 한다. C1은 human/LLM content, C2는 important receipt, C3는 portable declaration, O1은 authoritative
+local operational state, O2는 provider-authoritative projection, O3는 derived cache다. Secret은 어느 class의
+본문에도 넣지 않는다. projection schema migration은 dry-run, backup, count/reference/receipt validation과
+last-known-good 복구를 제공한다.
 
 ## 9. typed mutation 안전 계약
 
-모든 mutation request는 아래 공통 필드를 가진다.
+모든 mutation은 Core가 `ActionPlan`을 만들고 두 client가 같은 `ActionRun`으로 apply/reconcile하는 흐름을
+사용한다. 아래는 개념 예시이며 구체 field 이름은 S3 contract가 소유한다.
 
 ```json
 {
-  "action": "stable_action_id",
+  "action_type": "stable_action_type",
+  "action_id": "core-issued-opaque-id",
   "target": {"type": "task", "id": "stable-id"},
   "expected_revision": "opaque",
   "idempotency_key": "client-generated-opaque",
+  "plan_hash": "core-issued-plan-hash",
   "input": {},
   "preview_token": "required-for-apply-when-risk-is-write-or-destructive"
 }
 ```
 
-Core는 action별 input schema와 capability를 소유한다. `preview` 결과는 canonical target, source/destination
-context, requested/effective permission, side effects, risk(`read|write|destructive`), backup/checkpoint, expiry와
-승인 문구를 포함한다. apply는 preview와 같은 target revision/policy일 때만 허용하며 달라지면
-`STALE_PREVIEW`로 거부한다.
+Core는 action별 input schema와 capability를 소유한다. `action_type`은 동작 종류이고 `action_id`는 한 plan/run을
+끝까지 연결하는 stable identity다. `preview` 결과는 canonical target, source/destination context,
+requested/effective permission, side effects, risk(`read|write|destructive`), plan hash, backup/checkpoint,
+expiry와 승인 문구를 포함한다. apply는 preview와 같은 action ID, plan hash, target revision/policy일 때만
+허용하며 달라지면 `STALE_PREVIEW`로 거부한다.
 
 ### 최소 action family
 
@@ -283,7 +298,7 @@ context, requested/effective permission, side effects, risk(`read|write|destruct
 | Projects | `update_task`, `update_decision` | canonical Markdown revision 대상, atomic file write + projection refresh |
 | Runs & Agents | `jump_agent`, `start_agent`(E2 이후), `review_run` | Orca capability/effective permission; result pointer만 Core에 기록 |
 | Integrations | `sync_adapter`, `disconnect_adapter`, `clear_adapter_cache` | account/scope/cursor 구분; remote delete와 분리 |
-| System & Recovery | `rebuild_projection`, `create_backup`, `restore_backup` | canonical store 불변, backup/schema 검증, destination preview |
+| System & Recovery | `rebuild_projection`, `create_backup`, `restore_backup` | canonical store 불변, backup/schema 검증, destination preview; safe completion 또는 same-action CLI handoff |
 
 현재 v1 action(`open_project`, `attach/adopt/stop_session`, environment/profile/Secret mutation, Agent/task jump/stop,
 history clear, workflow run)은 즉시 제거하지 않는다. target action으로 mapping될 때까지 현재 owner revalidation,
@@ -299,82 +314,131 @@ action을 새 화면에 자동 노출하지 않으며 각 action의 제품 phase
   prompt와 command output 전문은 저장하지 않는다.
 - HTTP는 loopback, same-origin per-process token, restrictive CSP/no-CORS/no-store와 bounded request를 유지한다.
 
-## 10. 단계별 deliverable과 acceptance test
+## 10. S0–S9 stage별 Dashboard deliverable과 acceptance
 
-### Phase 0 — 결정·계약 등록
+구현 dependency와 stage close/stop은 [staged roadmap](IMPLEMENTATION-ROADMAP.md)이 소유한다. 이 절은 그
+stage마다 Dashboard가 전달하고 측정할 UX를 정하며, Dashboard를 CLI 뒤의 별도 polish phase로 미루지 않는다.
+roadmap의 `Runs`와 `Recovery`는 각각 user-facing **Runs & Agents**와 **System & Recovery**의 축약어다.
 
-Deliverable:
+기존 UX workstream 이름은 탐색용 alias로 유지한다: Phase 0=S0, Phase 1=S1 System & Recovery slice+S3 parity
+foundation, Phase 2=S2→S3·S4A→S4B·S7A/B→S7C, Phase 3=S5→S6, Phase 4=S8과 별도 S9다. alias는
+underlying dependency를 압축하지 않으며 각 card/action은 acceptance를 통과한 capability만 enable한다.
 
-- 이 명세와 제품 계획에 목표 IA, surface/runtime ownership, data/backup split을 등록한다.
-- 현재 v1 Dashboard route/action과 target contract의 compatibility map을 확정한다.
-- Markdown 최소 schema, Core query/action interface와 v2 envelope의 backend RFC를 후속 작업으로 만든다.
-
-Acceptance:
-
-1. 문서에서 Dashboard와 CLI가 같은 Core client이고 state owner가 아님을 모순 없이 설명한다.
-2. Orca default, native fallback, worktree별 human tmux, direct Orca Agent, optional cmux가 한 표에 명시된다.
-3. 현재 구현 기능과 future target을 혼동하지 않고 각 단계가 frontend/backend 작업으로 분리된다.
-
-### Phase 1 — Core parity와 compatibility shell
+### S0 — Phase 0 contract와 gap report
 
 Deliverable:
 
-- 기존 Overview/Projects/Activity/Settings/System data를 새 nav shell에 loss 없이 배치한다.
-- CLI와 Dashboard가 같은 query/action service와 stable errors를 사용한다.
-- loading/empty/stale/partial/unavailable 상태 component와 route alias를 만든다.
+- 현재 Overview/Projects/Activity/Settings/System route/action을 목표 여섯 영역에 mapping하고 current/planned,
+  owner, capability와 migration gap을 기록한다. 구현 변경은 하지 않는다.
+- target IA, Orca/native-terminal/tmux/cmux ownership, C1–C3/O1–O3/Secret과 compatibility policy를 잠근다.
 
 Acceptance:
 
-1. current v1 handler/security/action tests가 유지되고 `/activity` deep link가 유효하다.
-2. 같은 fixture에서 `wb --json`과 Dashboard query의 domain 결과/owner/capability가 일치한다.
-3. JS 없이 Guide/heading/navigation 의미 구조가 읽히며 keyboard-only로 모든 route와 visible action에 접근한다.
-4. 360px, 768px, 1280px에서 content loss, body horizontal overflow와 focus loss가 없다.
+1. 현재 v1 action이 모두 owner와 target area에 mapping되고 누락·중복 owner가 0개다.
+2. Orca default, native recovery, worktree별 human tmux, tmux 밖 Orca Agent와 optional cmux가 한 matrix에 있다.
+3. planner/backend/frontend가 동시에 수정할 file owner가 0개인 S1–S3 change map을 만들 수 있다.
 
-### Phase 2 — 30일 local closed loop
+### S1 — trust foundation와 System & Recovery shell
 
 Deliverable:
 
-- canonical Markdown + rebuildable SQLite로 Context, InboxItem, Project, Task, ExternalRef, WorkLocation, Run을 구현한다.
-- file/stdin capture → Inbox triage → Today → Orca/native resume → Run review를 연결한다.
-- System & Recovery에 projection rebuild와 검증된 backup/restore preview를 제공한다.
+- profile, capability/support tier, manifest freshness, last verified checkpoint와 exact recovery command를 표시한다.
+- Windows Terminal/iTerm2 bootstrap·doctor·restore와 Markdown/Git/tmux direct fallback을 안내한다.
+- install/repair는 자동 실행하지 않고 CLI의 backup/verify/restore dry-run receipt로 handoff한다.
 
 Acceptance:
 
-1. offline capture가 10초 이내 저장되고 Dashboard와 CLI 양쪽에 같은 stable ID/provenance로 나타난다.
-2. SQLite를 제거한 fixture에서 Markdown만으로 rebuild한 결과가 stable ID/reference/count를 보존한다.
-3. personal→work 또는 work→personal mismatch write가 UI와 CLI 모두 같은 code로 fail-closed한다.
-4. Orca unavailable fixture에서 Windows Terminal/iTerm2(지원 OS) 또는 shell fallback을 명시적으로 선택할 수 있고
-   중복 launch가 없다.
-5. partial action fixture가 surviving asset와 recovery instruction을 표시하며 자동 destructive retry를 하지 않는다.
-6. backup fixture에는 plaintext Secret이 없고 실제 restore drill이 schema validation을 통과한다.
+1. WSL fresh setup+doctor 2회, update 2회와 synthetic restore 1회의 evidence가 같은 manifest/checkpoint로 표시된다.
+2. macOS 미통과 fixture는 experimental이며 지원 완료로 보이지 않는다.
+3. Workbench/Orca unavailable 상태에서 native recovery command까지 keyboard로 도달하고 canonical state를 바꾸지 않는다.
 
-### Phase 3 — external read connector
+### S2 — canonical core read surface
 
 Deliverable:
 
-- GitHub read-only metadata adapter를 먼저 추가하고 provenance/cursor/health/reconcile/disconnect/export를 검증한다.
-- 같은 계약 재사용 gate를 통과한 후 Slack read-only intake를 추가한다.
+- read-only Inbox/Today/Project skeleton, projection revision/freshness/rebuild status와 canonical file link를 제공한다.
+- C1–C3/O1–O3 class와 receipt provenance를 detail에서 보여주고 parse/corrupt error에 file/field/recovery를 붙인다.
 
 Acceptance:
 
-1. duplicate/out-of-order/missed event fixture가 immutable source ID와 cursor reconcile로 원문 ref를 잃지 않는다.
+1. SQLite/sidecar 삭제 후 clean rebuild에서 canonical object·important receipt 유실이 0이고 stable relation이 100%다.
+2. export→clean import→rebuild에서 stable relation과 query equivalence가 100%다.
+3. Secret fixture가 Markdown, SQLite, search, log와 Dashboard snapshot/DOM에 0건 나타난다.
+4. empty, stale, partial, parse error와 unavailable fixture가 서로 다른 accessible status/name을 가진다.
+
+### S3 — CLI/Dashboard parity closed loop
+
+Deliverable:
+
+- Today, Inbox triage, Project resume와 Runs & Agents/recovery panel에서 같은 `ActionPlan/ActionRun`을 사용한다.
+- 같은 action ID/plan hash 승인, stale-plan rejection과 terminal-required action의 exact `wb` handoff를 제공한다.
+- 기존 `/activity` deep link와 v1 security/action contract를 compatibility 기간 동안 유지한다.
+
+Acceptance:
+
+1. 실제 Inbox 20개/closed loop 3개에서 provenance가 100%이고 capture median이 10초 이하다.
+2. resume median이 60초 이하 또는 baseline 대비 30% 개선된다.
+3. parity fixture에서 plan hash, state transition, outcome/error code와 receipt schema mismatch가 0이다.
+4. partial failure의 surviving asset와 next action 표시율이 100%다.
+5. 360px/768px/1280px, 200% zoom과 keyboard-only에서 content/focus loss와 body horizontal overflow가 0이다.
+
+### S4A/S4B — Orca evidence와 E1 workspace projection
+
+S4A deliverable은 Integrations/Workspace card의 E0 sample size, current default, fallback과 promotion readiness다.
+S4B는 capability/version/health, read-only worktree/Agent summary, `observed_at`, confidence, open/jump와 result
+pointer를 Projects 및 Runs & Agents에 추가한다. stop/remove는 없다.
+
+Acceptance:
+
+1. S4A는 2주 또는 20 session 표본을 prompt/path/output 없이 표시하고, Orca 사용 30% 이상 또는 search need
+   3회 이상일 때만 E1 ready가 된다.
+2. S4B의 20회 resume에서 wrong-worktree jump가 0, stale handle 재탐색이 95% 이상, Orca 부재 fallback이
+   100%다.
+3. CLI/Dashboard가 같은 canonical target/capability error를 표시하고 tmux observation을 Orca Agent로 승격한
+   record가 0개다.
+
+### S5/S6 — GitHub 다음 Slack read
+
+S5는 GitHub account/context/scope/health/staleness, Inbox provenance, sync/reconcile, disconnect preview와 cache
+keep/delete/export를 제공한다. S6는 S5 acceptance 뒤 같은 surface와 event contract로 Slack을 추가하며
+provider-specific detail만 disclosure한다.
+
+Acceptance:
+
+1. duplicate/out-of-order/missed event, cursor reset, 429/5xx, revoke와 wrong-context fixture에서 원문 유실,
+   자동 덮어쓰기, plaintext credential과 external write가 각각 0건이다.
 2. stale/auth/rate-limit은 해당 integration만 degrade하고 local Today/Inbox/Projects는 계속 동작한다.
-3. account/context와 granted scope가 모든 item/action preview에 보이고 Secret/token은 snapshot/journal/DOM에 없다.
-4. GitHub 계약을 예외 분기 없이 재사용하지 못하면 Slack 단계는 시작하지 않는다.
+3. GitHub는 30일 실제 read-use 표본에서 manual navigation 또는 triage time 변화가 측정된다.
+4. Slack은 GitHub core contract/fixture를 재사용하고 명시된 최소 범위 밖 message body 보존이 0건이며,
+   generic SDK나 broad message archive가 필요하면 시작하지 않는다.
 
-### Phase 4 — controlled execution과 제한 write
+### S7A/S7B/S7C — history, encrypted snapshot와 clean restore
 
 Deliverable:
 
-- Orca E0/E1 gate 뒤 safe-profile Agent launch와 result pointer 회수를 제공한다.
-- 실제 반복 증거가 있는 typed integration write 하나만 preview/apply/reconcile/rollback으로 승격한다.
+- System & Recovery에 GitHub history와 OneDrive snapshot의 include/exclude, physical path, last verification,
+  expiry, restore drill과 recovery location을 분리해 표시한다.
+- Dashboard는 plaintext key를 받지 않는다. 같은 Core restore plan을 preview하고 안전한 completion을 보장할 수
+  있으면 foreground approval 뒤 실행하며, 보장할 수 없으면 같은 `action_id`의 exact CLI handoff를 제공한다.
 
 Acceptance:
 
-1. 10개 non-destructive Agent task에서 target worktree/effective permission 오류와 duplicate launch가 0건이다.
-2. preview 이후 target revision/policy 변경은 apply를 `STALE_PREVIEW`로 거부한다.
-3. timeout 이후 provider state reconcile 전 write를 재시도하지 않는다.
-4. Orca lifecycle을 Core DB가 소유하지 않고 Orca 부재 시 기존 local recovery가 100% 유지된다.
+1. clean environment에서 Git history restore + snapshot decrypt/checksum + projection rebuild + doctor가 성공한다.
+2. 같은 path 이중 sync, plaintext Secret/age key와 반복 conflict가 각각 0건이다.
+
+### S8/S9 — controlled launch와 limited write gate
+
+S8은 E1과 clean restore acceptance 뒤 Agent/worktree/setup policy/effective permission을 보이는 Orca-owned
+launch plan을 추가한다. S9는 실제 반복 사례 3개 이상과 stable revision, preview diff, idempotency/CAS,
+reconcile 및 undo/recovery를 모두 가진 R2 write 한 개만 foreground approval로 검토한다.
+
+Acceptance:
+
+1. S8의 비파괴 task 10개에서 policy 표시가 100%, result pointer가 90% 이상, duplicate launch와 credential
+   leak가 각각 0건이다.
+2. preview 뒤 target revision/policy 변경은 `STALE_PREVIEW`로 거부하고 write timeout 뒤 reconcile 전 retry는 0건이다.
+3. arbitrary target, rollback 부재, cross-context risk 또는 orphan worker가 1건이라도 있으면 E1/최근 accepted
+   checkpoint로 rollback한다.
 
 ## 11. 출시 전 공통 검증
 

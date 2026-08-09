@@ -5,6 +5,7 @@
 > 근거: [raw/](raw/) · [통합 판단](raw/synthesis-and-decisions.md)
 > 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
 > Dashboard 상세: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
+> 목표 구조·전달: [ARCHITECTURE.md](ARCHITECTURE.md) · [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md)
 
 ## 1. 한 문장 제품 정의
 
@@ -227,7 +228,13 @@ fallback이 명확한지로 판단한다.
 - journal은 입력 전문보다 action ID, 대상, 정책, 시각, outcome, artifact pointer를 남기며 사용자가 export·삭제할 수 있다.
 - backup은 쓰기 전 생성하고 schema validation과 실제 restore drill로 검증한다.
 - 사용자가 작성하는 task·note·decision은 **Markdown을 canonical format**으로 삼고, stable ID와 최소
-  frontmatter를 사용한다. SQLite는 검색·dedupe·cursor·run journal용 재구축 가능한 projection이다.
+  frontmatter를 사용한다. 중요한 approval, plan hash, mutation outcome, checkpoint/recovery instruction도
+  append-oriented Markdown 또는 portable journal에 먼저 확정한다. SQLite는 검색·dedupe·cursor·Today 같은
+  재구축 가능한 projection/cache다.
+- state는 [목표 아키텍처의 분류](ARCHITECTURE.md#6-canonical-data와-operational-state-분류)에 따라
+  C1–C3(canonical/portable), O1(authoritative local operation), O2(provider projection), O3(derived cache),
+  Secret으로 분류한다. pending mutation·idempotency/fencing·미조정 outcome 같은 O1을 SQLite에만 두거나
+  `rebuildable`이라고 부르지 않는다.
 - 여러 장비의 Markdown·설정 history는 private GitHub repository를 우선 사용한다. runtime state,
   attachment와 전체 snapshot은 Secret을 제외한 암호화 archive로 OneDrive에 보관한다. 같은 working tree를
   Git과 OneDrive가 동시에 동기화하지 않으며, OneDrive 사본도 정기 restore drill을 통과해야 한다.
@@ -263,6 +270,20 @@ local usage 기록은 opt-in이고 category, 상태, 시각과 소요 시간만 
 전문은 수집하지 않는다.
 
 ## 11. 로드맵
+
+아래 30/90일 구분은 제품 horizon이며 구현 완료 순서는
+[staged roadmap](IMPLEMENTATION-ROADMAP.md)의 S0–S9 dependency와 acceptance가 소유한다. `Runs`와
+`Recovery`라는 stage 문구는 각각 Dashboard의 **Runs & Agents**, **System & Recovery** 영역을 줄여 쓴
+표현이다.
+
+| 제품 horizon | delivery stage 연결 |
+|---|---|
+| 0~30일 | S1 trust foundation → S2 canonical core → S3 client parity; S4A Orca E0와 S7 history/snapshot branch는 dependency 충족 시 병행 |
+| 31~90일 | S4B Orca E1 promotion, S5 GitHub read → S6 Slack read, S7 clean restore; acceptance를 통과한 경우에만 S8 |
+| 장기 | S8 controlled launch의 잔여 검증과 S9 limited write decision gate 이후 evidence 기반 확장 |
+
+모든 stage에서 Dashboard는 후속 polish가 아니라 CLI와 함께 deliverable이다. 같은 fixture/action에서 plan hash,
+state transition, outcome/error code와 receipt schema mismatch가 0이어야 client parity를 충족한다.
 
 ### 0~30일 — 신뢰 기반과 한 개의 개인 운영 루프
 
@@ -341,9 +362,11 @@ local usage 기록은 opt-in이고 category, 상태, 시각과 소요 시간만 
 5. Orca E0 사용률과 read-only E1 승격 여부
 6. macOS가 WSL과 함께 Tier-1 gate를 통과하는지
 
-다음 실행 순서는 **WSL/macOS profile smoke → Markdown schema/export → 30일 대표 루프 → GitHub read →
-Slack read → Orca E0 판정 → 제한 write**다. 이 순서를 벗어나는 기능은 실제 장애나 반복 사용 증거가
-있을 때만 예외로 받아들인다.
+다음 실행 순서는 staged DAG를 따른다. **S1 WSL/macOS profile smoke → S2 Markdown/schema/export → S3 30일
+대표 loop → S5 GitHub read → S6 Slack read**가 critical path다. S4A Orca E0는 S1 뒤 S2/S3과 병행하고,
+S4B E1은 S3+E0 promotion 뒤에만 진행한다. S7 history/snapshot branch와 clean restore를 독립 gate로 닫은 뒤
+S8 controlled launch와 S9 제한 write를 검토한다. 이 dependency를 벗어나는 기능은 실제 장애나 반복 사용
+증거와 owner/rollback이 있는 decision gate에서만 예외로 받아들인다.
 
 ## 14. 근거와 결정 이력
 

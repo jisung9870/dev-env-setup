@@ -8,6 +8,8 @@
 - 현재 구현 기준: root `d9462cc`, workbench `10347a9`, binbox `682e018`,
   nvim `d25dbfe`, cmux-config `f5e5195`
 - 현행 기획서: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
+- 목표 아키텍처: [ARCHITECTURE.md](ARCHITECTURE.md)
+- 단계별 전달 계획: [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md)
 - Dashboard 제품·UX 명세: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
 - 통합 판단: [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md)
 - 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
@@ -17,6 +19,8 @@
 | 위치 | 역할 | 사용 규칙 |
 |---|---|---|
 | [PRODUCT-PLAN.md](PRODUCT-PLAN.md) | 제품 정의, 원칙, MVP, roadmap, 성공·중단 기준 | 현행 제품 결정의 source of truth |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | component ownership, current/planned 구분, data class와 data flow | Phase 0 목표 architecture contract |
+| [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md) | S0–S9 dependency, stage deliverable, acceptance, cutoff/rollback | 구현 순서와 stage gate의 source of truth |
 | [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md) | Dashboard IA, 화면 상태, Core/API/action 안전 계약, 단계별 인수 기준 | Phase 0 Dashboard target contract |
 | [raw/](raw/) | 현재 상태, 분야별 조사 원문, 반론·불확실성, 통합 판단 | 특정 시점의 근거이며 구현 자체를 대체하지 않음 |
 | [archive/](archive/) | 완료·대체된 계획과 구현 이력 | 현행 지시로 사용하지 않음 |
@@ -25,13 +29,15 @@
 ## 읽는 순서
 
 1. [PRODUCT-PLAN.md](PRODUCT-PLAN.md) — 선정된 제품 방향과 제한된 MVP
-2. [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md) — Dashboard와 CLI/Core의 목표 UX·안전 계약
-3. [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md) — 워커 간 충돌과 선택 이유
-4. [raw/current-system.md](raw/current-system.md) — 현재 구현 자산과 책임 경계
-5. [raw/repository-baseline.md](raw/repository-baseline.md) 및
+2. [ARCHITECTURE.md](ARCHITECTURE.md) — 목표 ownership, data class와 client parity
+3. [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md) — S0–S9 전달 순서와 acceptance/cutoff
+4. [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md) — Dashboard와 CLI/Core의 목표 UX·안전 계약
+5. [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md) — 워커 간 충돌과 선택 이유
+6. [raw/current-system.md](raw/current-system.md) — 현재 구현 자산과 책임 경계
+7. [raw/repository-baseline.md](raw/repository-baseline.md) 및
    [raw/validation-baseline.md](raw/validation-baseline.md) — Git·지원·검증 기준선
-6. [raw/README.md](raw/README.md)의 A–E 조사 원문 — 사실, 근거, 반론과 불확실성
-7. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 아직 결정하지 않은 항목과 다음 gate
+8. [raw/README.md](raw/README.md)의 A–E 조사 원문 — 사실, 근거, 반론과 불확실성
+9. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 아직 결정하지 않은 항목과 다음 gate
 
 ## 이번 기획에서 확정한 것
 

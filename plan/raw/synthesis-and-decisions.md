@@ -78,8 +78,9 @@ Workbench는 장기 Task와 policy, opaque provider reference, 관찰 시각과 
 - query, dedupe, run journal과 cursor는 transaction이 있는 local store가 유리하다.
 
 **선택:** LLM wiki 방식처럼 Markdown을 task·note·decision의 canonical authoring format으로 삼고 stable
-ID와 최소 frontmatter를 둔다. SQLite는 검색, dedupe, cursor와 run journal을 위한 재구축 가능한 projection
-이며 Markdown을 대체하지 않는다. 상세 frontmatter와 rename 규칙만 MVP prototype에서 확정한다.
+ID와 최소 frontmatter를 둔다. 중요한 receipt와 authoritative local operation은 portable journal에 먼저
+확정하고, SQLite는 검색, dedupe, cursor와 journal query를 위한 재구축 가능한 projection이며 Markdown이나
+portable journal을 대체하지 않는다. 상세 frontmatter와 rename 규칙만 MVP prototype에서 확정한다.
 
 ### 충돌 F — 첫 외부 연동
 
@@ -172,3 +173,14 @@ Windows Terminal과 iTerm2는 각 OS의 native fallback, cmux는 선택적 macOS
 Run/Task/Dispatch lifecycle을 복제하지 않고 opaque reference, capability, 관찰 시각과 result pointer만
 투영한다. iTerm2 adapter와 새 navigation/API는 Phase 0 결정이지 현재 구현 완료 주장이 아니며, 구현 전까지
 capability를 unavailable로 정직하게 표시한다.
+
+PM architecture/roadmap cross-review에서 저장과 delivery 용어를 더 엄밀하게 맞췄다. Markdown canonical과
+SQLite projection이라는 원칙은 유지하되, state를 C1–C3, O1–O3와 Secret으로 분류하고 중요한 receipt와
+O1 checkpoint를 portable journal에 먼저 확정한다. 따라서 pending mutation, fencing key와 unreconciled
+outcome을 SQLite에만 저장한 채 rebuildable이라고 부르는 설계는 허용하지 않는다.
+
+제품 horizon(0~30일/31~90일/장기)은 stage 완료를 대신하지 않으며 구현 gate는
+[IMPLEMENTATION-ROADMAP.md](../IMPLEMENTATION-ROADMAP.md)의 S0–S9가 소유한다. CLI/Dashboard parity는 같은
+application service를 사용한다는 선언뿐 아니라 같은 fixture/action의 plan hash, state transition,
+outcome/error code와 receipt schema mismatch 0으로 판정한다. roadmap의 `Runs`와 `Recovery`는 user-facing
+**Runs & Agents**와 **System & Recovery**의 축약어로 해석해 navigation owner를 둘로 만들지 않는다.

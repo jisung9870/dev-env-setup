@@ -3,6 +3,7 @@
 > 상태: **Phase 0 delivery plan**  
 > 기준일: 2026-08-10  
 > 아키텍처: [ARCHITECTURE.md](ARCHITECTURE.md)  
+> Dashboard workstream: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
 > 제품 gate: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
 
 ## 1. delivery 원칙
@@ -42,7 +43,27 @@ flowchart LR
 
 Critical path는 `S0 → S1 → S2 → S3 → S5 → S6`이다. S4A와 backup 두 branch는 선행조건이 충족되면
 병행할 수 있지만, 같은 file owner를 공유하는 implementation task는 병렬 edit하지 않는다. S8과 S9는
-30일 MVP 밖의 조건부 stage다.
+30일 MVP 밖의 조건부 stage다. `PRODUCT-PLAN.md`의 30/90일 horizon이나 마지막 scope 순서가 이 DAG와 다르게
+읽히면 이 문서의 dependency가 실행 순서를 소유한다. 특히 Orca E0(S4A)는 Slack 뒤에 기다리는 작업이 아니라
+S1 뒤 S2/S3과 병행해 표본을 모으며, E1(S4B)만 S3과 E0 promotion을 모두 기다린다.
+
+### Dashboard Phase 0–4와 delivery DAG의 관계
+
+`DASHBOARD-SPEC.md`의 Phase는 UX workstream 묶음이고 이 문서의 dependency gate를 압축하거나 건너뛰지
+않는다.
+
+| Dashboard phase | delivery stage mapping | dependency/해석 |
+|---|---|---|
+| Phase 0 결정·계약 | S0 | 명세, compatibility map과 gap report만 완료한다. v2 route/action은 구현 완료가 아니다. |
+| Phase 1 Core parity·compatibility shell | S1의 System & Recovery slice + S3 client-parity foundation | nav/alias/common state는 S0 뒤 시작할 수 있지만 canonical mutation parity는 S2 data contract 뒤 S3에서 accept한다. |
+| Phase 2 local closed loop | S2 → S3, workspace는 S4A → S4B, off-device restore는 S7A/S7B → S7C | 한 번에 release하는 단일 phase가 아니다. 각 card/action은 underlying stage gate를 통과한 capability만 노출한다. |
+| Phase 3 external read connector | S5 → S6 | GitHub acceptance 전 Slack code와 UI를 시작하지 않는다. |
+| Phase 4 controlled execution·limited write | S8 및 별도 S9 | S8은 S4B+S7C 뒤, S9는 S6+S7C(Agent write면 S8도) 뒤다. 두 기능을 같은 승격으로 묶지 않는다. |
+
+모든 Dashboard slice는 명세의 loading/empty/stale/partial/blocked/unknown/unavailable state, WCAG 2.2 AA,
+360/768/1280px responsive, keyboard/focus와 current v1 security/compatibility regression을 해당 stage의
+acceptance에 포함한다. planner 명세가 화면과 interaction의 source이고 이 roadmap은 언제 claim할 수 있는지를
+정한다.
 
 ## 3. 모든 stage에 적용하는 definition of done
 
@@ -136,6 +157,8 @@ Critical path는 `S0 → S1 → S2 → S3 → S5 → S6`이다. S4A와 backup �
 
 - read-only Inbox/Today/Project skeleton, projection freshness, rebuild status와 canonical file link.
 - Markdown parse error를 숨기지 않고 file/field/recovery guidance를 보여준다.
+- 새 IA shell과 common state component는 schema-ready capability만 enable하고, 준비되지 않은 v2 query/action은
+  unavailable/준비 중으로 표시한다. 현재 v1 deep link와 typed action을 자동으로 제거하거나 재노출하지 않는다.
 
 **Acceptance**
 
@@ -171,6 +194,8 @@ Critical path는 `S0 → S1 → S2 → S3 → S5 → S6`이다. S4A와 backup �
 - Today, Inbox triage, Project resume, Runs/recovery panel.
 - same plan hash 승인, stale-plan rejection, terminal-required action의 exact CLI handoff.
 - browser refresh/server failure에도 canonical data를 손상하지 않는 error state.
+- `DASHBOARD-SPEC.md` Phase 1 acceptance인 v1 security/deep-link regression, keyboard landmark/focus, 360/768/1280px
+  content-loss 검증을 통과한다.
 
 **Acceptance**
 
@@ -294,7 +319,9 @@ Critical path는 `S0 → S1 → S2 → S3 → S5 → S6`이다. S4A와 backup �
 - S7B: Secret 제외 manifest, hashes, schema/app version, retention을 가진 encrypted OneDrive snapshot.
 - live Git working tree와 OneDrive staging/snapshot path 물리 분리.
 - CLI: snapshot create/verify/list/restore-dry-run; Dashboard: last snapshot/verification/restore drill, expiry와
-  recovery location. Dashboard가 plaintext key를 받거나 restore를 즉시 실행하지 않는다.
+  recovery location. Dashboard는 같은 Core restore plan을 preview하고 foreground approval 뒤 실행한다. browser
+  process restart 등으로 안전한 completion을 보장할 수 없는 platform에서는 같은 `action_id`의 exact CLI
+  handoff를 제공한다. 어느 경로도 plaintext key를 browser payload로 받지 않는다.
 
 **Acceptance**
 
@@ -350,7 +377,29 @@ Critical path는 `S0 → S1 → S2 → S3 → S5 → S6`이다. S4A와 backup �
 
 ## 5. cutoff/checkpoint policy
 
-### 5.1 cutoff 단위
+### 5.1 23:30 KST nightly cutoff
+
+매 작업일 **23:30 KST**는 새 scope와 mutation을 멈추는 hard cutoff다. 이는 release date를 뜻하지 않고,
+shared `orca/work`에서 작업을 review 가능한 상태로 고정해 다음 날 또는 다음 dispatch가 안전하게 이어받도록
+하는 운영 checkpoint다.
+
+- 23:15 KST부터 새 file owner를 잡거나 schema migration, provider apply, restore, default workspace 변경을
+  시작하지 않는다.
+- 23:30 KST에는 실행 중인 작업을 `accepted`, `stopped`, `rolled-back`, `in-progress-safe` 중 하나로 기록한다.
+  `in-progress-safe`는 canonical/working data가 유효하고 partial artifact, owner, exact next action과 rollback이
+  기록된 경우에만 허용하며 stage acceptance를 뜻하지 않는다.
+- 23:30 이후에는 read-only validation, `git diff --check`, artifact/hash 수집, log/handoff와 already-started safe
+  verification만 허용한다. 새 mutation, scope expansion, external write, migration과 dispatch는 다음 작업일로
+  넘긴다.
+- 이미 시작한 action이 23:30에 외부/authoritative state를 불명확하게 남겼다면 자동 retry하지 않고
+  `partial`/`unknown` receipt와 reconcile instruction을 남긴다.
+- plaintext Secret 노출, data-loss 진행 또는 actively destructive partial action을 막기 위한 emergency
+  containment만 예외다. 예외는 exact action, 이유, 영향, 결과와 후속 review를 checkpoint에 기록하며 새
+  feature work로 확장하지 않는다.
+- coordinator가 더 이른 dispatch cutoff를 지정하면 더 이른 시각이 우선한다. 이 정책은 늦은 완료를
+  성공으로 포장하거나 미완료 stage를 날짜 때문에 close하는 근거가 아니다.
+
+### 5.2 cutoff 단위
 
 각 stage는 다음 artifact를 한 묶음으로 고정해야 한다.
 
@@ -374,7 +423,7 @@ checkpoint ID
   backlog로 다음 stage에 넣는다.
 - scope exception은 실제 장애나 반복 사용 evidence와 owner/rollback을 기록한 decision gate가 있어야 한다.
 
-### 5.2 rollback 우선순위
+### 5.3 rollback 우선순위
 
 1. provider adapter disable; cached projection은 keep/delete를 사용자가 선택.
 2. SQLite projection delete/rebuild.

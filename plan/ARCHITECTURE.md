@@ -4,6 +4,7 @@
 > 기준일: 2026-08-10  
 > 범위: 제품 경계, component ownership, canonical data, 실행 surface와 data flow  
 > 상위 결정: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)  
+> Dashboard target contract: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
 > 전달 순서: [IMPLEMENTATION-ROADMAP.md](IMPLEMENTATION-ROADMAP.md)
 
 ## 1. 목적과 해석 규칙
@@ -18,6 +19,11 @@ Setup은 여러 장비에서 개인 업무와 개발 맥락을 준비하고, 이
 - **계획**은 이 문서와 roadmap에서 새로 채택한 목표다.
 - **실험**은 acceptance gate 전에는 지원 기능이 아니다.
 - child repository의 상세 CLI, schema와 안전 계약은 각 child README/docs가 계속 소유한다.
+
+문서 ownership도 층을 나눈다. `PRODUCT-PLAN.md`는 제품 방향과 성공 지표, 이 문서는 system ownership과
+data/runtime invariant, `DASHBOARD-SPEC.md`는 Dashboard IA·interaction·responsive/accessibility target,
+`IMPLEMENTATION-ROADMAP.md`는 dependency와 delivery gate를 소유한다. Dashboard 명세의 `Phase 0–4`는 UX
+workstream 이름이며 delivery DAG의 `S0–S9`를 대체하지 않는다.
 
 ## 2. 확정된 아키텍처 결정
 
@@ -134,7 +140,9 @@ flowchart TB
 
 SQLite를 “rebuildable”이라고 부르려면 O1이 DB 안에만 남아서는 안 된다. O1 record는 durable portable
 journal/checkpoint로 먼저 확정하거나, 별도의 authority store로 명시하고 DB rebuild가 그 record를 재생할 수
-있어야 한다. 어떤 state도 분류 없이 `workbench.db`에 추가하지 않는다.
+있어야 한다. `PRODUCT-PLAN.md`와 Dashboard 명세에서 말하는 SQLite `run journal`은 C2/O1 authority가 아니라
+그 receipt/journal을 찾고 query하기 위한 projection을 뜻한다. 어떤 state도 분류 없이 `workbench.db`에
+추가하지 않는다.
 
 ### 6.2 최소 canonical object
 
