@@ -242,6 +242,7 @@ pass 'pane ownership drift reconciles the task to completed and refuses jump and
 
 expect_exit 1 env FAKE_TMUX_MODE=misleading "$WB" open alpha --backend tmux
 grep -Fq 'create tmux session: exit status 7' "$RUN_DIR/last.stderr" || die 'misleading provider fixture did not execute'
+grep -Fq 'SUCCESS but provider failed' "$RUN_DIR/last.stdout" || die 'provider stdout was not preserved on session creation failure'
 pass 'SUCCESS-looking output with non-zero exit remains failure'
 
 FAKE_TMUX_MODE=hung python3 - "$WB" <<'PY'

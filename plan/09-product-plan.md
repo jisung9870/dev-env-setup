@@ -2,7 +2,7 @@
 
 - 결과 상태: **Phase 0~5 구현 완료, Phase 5 이후 Dashboard 편집·백그라운드 server·scheduler까지 구현 — Phase 6 다음**
 - 기준일: 2026-08-10
-- 기준 구현: workbench `371cdd0`
+- 기준 구현: workbench `10347a9`
 - 적용 범위: `dev-env-setup`, `workbench`, `binbox`, `lazyvim-config`, `cmux-config`
 - 대상 독자: 사용자, 유지보수자, 후속 구현 Agent
 - 문서 역할: 현재 제품 기능과 향후 방향의 기준서. 세부 계약과 구현 이력은 `plan/00`~`08` 및 각 저장소 문서를 따른다.
@@ -131,9 +131,9 @@ Workbench 구현 이력은 `2ad89cd`(Phase 0~4), `dfaa40b`(Environment migration
 `f96e9a9`(project Secret reference), `cc5b340`(workflow 환경 주입), `39100f2`(Dashboard Context health),
 `7591c15`(managed session과 백그라운드 server), `215c28e`(Environment expiry scheduler),
 `2e97f6d`(Dashboard Environment 편집), `aa24d3d`(Dashboard Secret 관리와 클립보드),
-`aa00143`(Dashboard Profile 관리), `344f8b1`(activity center), `371cdd0`(Dashboard navigation 정리)다.
+`aa00143`(Dashboard Profile 관리), `344f8b1`(activity center), `371cdd0`(Dashboard navigation 정리), `10347a9`(tmux provider 진단 보존)다.
 
-기준 구현 `371cdd0`에서 실행한 검증 결과다.
+기준 구현 `10347a9`에서 실행한 검증 결과다.
 
 | 검증 | 명령 | 결과 |
 |---|---|---|
@@ -151,8 +151,9 @@ Workbench 구현 이력은 `2ad89cd`(Phase 0~4), `dfaa40b`(Environment migration
 - 첫 번째 원인은 가짜 tmux fixture가 `sessions.Ensure` 경로의 `list-sessions`, `show-options`,
   `list-panes`, `kill-session`, session 범위 `set-option`을 모르는 것이었다. fixture를 확장했다.
 - 두 번째 원인은 pane 소유권 불일치 시의 task 상태 계약 변경이다. 아래 실패 모드 표에 반영했다.
-- 세 번째로 session 생성 실패 시 provider의 stdout과 exit code가 더 이상 전달되지 않는 것을 확인했다.
-  실패 판정 자체는 정상이므로 진단 정보 손실이며, 아래 문제 6번에서 판정 대상으로 다룬다.
+- session 생성 실패 진단 손실은 `10347a9`에서 수정했다. `sessions.Ensure`가 실패한 `ProcessResult`를
+  반환하고 `wb open`, Agent 시작, Dashboard가 command, exit code, stdout, stderr를 보존한다. 통합 E2E는
+  성공처럼 보이는 provider stdout과 exit 7이 함께 전달되면서 전체 명령은 실패하는 계약을 직접 검증한다.
 - race detector는 이번 회차에 실행하지 않았다. 이전 Phase 구현 시점의 통과 기록으로 대체하지 않는다.
 - 변형·인코딩된 값, file/network 채널의 유출 방지는 sandbox 범위가 아니며 검증 완료로 간주하지 않는다.
 - 물리 Linux/Windows/WSL 및 실제 cmux 장비 smoke는 아직 수행하지 않았다. Windows cross-compile 통과를
@@ -206,17 +207,14 @@ core의 안전장치는 구현됐지만 LazyVim과 cmux는 list/open 또는 proj
 **방향:** 이 문서를 제품 기준서로 사용하고 `00`~`08`은 배경·계약·구현 이력으로 유지한다. 기능 또는
 방향이 바뀌면 먼저 이 문서의 현재 기능 표와 로드맵을 갱신한 뒤 세부 문서를 변경한다.
 
-### 6. session 생성 실패 시 provider 진단 정보가 사라진다
+### 6. session 생성 실패 시 provider 진단 정보 보존 — 해결
 
-`wb open`과 Agent 실행은 이제 `sessions.Ensure`를 거친다. 이 경로가 실패하면 tmux adapter와 Agent runtime이
-빈 `ProcessResult`를 반환하므로(`workbench/adapters/tmux/tmux.go:211`,
-`workbench/internal/agents/runtime.go:118`) 실패한 backend 프로세스의 stdout과 exit code가 사용자에게
-전달되지 않고 wrapping된 오류 문자열만 남는다. 이전 구현은 실패한 프로세스 결과를 그대로 전달했다. 실패를
-실패로 판정하는 계약은 유지되지만 운영자는 provider가 실제로 무엇을 출력했는지 볼 수 없다.
+`10347a9`에서 기본안을 채택했다. `sessions.Ensure`는 session 생성 과정에서 실패한 `ProcessResult`를 함께
+반환하고, tmux adapter와 Agent runtime은 이를 버리지 않는다. `wb open`과 Agent 시작은 provider stdout/stderr를
+원래 채널로 출력하며, Dashboard와 구조화된 오류는 command, exit code, stdout, stderr를 세부정보로 제공한다.
 
-**방향:** Phase 6 착수 전에 판정한다. 기본안은 `Ensure`가 실패한 `ProcessResult`를 함께 반환해 이전 수준의
-진단 정보를 복원하는 것이다. 현재 동작을 계약으로 확정한다면 그 근거를 이 문서와 backend 계약 문서에 함께
-기록한다. 어느 쪽이든 통합 E2E가 그 계약을 직접 검증해야 한다.
+**계약:** 성공처럼 보이는 stdout이 있어도 non-zero exit는 계속 실패다. 단위 테스트는 Ensure→adapter와
+Ensure→Agent 전달을 검증하고, 통합 E2E는 provider stdout과 exit 7이 모두 보존되는 사용자 경로를 검증한다.
 
 ## 방향성 결정
 
@@ -276,7 +274,7 @@ arbitrary command runner를 만들지 않는다. Phase 5의 수용 조건은 CLI
 | stale cmux action | generator `--check` | 오래된 action 배포를 실패 처리 | `sync-workbench` 후 config rebuild |
 | Agent backend reference drift | `Alive`/ownership 재검증 | jump/stop 거부 | task 상태 reconcile, terminal history 보존 |
 | pane 소유권 불일치 | pane user option의 task ID 비교 | 해당 task를 `completed`로 확정하고 이후 jump과 stop을 모두 거부 | 프로세스가 실제로 살아 있으면 terminal에서 직접 정리한다. Workbench는 그 pane을 다시 소유하지 않는다 |
-| session 생성 실패 | backend 프로세스 exit code | 실패로 판정하고 open/start를 중단 | 현재는 provider stdout이 전달되지 않으므로 같은 명령을 terminal에서 직접 실행해 원인을 확인한다(문제 6번) |
+| session 생성 실패 | backend 프로세스 exit code | 실패로 판정하고 open/start를 중단 | provider stdout/stderr와 command/exit code를 확인하고 backend 자체 오류를 수정한 뒤 재실행 |
 | dirty/locked worktree | Git porcelain 재검증 | remove 거부 | 변경 정리 또는 사용자가 Git에서 명시적으로 처리 |
 | optional provider/backend 없음 | scoped Doctor status | core는 healthy 유지 | 설치 안내 또는 다른 backend 선택 |
 | required repo/setup 실패 | root bootstrap/doctor | aggregate 실패, partial result 표시 | clean checkout/lock 확인 후 해당 child 재실행 |
@@ -314,7 +312,7 @@ arbitrary command runner를 만들지 않는다. Phase 5의 수용 조건은 CLI
 | Worktree 안전 | CLI/client contract test | Workbench·client 구현자 | mutation UI 변경 후 | dirty/locked/unmerged와 외부 worktree 거부 유지 |
 | Windows/WSL 지원 | physical smoke 기록 | 환경 유지보수자 | Tier 1 지원 완료 판정 전 | bootstrap/doctor/editor/tmux/Agent/worktree 대표 흐름 성공 |
 | Environment/Secret 비노출 | Workbench tests + browser Context 확인 | Workbench 유지보수자 | 관련 contract 변경 후 | argv/history/Dashboard JSON/browser에 평문 0건 |
-| 기준 구현 통합 E2E | `tests/workbench-e2e.sh` | 환경 유지보수자 | Phase 6 착수·release 판정 전 | `371cdd0`에서 11 group 성공 |
+| 기준 구현 통합 E2E | `tests/workbench-e2e.sh` | 환경 유지보수자 | Phase 6 착수·release 판정 전 | `10347a9`에서 11 group 성공 |
 
 관찰 기간은 고정 일수가 아니라 위 대표 흐름의 완주 여부로 정한다. 월간·배치성 기능이 아닌 개인
 개발환경이므로, 각 지원 client/backend에서 실제 project·Agent·worktree 흐름을 최소 한 번 끝까지 수행한
@@ -331,9 +329,9 @@ arbitrary command runner를 만들지 않는다. Phase 5의 수용 조건은 CLI
 | 5 | Dashboard Overview와 Tool health | 완료 | Workbench/binbox 구현자 | Phase 3 optional provider 계약 통과 |
 | 6 | allowlisted typed workflow | 완료 | Workbench 구현자 | detached tmux worker·보안·metadata-only history 계약 통과 |
 | 7 | Environment와 local Secret 통합 | 완료 | Workbench/binbox 구현자 | migration·project 연결·workflow 주입·read-only Context·평문 비노출 계약 통과 |
-| 8 | 기준 구현 통합 E2E 결과 확정 | 완료 | 환경 유지보수자 | `371cdd0`에서 vet·test·Windows cross-compile·contract·doctor·E2E 성공 기록 |
-| 9 | session 생성 실패 시 provider 진단 정보 판정 | 다음 | Workbench 구현자 | 문제 6번의 두 선택지 중 하나를 채택하고 통합 E2E가 그 계약을 직접 검증 |
-| 10 | fallback 정리와 배포 판정 | 대기 | 환경 유지보수자 | Phase 6 관찰 근거와 physical Linux/Windows/WSL/cmux smoke 확보 |
+| 8 | 기준 구현 통합 E2E 결과 확정 | 완료 | 환경 유지보수자 | `10347a9`에서 vet·test·Windows cross-compile·Dashboard Node test·E2E 성공 기록·contract·doctor 성공 기록 |
+| 9 | session 생성 실패 시 provider 진단 정보 보존 | 완료 | Workbench 구현자 | 실패 ProcessResult 전달 채택, 단위·통합 E2E 직접 검증 |
+| 10 | fallback 정리와 배포 판정 | 다음 | 환경 유지보수자 | Phase 6 관찰 근거와 physical Linux/Windows/WSL/cmux smoke 확보 |
 
 ## 가정과 미확인 사항
 

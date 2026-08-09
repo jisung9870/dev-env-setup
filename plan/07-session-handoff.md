@@ -88,11 +88,10 @@ plan/README.md
 
 `plan/README.md`와 `09-product-plan.md`의 진행 상태를 확인한다. `archive/04-implementation-roadmap.md`의 Phase 번호는
 초기 이력이다. 현재 기준선은 Phase 0~5 구현 완료와 그 이후 추가 구현 반영, Phase 6 다음이다. 기준 구현
-workbench `371cdd0`에서 vet, 단위·통합 test, Windows cross-compile, cross-repo contract 18 group, aggregate
+workbench `10347a9`에서 vet, 단위·통합 test, Windows cross-compile, cross-repo contract 18 group, aggregate
 doctor, 통합 E2E 11 group이 통과했다.
 
-Phase 6보다 먼저 처리할 단일 작업은 session 생성 실패 시 provider의 stdout과 exit code가 전달되지 않는
-문제의 판정이다. 상세는 `09-product-plan.md`의 문제 6번에 있다. 그 뒤에 대표 project/Agent workflow와
+session 생성 실패 시 provider 진단 보존은 `10347a9`에서 완료됐다. 다음 작업은 대표 project/Agent workflow와
 physical Linux/Windows/WSL/cmux smoke를 수집하고, 그 근거로 compatibility path를 warning → shim → 제거
 순서로 평가하며 관찰만으로 자동 삭제하지 않는다.
 
