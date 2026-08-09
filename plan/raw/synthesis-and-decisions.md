@@ -151,3 +151,24 @@ prompt와 terminal 전문은 기본 저장하지 않고 runtime handle을 영구
 - 상세 사실·반론·불확실성·외부 출처는 각 worker raw 보고서에 보존한다.
 - 완료된 이전 계획은 기존 archive에 그대로 두며, 활성 영역에서 추가 이동할 완료 계획은 발견되지 않았다.
 - binbox 명령 문서는 독립 운영·복구 경로이므로 정리·삭제 대상으로 취급하지 않는다.
+
+## 9. 2026-08-10 Phase 0 Dashboard·workspace 결정 addendum
+
+현재 Dashboard의 loopback, same-Core client, typed action, ownership 재검증, responsive/accessibility 자산은
+버릴 대상이 아니라 제품 경험의 기반으로 채택했다. operations console은 Today, Inbox, Projects,
+Runs & Agents, Integrations, System & Recovery의 여섯 영역으로 발전한다. 현재 Overview/Activity/Settings의
+기능은 각각 새 영역에 이행하고, `/activity` 같은 기존 deep link와 v1 action은 호환 기간 동안 보존한다.
+상세 target contract와 phase별 인수 기준은 [Dashboard 제품·UX 명세](../DASHBOARD-SPEC.md)가 소유한다.
+
+Dashboard와 `wb` CLI는 Workbench Core의 동등한 client다. Dashboard, browser localStorage 또는 SQLite가
+사용자 task/decision, provider runtime이나 외부 원문의 두 번째 owner가 되어서는 안 된다. Markdown은
+사용자 작성 정보의 canonical format, SQLite는 재구축 가능한 projection이며, private GitHub는 그
+Markdown·설정 history를 보존하고 OneDrive는 Secret을 제외한 암호화 snapshot·attachment·runtime backup을
+담당한다. 같은 working tree의 Git/OneDrive 이중 sync는 금지한다.
+
+terminal/runtime 역할도 다음과 같이 확정했다. Orca가 기본 terminal workspace이자 Agent runtime owner이고,
+Agents는 Orca 아래에서 직접 실행한다. tmux는 Orca worktree별 사람의 shell/editor 작업을 나누는 partition,
+Windows Terminal과 iTerm2는 각 OS의 native fallback, cmux는 선택적 macOS client다. Workbench는 Orca의
+Run/Task/Dispatch lifecycle을 복제하지 않고 opaque reference, capability, 관찰 시각과 result pointer만
+투영한다. iTerm2 adapter와 새 navigation/API는 Phase 0 결정이지 현재 구현 완료 주장이 아니며, 구현 전까지
+capability를 unavailable로 정직하게 표시한다.

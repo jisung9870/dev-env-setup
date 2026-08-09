@@ -4,6 +4,7 @@
 > 기준일: 2026-08-10
 > 근거: [raw/](raw/) · [통합 판단](raw/synthesis-and-decisions.md)
 > 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
+> Dashboard 상세: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
 
 ## 1. 한 문장 제품 정의
 
@@ -76,7 +77,9 @@ provenance를 보존하고 project와 next action을 붙인다. 실행 시 repos
 
 ### 개발과 Agent 작업
 
-project에서 관련 task·문서·Git 상태·worktree를 모아 tmux/LazyVim 또는 Orca로 연다. Orca가 runtime을
+project에서 관련 task·문서·Git 상태·worktree를 모아 기본 terminal workspace인 Orca로 연다. 사람의
+shell/editor 작업은 Orca worktree별 tmux partition으로 나누고 Agent는 Orca 아래에서 직접 실행한다.
+Windows Terminal과 iTerm2는 각 OS의 native fallback이고 cmux는 선택적 client다. Orca가 runtime을
 소유하고 Setup은 opaque reference와 관찰 시각, 결과 pointer만 보존한다. diff, test, 미결 항목을 review
 packet으로 만들며 commit, push, merge는 별도 승인 작업이다.
 
@@ -101,7 +104,7 @@ terminal·Git·로컬 Markdown의 최소 경로로 프로젝트와 작업을 찾
 | Projects | 결과와 다음 행동, 실행 위치는 어디인가 | task, note/ref, repo/worktree/session/Agent |
 | Areas | 계속 책임지는 개인·업무 영역은 무엇인가 | context, account, policy, review |
 | Library | 근거와 결정으로 어떻게 돌아가나 | local note, decision, external ref |
-| Runs | 무엇을 실행했고 어디까지 됐나 | recipe, attempt, checkpoint, artifact, outcome |
+| Runs & Agents | 무엇을 실행했고 어디까지 됐나 | recipe, attempt, checkpoint, artifact, outcome, provider Agent ref |
 | Integrations | 무엇과 어떤 권한으로 연결됐나 | adapter, capability, scope, cursor, health |
 | System & Recovery | 설치와 데이터가 복구 가능한가 | profile, doctor, snapshot, backup, restore |
 
@@ -136,7 +139,7 @@ Recipe(typed_input, risk, approval, retry/recovery policy)
 ```mermaid
 flowchart TB
     U["사용자"] --> C["Capture · Today · Review"]
-    U --> X["CLI · tmux · LazyVim"]
+    U --> X["wb CLI · Orca · tmux · native terminal"]
     U --> UI["로컬 Web UI"]
     C --> CORE["Workbench Core\nproject · task · ref · run · policy"]
     X --> CORE
@@ -146,7 +149,7 @@ flowchart TB
     CORE --> AD["Adapter boundary"]
     AD --> API["API · webhook · CLI"]
     AD --> MCP["MCP"]
-    AD --> ORCA["Orca optional Agent backend"]
+    AD --> ORCA["Orca default workspace · Agent runtime"]
     AD --> OTHER["Calendar · Mail · Slack/Teams"]
     ORCA --> AG["worktree · terminal · Agent · Run/Task/Dispatch"]
 ```
@@ -157,10 +160,12 @@ flowchart TB
 |---|---|---|
 | root setup | profile, provisioning, 검증 조합, doctor, restore | child 기능과 사용자 원문 |
 | Workbench Core | 장기 project/task/ref/run index, policy, local projection | 외부 원문과 provider runtime lifecycle |
-| CLI/Web UI | capture, review, search, jump, 제한된 typed action | source of truth와 임의 shell |
-| tmux/LazyVim/binbox | 독립 실행·복구 경로 | 중앙 registry |
+| `wb` CLI/Dashboard | 같은 Core를 통한 capture, review, search, jump, 제한된 typed action | source of truth와 임의 shell |
+| tmux/LazyVim/binbox | Orca worktree별 human work partition과 독립 실행·복구 경로 | 중앙 registry와 Orca Agent lifecycle |
 | Adapter | capability, ID mapping, health, cursor, disable | provider 내부 상태 추측 |
-| Orca | Orca worktree·terminal·Agent·orchestration runtime | 장기 개인 업무 index |
+| Orca | 기본 terminal workspace와 worktree·terminal·Agent·orchestration runtime | 장기 개인 업무 index |
+| Windows Terminal/iTerm2 | Orca 부재 시 OS native fallback | Core state와 안정되지 않은 tab/process ownership 추측 |
+| cmux | 선택적 macOS client/open target | 기본 workspace와 필수 복구 경로 |
 
 일반 설치는 **`workbench` profile을 기본값**으로 삼아 Workbench와 prerequisite를 필수로 검증한다.
 `terminal` profile은 tmux·LazyVim·binbox만으로 복구하거나 최소 설치할 때 명시적으로 선택하는 독립
@@ -179,6 +184,12 @@ fallback이다. 이 구분은 제품 중요도의 차이가 아니라 설치 성
 6. **Typed action과 run journal:** preview, risk label, explicit approval, checkpoint, 결과 pointer, 복구 지침.
 7. **Adapter health 계약:** file/Git을 첫 구현으로 하고 capability, scope, cursor, health, disable/export를 통일.
 8. **Orca E0/E1 실험:** 사용 관찰 후 read-only health·summary·open/jump adapter. controlled launch는 MVP gate 밖이다.
+
+Dashboard는 기존 operations console을 유지·재사용해 장기적으로 **Today / Inbox / Projects / Runs & Agents /
+Integrations / System & Recovery**로 발전시킨다. MVP에서는 `wb` CLI를 capture/action의 terminal-first 경로로,
+Dashboard를 Today/review 권장 UI로 두며 둘 다 같은 Workbench Core query/action을 사용한다. 상세 IA와
+호환·안전 계약은 [Dashboard 명세](DASHBOARD-SPEC.md)를 따른다. Orca E0/E1의 read-only 제한은 사용자가
+Orca를 기본 workspace로 쓰는 행위가 아니라 **Workbench가 Orca runtime에 행사하는 adapter 권한**에 적용한다.
 
 ### 다음 기능
 
@@ -316,6 +327,10 @@ local usage 기록은 opt-in이고 category, 상태, 시각과 소요 시간만 
    명시한 별도 profile로 둔다.
 8. lock manifest는 실제 smoke 기준 90일이 지나면 검증 만료로 표시하고 재검증 전 자동 승격하지 않는다.
 9. Dashboard는 Today/review의 권장 UI로 두되 CLI·terminal을 항상 독립 복구 경로로 유지한다.
+10. Dashboard는 별도 state owner가 아니며 `wb` CLI와 Workbench Core를 공유한다. 목표 navigation은 Today,
+    Inbox, Projects, Runs & Agents, Integrations, System & Recovery다.
+11. Orca는 기본 terminal workspace이고 Agents는 Orca 아래에서 직접 실행한다. Windows Terminal/iTerm2는
+    native fallback, tmux는 Orca worktree별 human work partition, cmux는 선택적 client다.
 
 ### 관찰 후 확정할 항목
 

@@ -8,6 +8,7 @@
 - 현재 구현 기준: root `d9462cc`, workbench `10347a9`, binbox `682e018`,
   nvim `d25dbfe`, cmux-config `f5e5195`
 - 현행 기획서: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
+- Dashboard 제품·UX 명세: [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md)
 - 통합 판단: [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md)
 - 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
 
@@ -16,6 +17,7 @@
 | 위치 | 역할 | 사용 규칙 |
 |---|---|---|
 | [PRODUCT-PLAN.md](PRODUCT-PLAN.md) | 제품 정의, 원칙, MVP, roadmap, 성공·중단 기준 | 현행 제품 결정의 source of truth |
+| [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md) | Dashboard IA, 화면 상태, Core/API/action 안전 계약, 단계별 인수 기준 | Phase 0 Dashboard target contract |
 | [raw/](raw/) | 현재 상태, 분야별 조사 원문, 반론·불확실성, 통합 판단 | 특정 시점의 근거이며 구현 자체를 대체하지 않음 |
 | [archive/](archive/) | 완료·대체된 계획과 구현 이력 | 현행 지시로 사용하지 않음 |
 | root/child README와 docs | 실제 설치·운영·schema·명령 계약 | 구현 세부의 source of truth |
@@ -23,12 +25,13 @@
 ## 읽는 순서
 
 1. [PRODUCT-PLAN.md](PRODUCT-PLAN.md) — 선정된 제품 방향과 제한된 MVP
-2. [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md) — 워커 간 충돌과 선택 이유
-3. [raw/current-system.md](raw/current-system.md) — 현재 구현 자산과 책임 경계
-4. [raw/repository-baseline.md](raw/repository-baseline.md) 및
+2. [DASHBOARD-SPEC.md](DASHBOARD-SPEC.md) — Dashboard와 CLI/Core의 목표 UX·안전 계약
+3. [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md) — 워커 간 충돌과 선택 이유
+4. [raw/current-system.md](raw/current-system.md) — 현재 구현 자산과 책임 경계
+5. [raw/repository-baseline.md](raw/repository-baseline.md) 및
    [raw/validation-baseline.md](raw/validation-baseline.md) — Git·지원·검증 기준선
-5. [raw/README.md](raw/README.md)의 A–E 조사 원문 — 사실, 근거, 반론과 불확실성
-6. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 아직 결정하지 않은 항목과 다음 gate
+6. [raw/README.md](raw/README.md)의 A–E 조사 원문 — 사실, 근거, 반론과 불확실성
+7. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 아직 결정하지 않은 항목과 다음 gate
 
 ## 이번 기획에서 확정한 것
 
@@ -36,7 +39,12 @@
 - 첫 제품 쐐기는 `Prepare → Resume → Recover`이고, 30일에는 신뢰 기반과 한 개의 닫힌 개인 운영 loop만 만든다.
 - 외부 원문은 복제보다 reference/projection으로 연결하며 개인/업무 credential과 write 권한을 분리한다.
 - MCP는 file, Git, API, webhook, CLI와 같은 adapter 선택지 중 하나다.
-- Orca는 Agent 관리·멀티 Agent 실행의 첫 optional backend다. Workbench는 Orca runtime을 복제하지 않는다.
+- Orca는 기본 Agent runtime이지만 필수 state dependency는 아니다. Workbench는 Orca runtime을 복제하지
+  않고, Orca 부재 시 native terminal/direct 경로를 fallback으로 유지한다.
+- Dashboard는 operations console을 버리지 않고 Today/Inbox/Projects/Runs & Agents/Integrations/System & Recovery로
+  발전하며, `wb` CLI와 같은 Workbench Core를 사용한다.
+- Orca는 기본 terminal workspace다. Windows Terminal/iTerm2는 native fallback, tmux는 Orca worktree별 human
+  work partition, cmux는 선택적 client이며 Agents는 Orca에서 직접 실행한다.
 - 자체 Agent scheduler/message bus/DAG, cloud sync, native app과 폭넓은 양방향 연동은 사용 gate까지 보류한다.
 - WSL은 primary Tier-1이며 macOS를 같은 30일 smoke track에서 병행한다.
 - 일반 설치는 `workbench` profile, 복구·최소 설치는 명시적 `terminal` profile을 사용한다.
