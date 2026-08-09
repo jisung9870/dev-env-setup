@@ -77,13 +77,21 @@ Dashboard의 primary navigation은 위 여섯 영역으로 제한한다. `Areas`
 
 | Target route | 초기 source | 호환 정책 |
 |---|---|---|
-| `/` 또는 `/today` | 현재 `/` Overview | `/`는 Today가 되며 `/today` alias 허용 |
-| `/inbox` | 신규 Core query | schema gate 전에는 명확한 준비 중 empty state |
+| `/` | 현재 `/` Overview | canonical Today entry로 유지; 현재 data만 표시 |
+| `/today` | 신규 alias | S2 Today read capability acceptance 뒤 같은 view를 server-render하는 alias; 그 전에는 만들지 않음 |
+| `/inbox` | 신규 Core query | S2 acceptance 전에는 404+nav unavailable; 404를 empty Inbox로 표현하지 않음 |
 | `/projects` | 현재 `/projects` | 안전 계약과 deep link를 유지하며 확장 |
-| `/runs` | 현재 `/activity` + project Task history | `/activity`는 최소 한 release 동안 redirect/alias |
+| `/runs` | 현재 `/activity` + project Task history | S3 acceptance 뒤 canonical; `/activity`는 rendered compatibility alias로 유지 |
 | `/integrations` | 현재 `/settings` 일부 | profile/Secret owner를 분리한 뒤 이행 |
 | `/system` | 현재 `/system` + `/settings` 일부 | label을 System & Recovery로 확장 |
 | `/guide` | 현재 Guide | embedded/offline 동작 유지 |
+
+S1의 smallest slice는 새 route를 추가하지 않는다. target label은 현재 route에 mapping하고 Inbox는 focus 가능한
+`준비 중 · S2 필요` 항목으로 표시하되 link나 empty data를 만들지 않는다. `/activity`와 `/settings`는 query와
+fragment를 버릴 수 있는 redirect 대신 같은 route를 render한다. `/runs`가 생긴 뒤에도 `/activity`는 최소 한
+release 유지하고, 30일 explicit compatibility observation에서 사용 0이 증명되지 않으면 제거하지 않는다.
+`/settings`는 Integrations와 System & Recovery로 연결하는 compatibility index이므로 한쪽으로 redirect하지
+않는다. Project/Task/Run ID의 URL grammar는 S2 identity와 S3 application-service acceptance 전에는 정의하지 않는다.
 
 ## 4. 화면 명세
 
@@ -300,10 +308,16 @@ expiry와 승인 문구를 포함한다. apply는 preview와 같은 action ID, p
 | Integrations | `sync_adapter`, `disconnect_adapter`, `clear_adapter_cache` | account/scope/cursor 구분; remote delete와 분리 |
 | System & Recovery | `rebuild_projection`, `create_backup`, `restore_backup` | canonical store 불변, backup/schema 검증, destination preview; safe completion 또는 same-action CLI handoff |
 
-현재 v1 action(`open_project`, `attach/adopt/stop_session`, environment/profile/Secret mutation, Agent/task jump/stop,
-history clear, workflow run)은 즉시 제거하지 않는다. target action으로 mapping될 때까지 현재 owner revalidation,
+현재 executable v1 baseline은 public table의 14개가 아니라, 코드/test에 있는 `update_secret`을 포함한 **15개
+action**이다. 이 action들(`open_project`, `attach/adopt/stop_session`, environment/profile/Secret mutation,
+Agent/task jump/stop, history clear, workflow run)은 즉시 제거하지 않는다. target action으로 mapping될 때까지 현재 owner revalidation,
 token/origin/body limit, backup, allowlisted argv와 error contract를 유지한다. 특히 현재 제공되는 destructive
 action을 새 화면에 자동 노출하지 않으며 각 action의 제품 phase와 ownership gate를 다시 통과시킨다.
+
+`update_secret`은 S1의 `/settings` compatibility surface에서만 현재 typed set/remove, write-only value와
+metadata-only response를 유지한다. target owner는 Integrations의 account/credential connection이고 System &
+Recovery는 store availability/recovery를 read-only로 참조한다. S2 zero-leak와 S3 plan/revision gate 전에는 새
+Integrations screen에 복제하거나 재노출하지 않는다.
 
 ### outcome과 retry
 
@@ -313,6 +327,11 @@ action을 새 화면에 자동 노출하지 않으며 각 action의 제품 phase
 - journal은 action ID, target, policy/revision, 승인, 시각, outcome, artifact/recovery pointer를 저장하며 Secret,
   prompt와 command output 전문은 저장하지 않는다.
 - HTTP는 loopback, same-origin per-process token, restrictive CSP/no-CORS/no-store와 bounded request를 유지한다.
+- v1 action JSON의 normative maximum은 **16 KiB(16,384 bytes)**다. 16,385 bytes 이상은 HTTP 413으로
+  service/action 실행 전에 거부하고 body나 decoder diagnostic을 echo하지 않는다. 구현의 약 16 MiB+64 KiB constant는 S1에서 줄이며,
+  threshold test가 통과하기 전에는 문서만 큰 값으로 바꾸지 않는다.
+- browser는 backend error code와 allowlisted user message/recovery만 렌더한다. raw `message/details`, command
+  diagnostics, cwd/home/registry path, provider payload와 Secret metadata를 generic notice에 넣지 않는다.
 
 ## 10. S0–S9 stage별 Dashboard deliverable과 acceptance
 
@@ -440,7 +459,103 @@ Acceptance:
 3. arbitrary target, rollback 부재, cross-context risk 또는 orphan worker가 1건이라도 있으면 E1/최근 accepted
    checkpoint로 rollback한다.
 
-## 11. 출시 전 공통 검증
+## 11. S0 product/UX gate resolution
+
+### 결정 요약
+
+| Gate | 제품 결정 | defer/owner 경계 |
+|---|---|---|
+| 15번째 `update_secret` | executable baseline은 15개다. `/settings` compatibility에서만 보존하고 target ownership은 Integrations, store recovery read는 System & Recovery다. | public v1 action table 정정은 Workbench docs owner; 새 area mutation은 S2/S3 gate |
+| action request size | 16 KiB를 normative v1 maximum으로 선택한다. 초과는 HTTP 413, fixed safe copy, service call 0이다. | error envelope field/code 이름을 새로 만들지 않으며 backend가 S1 handler/test를 소유 |
+| route/deep link | S1은 현재 route를 render하고 redirect/new alias를 만들지 않는다. target alias와 ID grammar는 capability acceptance 뒤다. | backend가 route handler, frontend가 route matrix/history/focus를 소유; S2/S3 전 URL parameter 금지 |
+| full refresh focus | 15초/manual/post-action refresh가 focus를 버리는 현재 동작은 S1 visible slice의 accessibility blocker다. | accepted S1 slice에서 stable existing DOM key만 사용; Core identity/deep-link는 만들지 않음 |
+| sensitive paths/errors | raw error detail은 절대 generic DOM에 render하지 않는다. project canonical path는 existing Project detail에서만 유지하고 새 shell/Today에는 복제하지 않는다. | path allowlist와 server redaction은 S2/S3 threat/contract owner; compatibility path 제거는 별도 migration |
+| six-area rollout | IA label은 한 번에 보이되 capability는 stage별 enable한다. unavailable Inbox와 compatibility-mapped areas를 정직하게 표시한다. | S1 shell은 새 domain data/action 0; S2/S3/S5 이후 각 capability 독립 promotion |
+
+### 선택한 smallest user-visible slice
+
+S1의 첫 frontend slice는 **focus-safe six-area compatibility shell** 하나다.
+
+- global nav에 Today, Inbox, Projects, Runs & Agents, Integrations, System & Recovery를 이 순서로 보인다.
+- Today=`/`, Projects=`/projects`, Runs & Agents=`/activity`, Integrations=`/settings`, System & Recovery=`/system`의
+  현재 view를 사용한다. Inbox는 `준비 중 · S2 필요`와 `aria-disabled=true`를 가진 focusable control이며
+  activation은 route/data/action을 만들지 않는다.
+- 모든 current route에 정확히 하나의 visible `h1`, active `aria-current=page`, generated/refresh state와
+  persistent failure summary를 제공한다. Guide는 primary six-area nav와 구분해 유지한다.
+- manual refresh는 Refresh button, background refresh는 현재 focused control, action refresh는 invoking control로
+  돌아간다. 같은 stable `id`/기존 `data-*` key의 enabled control이 사라졌으면 route `h1`에 focus하고
+  `이전 항목을 더 이상 사용할 수 없음`을 polite announce한다. DOM 위치나 label text만으로 대상을 추측하지 않는다.
+- compatibility Settings의 `update_secret` form과 나머지 v1 control은 현 위치·payload·confirmation을 유지한다.
+  새 nav에 destructive action을 추가하거나 control을 다른 owner area로 복제하지 않는다.
+- new shell과 notices는 stable ID/display name, capability와 safe fixed copy만 render한다. canonical project path는
+  기존 Project detail, exact recovery path/command는 명시적 System & Recovery disclosure에서만 허용한다.
+  worktree path, task CWD, Agent registry path, tmux current path/command와 raw diagnostics를 새 shell에 복제하지 않는다.
+
+이 slice는 새로운 Inbox/Today model이나 v2 API보다 먼저 구현할 수 있지만, 아래 backend evidence가 같은
+integration checkpoint에 없으면 release하지 않는다.
+
+### exact acceptance fixtures
+
+#### Backend/security evidence paired with the slice
+
+1. **15-action inventory:** fixture가 `open_project`, `attach_session`, `adopt_session`, `stop_session`,
+   `update_environment`, `update_profile`, `update_secret`, `start_agent`, `jump_agent`, `stop_agent`, `jump_task`,
+   `stop_task`, `clear_agent_history`, `jump_pane`, `run_workflow`를 정확히 한 번씩 인식하고, 16번째 unknown action과
+   unknown nested Secret field를 실행 전 거부한다. `update_secret` response/snapshot/notice에 submitted value,
+   raw `sec://` reference와 vault/identity path 출현은 0건이다.
+2. **body boundary:** allowlisted minimal action JSON 뒤에 JSON whitespace를 채운 exact 16,384-byte body는 typed
+   decode/service call 1회, 같은 body 16,385 bytes는 HTTP 413/service call 0회다. 초과 response body와 log에
+   request bytes, decoder string, Secret sentinel과 filesystem sentinel 출현은 0건이다.
+3. **redacted failure:** fake action error의 raw details에 `/home/alice/private`, `C:\\Users\\Alice\\private`,
+   `sec://github/token`, `TOKEN_SENTINEL`, command/stdout/stderr를 넣는다. Dashboard response의 user-facing
+   message/DOM/accessibility tree/title attribute에는 sentinel 0건이고 stable existing code와 fixed recovery copy만
+   나타난다.
+4. **v1 regression:** loopback, token, Origin, content type, strict unknown/trailing JSON, CSP/no-CORS/no-store,
+   argument arrays, current ownership revalidation, backup/partial-survivor와 all current GET/HEAD/method behavior가
+   계속 통과한다.
+
+#### Route, refresh and accessibility fixture
+
+1. S1에서 `/`, `/projects`, `/activity`, `/settings`, `/system`, `/guide`, `/guide/`, `/docs`, `/docs/`의 current
+   GET/HEAD가 유지되고
+   `/today`, `/inbox`, `/runs`, `/integrations`는 404다. navigation의 six labels와 current/planned copy가 이 사실과
+   모순되지 않는다.
+2. browser fixture는 `/activity?source=bookmark#task-detail`과 `/settings?source=bookmark#secrets`를 load/refresh한
+   뒤 `location.pathname/search/hash`가 byte-for-byte 같음을 확인한다. S3 `/runs`가 accepted된 fixture에서는
+   `/activity` rendered alias가 query/hash를 유지하고 같은 capability state를 보인다.
+3. focus matrix는 project button, task button, Refresh, Secret submit과 unavailable Inbox control 각각에서
+   manual, timer, success, failure refresh를 실행한다. target이 남으면 `document.activeElement` stable key가 같고,
+   target이 사라지면 route `h1`과 polite removal notice가 확인되며 focus가 `body`로 빠지는 경우는 0건이다.
+4. 각 route는 one visible `h1`, named landmarks/nav, active `aria-current`, unavailable reason, keyboard-only order,
+   visible focus와 no hover-only information을 가진다. failure summary는 persistent하고 focusable하며 field error와
+   programmatically 연결된다. current native constraint가 field를 특정할 수 없는 server error는 form-level
+   `aria-describedby`만 사용하고 field name을 추측하지 않는다.
+5. 360/768/1280 CSS px와 200% zoom, light/dark/system, reduced motion에서 body
+   `scrollWidth <= clientWidth`, content/focus loss 0, 44×44 px interactive target, body/form text 16 px 이상을
+   검증한다. 360px DOM order는 page title/status → primary action → filters/navigation → content → detail이다.
+
+### non-goals for this slice
+
+- `/today`, `/inbox`, `/runs`, `/integrations` handler, redirect, query parameter 또는 selected-object deep-link grammar.
+- Inbox/Today/Run object, Markdown/frontmatter, SQLite, `ActionPlan/ActionRun`, v2 envelope/field 또는 browser state store.
+- `update_secret` 이동/복제, provider account model, Secret recovery mutation 또는 raw credential/error/path 표시.
+- current destructive action의 새 navigation 노출, Orca/iTerm2/connector 구현, install/repair, automatic retry/fallback.
+- framework/build-system migration, remote asset, analytics, service worker, arbitrary command/path/prompt/argv/env input.
+
+### deferred questions and owner feedback
+
+- **PM:** S1 checkpoint는 이 slice와 backend evidence를 한 묶음으로 accept/stopped 처리하고 여섯 label의 존재를
+  여섯 capability 완료로 보고하지 않는다. `/activity` removal observation이 없으면 compatibility를 유지한다.
+- **Backend:** public v1 table을 15 actions로 정정하고 16 KiB/413/redaction tests를 소유한다. generic error
+  response에 raw `err.Error()`/details를 전달하지 않으며 route alias와 S1 recovery capability source를 결정한다.
+- **Frontend:** existing v1 payload를 바꾸지 않는 adapter 뒤에 navigation/focus/safe-notice seam을 둔다. label,
+  DOM order나 text로 focus identity를 만들지 않고 disabled Inbox activation과 raw error rendering을 막는다.
+- **Validation:** real browser harness에서 route/search/hash, timer/action focus matrix, accessibility tree sentinel,
+  360/768/1280+200% zoom과 44×44/16px를 실행한다. Node/Go-only 결과는 browser acceptance를 대체하지 않는다.
+- **Deferred to S2/S3:** stable object URL grammar, canonical path allowlist, structured error/recovery fields,
+  Settings split의 final route, profile/credential target view model과 alias retirement mechanism이다.
+
+## 12. 출시 전 공통 검증
 
 - unit/contract: Core owner, schema/version, unknown field, revision/idempotency, redaction, error/outcome fixture.
 - browser: keyboard, screen reader landmark/name, theme/contrast, reduced motion, zoom 200%, responsive screenshots.
