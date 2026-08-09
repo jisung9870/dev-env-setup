@@ -106,3 +106,55 @@
 - PM-owned files만 수정하고 planner/backend/frontend-owned 파일은 변경하지 않는다.
 - heading/link/required decision/stage mapping/23:30 rule과 PM-owned `git diff --check`를 검증해 통과했다.
 - backend/frontend task는 roadmap mapping의 underlying gate를 dependency로 사용해야 한다.
+
+## 2026-08-10 08:44 KST — S0 implementation gate review
+
+### Reviewed
+
+- `workbench/docs/core-contract-baseline.md`, `workbench/docs/dashboard-compatibility.md`, backend/frontend/planner
+  logs와 current Phase 0 plan을 검토했다.
+- current handler/service/assets/tests를 확인해 15-action executable baseline, request-size implementation,
+  existing route-only deep links와 focus rerender risk의 코드 근거를 대조했다.
+
+### Gate decision
+
+- **S0 accepted for S1 entry.** Architecture/Dashboard/roadmap decision, backend current-state inventory, frontend
+  compatibility gap report, S1–S3 dependency와 explicit file-owner map이 모두 존재한다.
+- 이것은 S1 recovery, S2 canonical data 또는 S3 client parity가 완료됐다는 뜻이 아니다. unresolved item은
+  owner와 acceptance가 지정된 첫 S1 compatibility slice 또는 후속 stage로만 이동한다.
+
+### Accepted, rejected, deferred
+
+- **Accepted:** executable action은 15개이고 `update_secret` public docs gap이 있다.
+- **Accepted decision:** total JSON action body를 16 KiB로 제한하고 >16 KiB를 mutation 전 413 stable error로
+  처리한다. 승인된 16 MiB use case는 발견되지 않았다.
+- **Accepted defect:** 15초 rerender/action reload focus loss를 current v1 frontend에서 bounded fix한다.
+- **Rejected now:** `/activity` redirect, `/settings` split/redirect, `/runs` 등 target alias 추가, 14-row table을
+  exhaustive라 주장, implemented 16 MiB limit을 evidence 없이 normative로 문서화.
+- **Deferred:** selected Project/Task URL grammar는 S2 stable ID 뒤 S3 application-service gate, target IA와
+  destructive action 재노출은 해당 capability/ownership gate까지 기다린다.
+
+### Selected first slice and ownership
+
+- Slice: **S1 v1 compatibility lock**; new IA/data/Orca behavior 없이 request limit, 15-action docs와 deterministic
+  focus만 닫는다.
+- Backend exclusive: `internal/dashboard/dashboard.go`, `dashboard_test.go`, `docs/dashboard.md`.
+- Frontend exclusive: `internal/dashboard/assets/app.js`, 필요한 최소 `index.html`/`style.css`, new
+  `internal/dashboard/testdata/focus_test.mjs`.
+- Final validator는 두 lane 뒤 Go dashboard/CLI tests, Node syntax/all tests, full test/vet/build와 root diff check를
+  실행한다. 자세한 success/stop/rollback/23:30 rule은 roadmap Section 7에 기록했다.
+
+### Orca communication
+
+- Backend owner `term_62e323ac-17ac-4043-b8b4-80bc9ccb4a0b`에 S0 acceptance, 16 KiB/15-action/route test와
+  exclusive file scope를 `msg_edcbe2ed60f2`로 보냈다.
+- Frontend owner `term_5c0b82de-4d83-4b3b-b902-1d09ba9acf65`에 focus-only slice, target alias 금지와 exclusive
+  asset/test scope를 `msg_022df5e6c195`로 보냈다.
+- Planner owner가 이미 release된 상태라 coordinator `term_01e597b5-cc85-460a-b67a-0e736f794dae`에 rendered
+  compatibility route/deep-link defer 결정을 `msg_2a61be0d45e6`로 보내 routing을 요청했다.
+
+### Files and validation
+
+- Modified only `plan/IMPLEMENTATION-ROADMAP.md` and `plan/agent-job/pm/log.md`.
+- No commit/push. PM-owned `git diff --check`, required heading/decision/owner/test/rollback/23:30 marker 검색과
+  referenced Workbench file existence 검증이 통과했다. workspace의 planner-owned 변경은 건드리지 않았다.

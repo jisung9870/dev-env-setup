@@ -103,6 +103,30 @@ acceptance에 포함한다. planner 명세가 화면과 interaction의 source이
   시작하지 않는다.
 - SQLite에 둘 operational state의 authority를 분류하지 못하면 schema implementation을 시작하지 않는다.
 
+#### 2026-08-10 S0 implementation gate 판정
+
+**판정: ACCEPTED — S1 진입 허용, S1/S2/S3 완료를 의미하지 않음.**
+
+근거는 `workbench/docs/core-contract-baseline.md`와 `workbench/docs/dashboard-compatibility.md`가 current API,
+store/runtime authority, 15개 executable action, route/deep-link, sensitive DOM, accessibility/responsive gap,
+S1–S3 fixture와 zero-overlap file-owner map을 current/planned로 분리해 기록했고, backend/frontend baseline test가
+통과했다는 것이다. 남은 불일치는 owner와 stage를 지정할 수 있으므로 S0 blocker가 아니라 아래 첫 S1 slice와
+후속 gate로 이동한다.
+
+| finding | 판정 | resolution/owner |
+|---|---|---|
+| executable Dashboard action은 15개이며 `update_secret`이 public 14-row table에서 빠짐 | **accepted fact** | backend docs owner가 첫 slice에서 table을 15개로 정렬하고 existing typed/redaction tests를 보존한다. |
+| code는 약 16 MiB+64 KiB, docs/Guide는 16 KiB request limit | **16 KiB 선택** | total JSON body hard limit를 16 KiB로 code/docs/test에서 일치시킨다. 현재 action은 typed metadata/single Secret field이며 16 MiB payload의 승인된 use case가 없다. |
+| `/activity`, `/settings`를 지금 redirect/target alias로 변경 | **rejected for first slice** | 두 route는 S3 compatibility window까지 rendered route로 유지한다. `/docs`만 현행 Guide alias로 유지하며 `/runs` 등 target route를 오늘 추가하지 않는다. |
+| current selected Project/Task deep link | **deferred** | current contract는 route-only다. stable object ID/URL grammar는 S2 schema 뒤 S3 application service가 소유한다. query/fragment를 새 meaning으로 추측하지 않는다. |
+| 15초 rerender와 action reload가 focus를 잃음 | **accepted S1 defect** | frontend가 current v1 DOM 안에서 stable focus key/restore fallback과 regression test만 추가한다. target navigation/state는 만들지 않는다. |
+| `/settings` split, `/activity`→`/runs`, destructive action 재노출 | **deferred** | S2/S3 capability, owner와 migration fixture 전에는 compatibility UI를 유지한다. |
+
+16 KiB는 request 전체의 UTF-8 byte 수(`16 << 10`)다. 초과 요청은 service mutation 전 HTTP 413과 stable
+`ACTION_BODY_TOO_LARGE`를 반환한다. 유효한 16 KiB 이하 JSON은 기존 typed decoder를 통과하며 unknown/trailing
+field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Secret/typed action 요구가 fixture로
+발견되면 16 MiB로 자동 회귀하지 않고 Secret transport와 storage threat review를 별도 decision gate로 연다.
+
 ### S1 — trust foundation와 recovery shell
 
 **목표:** 새 domain 전에 설치, native recovery와 검증 조합을 신뢰할 수 있게 한다.
@@ -447,15 +471,100 @@ checkpoint ID
 중단 시 최근 accepted checkpoint로 돌아가고, Dashboard와 CLI에는 degraded/support tier와 manual recovery를
 동시에 표시한다.
 
-## 7. immediate next task wave
+## 7. first implementation slice — S1 v1 compatibility lock
 
-S0 이후 첫 implementation wave는 다음 순서다.
+**목표:** 오늘 전달할 첫 bounded slice는 새 IA나 data model이 아니라, 현행 Dashboard의 security/documentation
+불일치와 focus 회귀를 닫아 S1 shell을 올릴 수 있는 안정된 v1 기준선을 만드는 것이다.
 
-1. **Planner/root:** S1 profile/verified-manifest/restore contract와 repository change map.
-2. **Backend/Workbench:** S2 Markdown/O1 journal/projection prototype 및 migration/rebuild fixtures.
-3. **Frontend/Workbench:** S0 current routes를 S2/S3 IA로 mapping하고 parity test harness 계약 작성.
-4. **Validation:** WSL/macOS smoke matrix, clean HOME/dirty child/corrupt state/restore fixtures.
+**Dependencies:** S0 accepted. S1 root verified-manifest, S2 Markdown/SQLite와 S3 ActionPlan/ActionRun에는 의존하지
+않으며 그 기능을 선행 구현하지 않는다.
 
-S2 schema contract가 accepted되기 전에는 backend와 frontend가 concrete field names를 각각 확정하지 않는다.
-S1 recovery gate와 S2 data gate가 모두 통과하기 전에는 GitHub adapter 또는 Orca E1 implementation을 시작하지
-않는다.
+### Backend deliverable — exclusive files
+
+Owner는 backend 한 명이며 다음 file만 수정한다.
+
+- `workbench/internal/dashboard/dashboard.go`: `maxActionBody = 16 << 10`; `*http.MaxBytesError`를 mutation 전
+  413/`ACTION_BODY_TOO_LARGE`로 normalize한다.
+- `workbench/internal/dashboard/dashboard_test.go`: valid-at-limit/one-byte-over-limit, service-not-called,
+  unknown/trailing JSON, `/activity`·`/settings`·`/docs`와 query-bearing current-route regression을 추가한다.
+- `workbench/docs/dashboard.md`: `update_secret`을 포함한 15-action table과 16 KiB total-body contract를 code와
+  일치시킨다.
+
+`internal/cli/dashboard.go`, target route, schema-v2, root setup과 embedded frontend asset은 이 backend slice에서
+수정하지 않는다. `/activity`와 `/settings`는 redirect하지 않고 현재 page를 계속 render하며 query는 새
+domain meaning으로 해석하지 않는다.
+
+### Frontend deliverable — exclusive files
+
+Owner는 frontend 한 명이며 backend lane과 병렬로 다음 file만 수정한다.
+
+- `workbench/internal/dashboard/assets/app.js`: refresh/action reload 직전 focused control의 stable key를 잡고,
+  rerender 뒤 같은 enabled control이 존재하면 복원한다. 대상이 사라졌거나 disabled이면 destructive/인접
+  control을 추측하지 않고 현재 route의 visible `h1`로 이동한다.
+- `workbench/internal/dashboard/assets/index.html`과 `style.css`: stable focus key와 visible/focusable route `h1`에
+  필요한 최소 markup/style만 수정한다. navigation label, target route와 state owner는 바꾸지 않는다.
+- `workbench/internal/dashboard/testdata/focus_test.mjs`: scheduled refresh, action success/failure reload, removed
+  target, disabled target과 route fallback을 검증한다. 기존 theme/Guide/context tests를 재사용한다.
+
+Go handler/service/test와 `docs/dashboard.md`는 frontend가 수정하지 않는다. selected-object URL/deep-link,
+`/runs`, `/integrations`, `/today`, `/settings` split, common v2 state renderer는 이 slice에 포함하지 않는다.
+
+### Integration order와 test gate
+
+두 lane은 file이 겹치지 않으므로 병렬 작업할 수 있다. final validation owner는 두 lane이 stable해진 뒤 한 번만
+통합 검증하며, 실패를 고치기 위해 다른 owner file을 즉시 수정하지 않고 원 owner에게 반환한다.
+
+```bash
+cd workbench
+go test ./internal/dashboard ./internal/cli
+node --check internal/dashboard/assets/app.js
+node --test internal/dashboard/testdata/*.mjs
+go test ./...
+go vet ./...
+go build ./cmd/wb
+cd ..
+git diff --check
+```
+
+**Success criteria**
+
+1. 16 KiB 이하의 유효 request는 기존 action contract를 유지하고 16 KiB 초과는 service call/side effect 없이
+   413/`ACTION_BODY_TOO_LARGE`가 된다.
+2. public action table과 executable dispatch/test inventory가 15개로 일치하며 `update_secret` plaintext가
+   response, log, snapshot에 나타나지 않는다.
+3. `/activity`, `/settings`, `/docs`와 query-bearing request가 기존 content/status를 유지하고 target route는
+   새로 생기지 않는다.
+4. scheduled refresh와 action reload 뒤 focus가 같은 enabled control 또는 route `h1` 중 하나에 결정적으로
+   남고 destructive sibling으로 이동하지 않는다.
+5. 위 Go/Node/full-module/static gate가 모두 통과하고 backend/frontend file overlap이 0이다.
+
+**Stop criteria**
+
+- 기존 approved action 중 16 KiB 초과가 필요한 실제 fixture가 나오면 limit change를 멈추고 별도 security
+  gate로 보낸다. 임의로 16 MiB를 유지하거나 per-action 예외를 만들지 않는다.
+- focus 보존에 browser-owned domain state, selected-object URL grammar, full render rewrite 또는 backend schema가
+  필요하면 frontend lane을 중단하고 S2/S3로 defer한다.
+- 한 lane이 다른 owner file을 요구하거나 v1 stable error/deep link/security test를 깨면 integration을 멈춘다.
+- target navigation, root recovery card, Markdown/SQLite, Orca adapter 또는 Agent mutation으로 scope가 넓어지면
+  slice를 reject한다.
+
+**Rollback**
+
+- data migration, provider call과 external side effect가 없으므로 backend와 frontend lane을 독립적으로 S0
+  checkpoint content로 되돌릴 수 있다.
+- backend rollback은 limit constant/error mapping/test/docs를 함께 되돌려 code/docs drift를 남기지 않는다.
+- frontend rollback은 focus helper/markup/test를 함께 되돌리고 current full-rerender behavior를 known gap으로
+  복원한다. 한 lane만 accept할 때도 다른 lane의 문서 claim을 미리 바꾸지 않는다.
+
+**23:30 checkpoint**
+
+- 23:15 KST 이후 새 file/scope를 열지 않는다. 각 lane은 changed files, test 결과, known gap과 rollback을 log에
+  남긴다.
+- 23:30 KST에 둘 다 green이면 `accepted`, 한 lane만 green이면 그 lane만 `accepted`하고 다른 lane은
+  `in-progress-safe` 또는 `rolled-back`으로 기록한다. 부분 상태를 S1 완료로 표시하지 않는다.
+- 23:30 이후에는 read-only diff/test evidence와 handoff만 허용하며 limit 또는 focus 구현을 새 방식으로
+  재시도하지 않는다.
+
+이 slice 뒤의 다음 순서는 S1 root profile/verified-manifest/recovery, S2 canonical schema/journal/projection,
+S3 shared application service다. S2 schema contract가 accepted되기 전 backend/frontend가 concrete v2 field를
+각자 고정하지 않으며, S1 recovery와 S2 data gate 전에는 GitHub adapter 또는 Orca E1을 시작하지 않는다.
