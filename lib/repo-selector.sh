@@ -60,7 +60,7 @@ wb_selector_add_unique() {
 }
 
 wb_selector_detect_platform() {
-  local uname_s="${1:-}" uname_r="${2:-}" wsl_interop="${3:-${WSL_INTEROP:-}}"
+  local uname_s="${1:-}" uname_r="${2:-}" wsl_interop="${3-${WSL_INTEROP:-}}"
   [ -n "$uname_s" ] || uname_s="$(uname -s 2>/dev/null || true)"
   [ -n "$uname_r" ] || uname_r="$(uname -r 2>/dev/null || true)"
   if [ -n "$wsl_interop" ] || printf '%s' "$uname_r" | grep -qi microsoft; then

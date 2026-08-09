@@ -315,8 +315,8 @@ data = json.load(open(sys.argv[1], encoding="utf-8"))
 assert data["schema_version"] == 1
 assert data["data"]["summary"]["unavailable_core"] == 0
 PY
-projects_mode="$(stat -f '%Lp' "$XDG_CONFIG_HOME/workbench/projects.toml")"
-agents_mode="$(stat -f '%Lp' "$XDG_STATE_HOME/workbench/agents.json")"
+projects_mode="$(stat -c '%a' "$XDG_CONFIG_HOME/workbench/projects.toml" 2>/dev/null || stat -f '%Lp' "$XDG_CONFIG_HOME/workbench/projects.toml")"
+agents_mode="$(stat -c '%a' "$XDG_STATE_HOME/workbench/agents.json" 2>/dev/null || stat -f '%Lp' "$XDG_STATE_HOME/workbench/agents.json")"
 [ "$projects_mode" = 600 ] && [ "$agents_mode" = 600 ] || die "state permissions are projects=$projects_mode agents=$agents_mode"
 "$WB" projects remove alpha >/dev/null
 [ -d "$project" ] || die 'project registry removal deleted repository'
