@@ -1,15 +1,24 @@
 # dev-env-setup
 
-여러 장비에서 **동일한 개인 개발 환경**을 재현하는 오케스트레이션 레이어.
+여러 장비에서 **개인 환경과 업무 흐름을 재현하고 이어가는 local-first 운영 기반**.
 
-이 환경의 제품 방향은 **terminal-first 개인 개발환경 운영 콘솔**이다. tmux와 LazyVim이 계속
-주 작업 공간을 맡고, binbox(`bb`)는 자주 쓰는 명령을 제공하는 toolbox로 유지한다. Workbench
-Core는 프로젝트·작업 상태와 관찰 결과를 정규화하고, Dashboard는 전체 현황과 복귀 지점을 보여주는
-operations console이다. Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의 기본 흐름은
-계속 동작해야 한다.
+이 환경의 제품 방향은 **terminal-first 개인 운영 환경**이다. 개발 작업을 출발점으로 문서, 계획,
+정보 수집, 반복 업무, 자동화와 외부 서비스 연동을 한 흐름에서 연결하되 원본 도구와 데이터의 소유권은
+보존한다. tmux와 LazyVim이 계속 주 작업 공간을 맡고, binbox(`bb`)는 운영 toolbox로 유지한다.
+Workbench Core는 프로젝트·작업·실행 상태와 관찰 결과를 정규화하고, Dashboard는 현황과 복귀 지점을
+보여주는 보조 operations console이다. Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의
+기본 흐름은 계속 동작해야 한다.
 
-장기 제품 비전은 개발환경 재현을 기반으로 개인 업무와 개발을 연결하는 나만의 도구 플랫폼이다. MCP
-server catalog, client 설정 배포, health와 access 정책은 새 기획에서 검토 중이며 현재 구현 기능은 아니다.
+장기 제품 비전은 개발환경 재현을 기반으로 개인 업무와 개발을 연결하는 나만의 통합 도구다. MCP,
+직접 API, webhook, 파일과 Git은 교체 가능한 연동 방식이며 어느 하나도 제품의 필수 기반으로 두지 않는다.
+Agent 관리와 multi-agent orchestration은 Orca 같은 외부 backend 연동을 먼저 검증하고, 공통 상태·정책이
+반복적으로 필요할 때만 제한된 자체 기능을 검토한다. 이 장기 영역들은 현재 구현 기능이 아니다.
+
+제품 기획의 첫 지원 기준은 WSL primary Tier-1과 macOS 병행 검증이다. 일반 설치는 Workbench를 포함한
+`workbench` profile을 기본으로 하고, 최소 설치·복구에는 명시적 `terminal` profile을 둔다. 사용자 작성
+정보는 Markdown을 원본으로, SQLite는 재구축 가능한 검색·실행 index로 사용한다. 외부 연동은 GitHub와
+Slack의 read-only 흐름부터 시작하며, 여러 장비 보존은 private GitHub history와 암호화된 OneDrive
+backup을 역할별로 분리하는 방향이다. 세부 내용은 [제품 기획서](plan/PRODUCT-PLAN.md)를 따른다.
 
 통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
 Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.

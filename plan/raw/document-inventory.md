@@ -30,6 +30,21 @@
 
 이 자료는 당시 판단과 구현 이력을 보존하지만 현행 source of truth가 아니다.
 
+## 2026-08-10 멀티 에이전트 조사 추가
+
+활성 `raw/`에 아래 조사 원문과 통합 판단을 추가했다.
+
+- `product-strategy-research.md`
+- `user-scenarios-and-features.md`
+- `technical-integration-security.md`
+- `prioritization-and-roadmap.md`
+- `agent-management-orchestration.md`
+- `synthesis-and-decisions.md`
+
+`PRODUCT-PLAN.md`와 `plan/README.md`는 이 조사를 반영한 현행 문서다. 기존
+`plan/archive/2026-08-10-plan-v1/` 이동은 이미 완료되어 있으며, 이번 검토에서 활성 영역에 남은 추가
+완료 계획은 발견되지 않았다. `WORKBENCH-PLAN.md`는 호환 링크이므로 archive 대상이 아니다.
+
 ## 별도 archive
 
 - `archive/04-implementation-roadmap.md`: 초기 Phase 구현 이력
