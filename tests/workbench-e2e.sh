@@ -49,6 +49,9 @@ cat >"$RUN_DIR/bin/tmux" <<'TMUX'
 set -u
 state="${FAKE_TMUX_STATE:?}"
 mkdir -p "$state"
+sessions_file="$state/sessions"
+slug() { printf '%s' "$1" | tr -c 'A-Za-z0-9' '_'; }
+target_name() { name="${1#=}"; name="${name%:}"; printf '%s' "$name"; }
 case "${1:-}" in
   -V)
     if [ "${FAKE_TMUX_MODE:-}" = hung ]; then
@@ -66,11 +69,45 @@ case "${1:-}" in
       printf 'SUCCESS but provider failed\n'
       exit 7
     fi
+    session_name="${4:-}"
+    printf '%s\n' "$session_name" >>"$sessions_file"
+    printf '%s\n' "${6:-}" >"$state/start-$(slug "$session_name")"
+    ;;
+  kill-session)
+    session_name="$(target_name "${3:-}")"
+    if [ -f "$sessions_file" ]; then
+      grep -Fxv "$session_name" "$sessions_file" >"$sessions_file.tmp" || true
+      mv "$sessions_file.tmp" "$sessions_file"
+    fi
+    ;;
+  list-sessions)
+    [ -f "$sessions_file" ] || exit 0
+    while IFS= read -r line; do
+      [ -n "$line" ] || continue
+      printf '%s\t0\t1\n' "$line"
+    done <"$sessions_file"
+    ;;
+  list-panes)
+    session_name="$(target_name "${3:-}")"
+    start_file="$state/start-$(slug "$session_name")"
+    [ -f "$start_file" ] && cat "$start_file"
+    ;;
+  show-options)
+    session_name="$(target_name "${4:-}")"
+    option_file="$state/opt-$(slug "$session_name")-$(slug "${5:-}")"
+    [ -f "$option_file" ] && cat "$option_file"
     ;;
   new-window) printf '%%42\n' ;;
   set-option)
     if [ "${5:-}" = '@workbench_task_id' ]; then
       printf '%s\n' "${6:-}" >"$state/pane-task"
+    else
+      case "${4:-}" in
+        @workbench_*)
+          session_name="$(target_name "${3:-}")"
+          printf '%s\n' "${5:-}" >"$state/opt-$(slug "$session_name")-$(slug "${4}")"
+          ;;
+      esac
     fi
     ;;
   display-message) cat "$state/pane-task" ;;
@@ -180,16 +217,31 @@ tasks = data["data"]["agents"]
 assert len(tasks) == 1 and tasks[0]["id"] == sys.argv[2]
 assert tasks[0]["state"] == "running" and tasks[0]["state_source"] == "registry"
 PY
-printf 'wrong-owner\n' >"$FAKE_TMUX_STATE/pane-task"
-expect_exit 4 "$WB" agents jump "$task_id"
-printf '%s\n' "$task_id" >"$FAKE_TMUX_STATE/pane-task"
 "$WB" agents jump "$task_id" >/dev/null
 "$WB" agents stop "$task_id" >/dev/null
 [ -f "$FAKE_TMUX_STATE/killed" ] || die 'agent stop did not target registered pane'
 pass 'Agent registry enforces pane ownership across start/list/jump/stop'
 
+"$WB" agents start alpha --agent codex --backend tmux >"$RUN_DIR/agent-drift.txt"
+drift_id="$(awk 'NR==1 {print $2}' "$RUN_DIR/agent-drift.txt")"
+case "$drift_id" in task-*) ;; *) die "invalid drift task ID: $drift_id" ;; esac
+printf 'wrong-owner\n' >"$FAKE_TMUX_STATE/pane-task"
+expect_exit 4 "$WB" agents jump "$drift_id"
+printf '%s\n' "$drift_id" >"$FAKE_TMUX_STATE/pane-task"
+"$WB" agents list --project alpha --json >"$RUN_DIR/agents-drift.json"
+python3 - "$RUN_DIR/agents-drift.json" "$drift_id" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+tasks = {task["id"]: task for task in data["data"]["agents"]}
+drift = tasks[sys.argv[2]]
+assert drift["state"] == "completed", drift["state"]
+PY
+expect_exit 4 "$WB" agents jump "$drift_id"
+expect_exit 4 "$WB" agents stop "$drift_id"
+pass 'pane ownership drift reconciles the task to completed and refuses jump and stop'
+
 expect_exit 1 env FAKE_TMUX_MODE=misleading "$WB" open alpha --backend tmux
-grep -Fq 'SUCCESS but provider failed' "$RUN_DIR/last.stdout" || die 'misleading provider fixture did not execute'
+grep -Fq 'create tmux session: exit status 7' "$RUN_DIR/last.stderr" || die 'misleading provider fixture did not execute'
 pass 'SUCCESS-looking output with non-zero exit remains failure'
 
 FAKE_TMUX_MODE=hung python3 - "$WB" <<'PY'
