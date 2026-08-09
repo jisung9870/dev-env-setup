@@ -8,6 +8,9 @@ Core는 프로젝트·작업 상태와 관찰 결과를 정규화하고, Dashboa
 operations console이다. Workbench가 없거나 Dashboard를 열지 않아도 tmux·LazyVim·`bb`의 기본 흐름은
 계속 동작해야 한다.
 
+장기 제품 비전은 개발환경 재현을 기반으로 개인 업무와 개발을 연결하는 나만의 도구 플랫폼이다. MCP
+server catalog, client 설정 배포, health와 access 정책은 새 기획에서 검토 중이며 현재 구현 기능은 아니다.
+
 통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
 Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
 

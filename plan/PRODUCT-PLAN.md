@@ -1,6 +1,6 @@
 # Setup 제품 기획서
 
-> 상태: **공동 검토용 v0.1**
+> 상태: **공동 검토용 v0.2**
 > 기준일: 2026-08-10
 > 근거: [raw/](raw/)
 > 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
@@ -10,19 +10,40 @@
 
 ## 1. 제안하는 제품 정의
 
-**Setup은 여러 장비에서 프로젝트 작업을 안전하게 시작하고, 이어가고, 복구하게 해주는
-terminal-first 개인 개발환경 운영 시스템이다.**
+**Setup은 여러 장비에서 개인 업무와 개발 작업을 안전하게 시작하고, 이어가고, 확장하게 해주는
+나만의 terminal-first 업무·개발 도구 플랫폼이다.**
 
-단순 설치 저장소보다 넓고, 범용 IDE나 팀 control plane보다 좁다. tmux·LazyVim·binbox를 실제 작업
-도구로 유지하고, root setup은 재현성과 호환성을, Workbench는 구조화된 상태와 복귀를 담당한다.
+개발환경 재현은 기반이고 최종 목적은 아니다. 그 위에서 프로젝트와 작업 맥락을 이어가고,
+Codex·Claude·에디터·업무 서비스를 일관된 정책으로 연결하는 개인용 도구를 만든다. 범용 IDE나 팀
+control plane보다 좁고 개인 워크플로에 맞게 진화한다. tmux·LazyVim·binbox는 실제 작업 도구,
+root setup은 재현성과 호환성, Workbench는 구조화된 상태·복귀·통합 관리를 담당한다.
 
 ### 검토가 필요한 대안
 
 | 선택 | 장점 | 비용 | 초안 의견 |
 |---|---|---|---|
 | A. 설치·dotfiles 관리 도구 | 범위가 작고 이해가 쉬움 | 이미 구현된 상태·Dashboard 기능을 주변 기능으로 만듦 | 현재 구현보다 너무 좁음 |
-| B. 개인 개발환경 운영 시스템 | 설치부터 일상 작업·복구까지 하나의 사용자 여정으로 설명 | 저장소 간 제품 계약을 명확히 해야 함 | **권장 초안** |
+| B. 개인 업무·개발 도구 플랫폼 | 환경 재현부터 작업·도구 통합까지 하나의 사용자 여정으로 설명 | 개인 워크플로에 맞춘 명확한 제품 경계가 필요 | **사용자 방향 확인** |
 | C. Workbench 중심 IDE | 단일 제품 메시지가 강함 | terminal 독립성과 기존 도구의 장점을 약화 | 근거 부족 |
+
+### 장기 비전 — MCP 관리
+
+MCP는 이 제품이 관리할 수 있는 자연스러운 통합 영역이다. 목표는 모든 요청을 가로채는 거대한 MCP
+proxy가 아니라, 개인 환경에서 사용하는 MCP server와 client 연결을 안전하고 재현 가능하게 관리하는
+control plane이다.
+
+| 관리 대상 | 제품이 제공할 수 있는 가치 |
+|---|---|
+| Catalog | 사용 중인 MCP server, 제공 tool/resource, 지원 client 목록 |
+| Lifecycle | 설치, update, enable/disable, version compatibility |
+| Configuration | Codex·Claude·에디터별 설정을 하나의 선언에서 안전하게 파생 |
+| Health | executable, transport, handshake, capability와 최근 실패 진단 |
+| Access | Secret 값 대신 reference, 환경별 scope, 최소 권한과 명시적 승인 |
+| Audit | 어떤 client가 어떤 server를 사용하도록 설정됐는지 metadata 기록 |
+
+MCP tool 호출 내용 전체를 저장하거나, 모든 Secret을 중앙화하거나, 임의 server를 검증 없이 자동
+설치하는 것은 기본 범위가 아니다. root setup은 설치·배포, Workbench는 registry·health·정책·상태,
+각 client는 실제 MCP 연결과 사용자 승인 UI를 담당하는 구성이 유력하다.
 
 ## 2. 대상 사용자
 
@@ -65,6 +86,11 @@ cross-build와 fixture test는 강하지만 실제 macOS/cmux, Windows/WSL, 별�
 완료 로그, 현재 계약, 미래 아이디어가 같은 문서에 누적되면서 “지금 무엇이 사실이고 다음 결정이
 무엇인지” 찾기 어려워졌다.
 
+### P6. AI·업무 도구 통합 설정의 분산
+
+Codex, Claude, 에디터와 업무 서비스가 각자 MCP 설정, credential 경계, 설치 방식과 health 진단을
+가지면 장비마다 같은 통합을 재현하고 문제 원인을 찾기 어렵다.
+
 ## 4. 사용자 가치 제안
 
 1. **한 번에 준비한다** — 새 장비에서 저장소, 링크, 설정의 상태를 예측 가능하게 만든다.
@@ -73,6 +99,7 @@ cross-build와 fixture test는 강하지만 실제 macOS/cmux, Windows/WSL, 별�
 4. **실패를 숨기지 않는다** — provider 출력, exit code, partial/optional 상태와 복구 지침을 보존한다.
 5. **기존 도구를 존중한다** — tmux·LazyVim·binbox를 Workbench 장애와 무관한 독립 작업 경로로 유지한다.
 6. **위험한 작업을 제한한다** — typed action, ownership 재검증, 명시적 확인을 기본값으로 둔다.
+7. **도구 연결을 재현한다** — MCP server와 client 설정·health·권한을 장비마다 같은 원칙으로 관리한다.
 
 ## 5. 제품 원칙 초안
 
@@ -84,6 +111,7 @@ cross-build와 fixture test는 강하지만 실제 macOS/cmux, Windows/WSL, 별�
 - platform 지원은 실제 장비에서 증명한 수준으로 표현한다.
 - Secret과 환경 값은 metadata와 plaintext 경계를 분리한다.
 - 새 추상화는 반복되는 실제 사용 사례가 확인된 뒤 만든다.
+- MCP는 catalog·configuration·health·access를 관리하되 불투명한 범용 proxy가 되지 않는다.
 - 문서는 현재 사실, 제품 결정, 완료 이력을 분리한다.
 
 ## 6. 제품 구성 초안
@@ -99,6 +127,8 @@ flowchart LR
     R -.-> C["cmux-config (macOS optional)"]
     W --> S["project · environment · session · worktree · Task state"]
     W --> P["shell · tmux · cmux · Windows Terminal providers"]
+    W --> M["MCP catalog · config · health · access"]
+    M --> A["Codex · Claude · editor · 업무 서비스"]
     C --> B
     C --> W
 ```
@@ -111,6 +141,7 @@ flowchart LR
 | Workbench Core | project·environment·session·worktree·Task의 구조화 state와 안전한 action | 임의 shell과 모든 provider 대체 |
 | Dashboard | 로컬 상태 이해, 복귀, 제한된 typed operation | 외부 공개 UI와 Secret plaintext 관리 |
 | cmux-config | macOS 선택 client/backend | cross-platform 필수 runtime |
+| MCP Management | server catalog, client config 파생, health, access policy | 모든 tool 호출 중계와 Secret 중앙화 |
 
 ### 가장 큰 미결정
 
@@ -150,6 +181,11 @@ project/worktree 선택 → Codex/Claude 시작 → stable ownership 저장 → 
 doctor/overview 확인 → core와 optional provider 구분 → backend diagnostics 확인 → 수동 독립 경로 또는
 backup으로 복구.
 
+### Journey G — MCP 도구 연결
+
+필요한 capability 선택 → 검증된 server 확인 → 설치·Secret reference 연결 → 대상 client 설정 생성 →
+handshake/health 확인 → 필요 시 client별 disable 또는 rollback.
+
 ## 8. 성공 기준 초안
 
 정량 telemetry를 새로 수집하기 전에는 대표 여정의 완주와 복구 가능성을 기준으로 한다.
@@ -162,6 +198,7 @@ backup으로 복구.
 | 실패 투명성 | backend command, exit code, stdout/stderr 또는 명확한 unavailable 이유 제공 |
 | 독립성 | Workbench/Dashboard가 없어도 합의한 terminal 기본 흐름 동작 |
 | 안전 | 외부 worktree, observed process, foreign session, Secret plaintext를 임의 변경·노출하지 않음 |
+| 통합 | 같은 MCP 선언에서 대상 client별 설정을 생성하고 Secret 평문 없이 health를 확인 |
 | 문서 | 현행 진입점에서 5분 안에 현재 상태, 다음 결정, 검증 범위를 찾을 수 있음 |
 
 향후 실제 사용 데이터가 필요하다면 command 내용이 아니라 기능 category, 성공/실패, primary/fallback,
@@ -173,10 +210,11 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 
 ### Workstream 1 — 제품 경계 합의
 
-- 제품 정의 A/B/C 선택
+- 사용자 확인 방향을 “개인 업무·개발 도구 플랫폼” 문장과 범위로 확정
 - Workbench required/optional/profile별 정책 선택
 - 지원 platform tier 결정
 - 독립 terminal 경로의 보장 범위 결정
+- MCP 관리가 소유할 catalog·configuration·health·access 경계 결정
 
 완료 조건: 이 문서의 미결정 표가 합의된 결정으로 바뀐다.
 
@@ -186,6 +224,7 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 - root README, dependencies, child docs의 owner 정리
 - toolchain prerequisite 발견성과 오류 메시지 점검
 - 지원 주장과 platform selector 일치
+- 현재 Codex·Claude·에디터의 MCP server/config/Secret 경계를 raw inventory로 수집
 
 완료 조건: clean checkout에서 selection, bootstrap, doctor의 결과가 문서와 일치한다.
 
@@ -196,6 +235,7 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 - managed/observed Agent 흐름
 - binbox 인프라 workflow
 - Dashboard가 실제 기본 경로인지 보조 경로인지 관찰
+- MCP server 하나를 두 client에 연결·검증·disable·rollback하는 대표 흐름
 
 완료 조건: 대표 흐름별 성공·불편·fallback 사용 근거가 raw에 기록된다.
 
@@ -221,7 +261,7 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 
 | 번호 | 질문 | 초안 선택 | 상태 |
 |---:|---|---|---|
-| D1 | 제품 정의 | 개인 개발환경 운영 시스템 | 사용자 검토 필요 |
+| D1 | 제품 정의 | 개인 업무·개발 도구 플랫폼 | **사용자 방향 확인** |
 | D2 | Workbench 설치 정책 | profile별 required/optional | 사용자 검토 필요 |
 | D3 | 첫 지원 platform | Linux + WSL, macOS는 tmux/cmux 분리 | 사용자 검토 필요 |
 | D4 | native Windows | core build target과 full setup 지원을 분리 | 사용자 검토 필요 |
@@ -229,6 +269,7 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 | D6 | 중복 경로 목표 | 제거보다 owner/fallback 명확화 우선 | 사용자 검토 필요 |
 | D7 | Dashboard 위치 | 기본 작업공간이 아닌 ops/resume 보조 UI | 사용자 검토 필요 |
 | D8 | 다음 구현 | 결정과 실제 사용 관찰 전 기능 추가 보류 | 사용자 검토 필요 |
+| D9 | MCP 관리 범위 | catalog·config·health·access control plane | 사용자 검토 필요 |
 
 ## 11. 위험과 대응
 
@@ -239,15 +280,18 @@ timestamp만 로컬에 기록하는 방식을 검토한다.
 | platform 지원 과장 | 장비별 설치 실패 | tier와 실제 smoke 증거 공개 |
 | local state schema drift | 이전 task/config 손실 | version, backup, migration, fail-closed |
 | Dashboard 권한 확대 | 임의 실행 또는 Secret 노출 | loopback/token/typed action 유지 |
+| MCP 설정 생성이 client 로컬 설정을 덮음 | 기존 연결과 사용자 수정 손실 | dry-run, owned block, backup, client별 rollback |
+| 검증되지 않은 MCP server 공급망 | credential·업무 데이터 노출 | allowlist, version pin, 최소 권한, explicit enable |
 | 문서 재누적 | 다시 source of truth 불명확 | raw/plan/archive 역할과 owner 유지 |
 
 ## 12. 이번 공동 작성의 다음 대화
 
-먼저 D1~D3을 확정한다.
+D1의 장기 방향은 “개인 업무·개발 도구 플랫폼”으로 확인됐다. 다음은 D2, D3, D9을 구체화한다.
 
-1. “개인 개발환경 운영 시스템”이라는 제품 정의가 원하는 방향과 맞는가?
-2. Workbench는 모든 기본 profile에서 필수여야 하는가?
-3. 가장 먼저 완성도를 증명할 실제 장비 조합은 무엇인가?
+1. Workbench는 모든 기본 profile에서 필수여야 하는가?
+2. 가장 먼저 완성도를 증명할 실제 장비 조합은 무엇인가?
+3. 첫 MCP 관리 범위는 catalog·설정 생성·health까지로 제한할지, enable/disable과 version update까지
+   포함할지?
 
-답이 정해지면 이 문서의 초안 표시를 갱신하고 Workstream 1의 완료 기준을 구체화한다. 그 전에는
+답이 정해지면 Workstream 1의 완료 기준과 첫 MCP inventory 범위를 구체화한다. 그 전에는
 기존 backlog를 새로운 Phase 번호로 확정하지 않는다.
