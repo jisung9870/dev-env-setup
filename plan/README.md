@@ -1,140 +1,47 @@
-# Personal Workbench 계획 패키지
+# Setup 제품 기획
 
-- 상태: **Phase 0~5 구현 완료, Phase 5 이후 추가 구현 반영, Phase 6 다음**
-- 최종 갱신일: 2026-08-10
-- 기준 구현: workbench `10347a9`
-- 독자: 현재 대화나 이전 장비의 context가 전혀 없는 사람 또는 AI Agent
-- 목표: 이 디렉터리만 읽고 Personal Workbench 구현을 안전하게 이어갈 수 있게 한다.
+이 디렉터리는 `dev-env-setup`과 네 개의 관리 저장소를 하나의 제품으로 다시 정의하기 위한
+기획 공간이다.
 
-## 지금 알아야 할 결론
+- 상태: **공동 작성 초안**
+- 기준일: 2026-08-10
+- 현재 구현 기준: root `99f5c9f`, workbench `10347a9`, binbox `682e018`,
+  nvim `d25dbfe`, cmux-config `f5e5195`
+- 현재 기획서: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
+- 사실 자료: [raw/README.md](raw/README.md)
+- 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
 
-현재 기능, 제품 경계, 남은 갭, 단계별 향후 방향을 한 번에 보려면
-[09-product-plan.md](09-product-plan.md)를 먼저 읽는다. 이 문서는 제품 방향의 기준서이고,
-아래 `00`~`08` 문서는 배경·세부 계약·구현 이력을 보존한다.
+## 문서 구조
 
-현재 `tmux + LazyVim + cmux + binbox` 환경은 폐기하지 않는다. 다음 구조로 점진 진화한다.
-
-```text
-dev-env-setup      장비 provisioning, 호환 repo snapshot, 통합 doctor
-       │
-       ▼
-workbench (`wb`)   프로젝트·Agent·worktree의 source of truth와 backend 진입
-  ├─ cmux adapter  로컬 desktop workspace
-  ├─ wt adapter    Windows Terminal tab/pane과 WSL 진입
-  ├─ tmux adapter  장시간 세션·SSH·재접속
-  ├─ nvim client   LazyVim picker·상태·작업 실행
-  ├─ dashboard     localhost Web UI, cmux browser에서도 사용 가능
-  └─ binbox        Kubernetes·Terraform·AWS 등 실제 실행 provider
-```
-
-![Cross-platform Workbench architecture](assets/cross-platform-workbench-architecture.svg)
-
-이 그림은 목표 책임 경계를 보여준다. 실제 구현 순서와 현재/목표 상태 차이는 아래 문서와 Phase별
-수용 기준을 따른다.
-
-중요한 경계:
-
-- Workbench는 cmux 전용이 아니다.
-- cmux, Windows Terminal, tmux, 일반 shell, LazyVim, local Web UI는 모두 같은 `wb` core의
-  client/backend다.
-- Windows에서는 Windows Terminal + WSL을 전체 기능 기본 경로로 사용한다.
-- Windows native에서는 `wb.exe` core와 `wt.exe` backend를 지원하고, Bash 기반 binbox 기능은 WSL
-  adapter를 통해 실행하거나 unavailable capability로 명시한다.
-- 처음부터 별도 desktop 앱을 만들지 않는다.
-- 우선 headless CLI와 versioned JSON contract를 만든다.
-- UI는 localhost dashboard로 시작하고, 필요가 입증될 때만 Tauri/SwiftUI 앱으로 포장한다.
-
-## 현재 진행 상태
-
-| 항목 | 상태 | 다음 행동 |
+| 위치 | 역할 | 편집 규칙 |
 |---|---|---|
-| 네 repo 구조·결합 분석 | 완료 | 변경 전 baseline commit 재확인 |
-| 목표 아키텍처와 대안 비교 | 완료 | Hybrid Workbench를 기본안으로 사용 |
-| CLI/API와 데이터 경계 | Phase 1~5 구현 완료 | Phase 6에서 관찰 근거가 있는 호환 경로만 정리 |
-| Desktop/Web UI 방향 | Phase 3 localhost Dashboard 구현·검증 완료 | loopback/auth/origin/body-limit 유지 |
-| LazyVim UI 방향 | Phase 3 async thin client 구현·검증 완료 | legacy fallback은 관찰 후 제거 판단 |
-| Phase 0 orchestration | 구현·검증 완료 | shared selector/lock/failure contract 유지 |
-| Phase 4 | 완료 | typed workflow와 metadata-only history 계약 유지 |
-| Phase 5 | 완료 | Environment·local Secret·project 연결·workflow 주입·Contexts 계약 유지 |
-| Phase 5 이후 추가 구현 | 완료 | tmux session 소유권, 백그라운드 server와 scheduler, activity history, Dashboard의 Environment·Secret·Profile typed 편집 |
-| Phase 6 | **다음** | 대표 사용 관찰과 물리 장비 smoke로 fallback·배포 판정 |
+| [PRODUCT-PLAN.md](PRODUCT-PLAN.md) | 제품 정의, 우선순위, 성공 기준을 함께 결정하는 초안 | 합의된 결정과 검토 중인 선택지를 구분한다 |
+| [raw/](raw/) | 코드·Git·검증 결과에서 수집한 현재 사실과 미결 과제 | 추측을 사실처럼 쓰지 않고 관찰 날짜와 근거를 남긴다 |
+| [archive/](archive/) | 완료됐거나 대체된 계획과 구현 이력 | 현행 지시로 사용하지 않는다 |
+| 각 저장소 README/docs | 구현·운영 계약 | 세부 동작의 최종 근거로 사용한다 |
 
-## 읽는 순서
+## 지금 읽을 순서
 
-새 세션이나 새 장비에서는 다음 순서로 읽는다.
+1. [raw/current-system.md](raw/current-system.md) — 현재 실제 제품 구조와 기능
+2. [raw/repository-baseline.md](raw/repository-baseline.md) — 저장소·플랫폼·lock 상태
+3. [raw/validation-baseline.md](raw/validation-baseline.md) — 검증된 것과 검증되지 않은 것
+4. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 이전 계획에서 남은 후보와 새로 발견한 갭
+5. [PRODUCT-PLAN.md](PRODUCT-PLAN.md) — 위 사실을 바탕으로 다시 작성한 기획 초안
 
-1. [09-product-plan.md](09-product-plan.md) — 현재 기능, 제품 경계, 갭, 단계별 향후 방향
-2. [00-context-and-current-state.md](00-context-and-current-state.md) — 왜 이 계획이 생겼고 초기·현재 상태가 어떻게 달라졌는가
-3. [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md) — 대안과 채택한 기본 방향
-4. [02-workbench-cli-and-data-contracts.md](02-workbench-cli-and-data-contracts.md) — `wb` 명령, schema, backend 계약
-5. [03-ui-and-client-spec.md](03-ui-and-client-spec.md) — Dashboard, cmux, Windows Terminal, LazyVim UI
-6. [05-repository-change-map.md](05-repository-change-map.md) — 각 repo의 책임과 변경 surface
-7. [06-validation-security-operations.md](06-validation-security-operations.md) — 테스트, 보안, 운영 기준
-8. [07-session-handoff.md](07-session-handoff.md) — context 없이 재개하는 명령과 handoff 문안
+## Source of truth
 
-### 완료 기록
+- 현재 동작은 코드, 테스트, 각 저장소의 구현 문서를 우선한다.
+- `raw/`는 특정 시점의 관찰 기록이며 구현 자체를 대체하지 않는다.
+- 제품 방향과 우선순위는 [PRODUCT-PLAN.md](PRODUCT-PLAN.md)에서 합의한다.
+- 이전 Phase 번호와 완료 기록은 archive의 역사 자료일 뿐 새 로드맵의 자동 입력이 아니다.
+- 사용자 로컬 변경은 제품 계획 정리 과정에서 수정하거나 삭제하지 않는다.
 
-- [초기 구현 로드맵](archive/04-implementation-roadmap.md) — 완료·rollback 이력과 legacy Phase 번호
-- [Phase 4 cleanup plan](archive/08-phase4-cleanup-plan.md) — 완료된 cleanup pass와 fallback 분류
-- [Unified Workbench/tmux 로드맵](archive/09-unified-workbench-tmux-roadmap.md) — 초기 통합 방향과 구현 이력
+## 이번 재기획에서 결정할 것
 
-## Source of truth 규칙
+- 이 제품의 중심을 “설치 저장소”와 “개인 개발환경 운영 시스템” 중 어디에 둘지
+- Workbench를 필수 구성요소로 둘지 선택 기능으로 복원할지
+- Linux/macOS/WSL/native Windows의 지원 수준과 증명 기준
+- binbox·tmux·LazyVim의 독립 경로와 Workbench 기능이 겹치는 부분의 유지·축소 기준
+- 배포, 버전, 호환 snapshot을 어떤 단위로 관리할지
 
-- 현재 기능과 제품 방향은 [09-product-plan.md](09-product-plan.md)를 기준으로 하고, 세부 계약과 구현
-  이력은 `plan/README.md`에서 연결된 문서를 기준으로 한다.
-- 루트 `WORKBENCH-PLAN.md`는 호환용 진입점이며 내용을 중복 보관하지 않는다.
-- 구현 중 결정이 바뀌면 관련 문서와 [01-decisions-and-target-architecture.md](01-decisions-and-target-architecture.md)의
-  결정 기록을 함께 갱신한다.
-- 코드와 문서가 충돌하면 현재 구현을 사실로 기록하되, 계획 변경 여부는 명시적으로 결정한다.
-- 완료되지 않은 항목을 완료로 표시하지 않는다.
-
-## 즉시 시작할 작업
-
-session 생성 실패 시 provider 진단 정보 보존은 `10347a9`에서 구현·검증을 마쳤다. 다음 작업은
-**Phase 6 — 호환 경로 정리와 배포 판정**이다. 기준 구현 `10347a9`에서 vet, 단위·통합 test,
-Windows cross-compile, Dashboard Node test 9개, cross-repo contract 18 group, aggregate doctor, 통합 E2E 11 group이 모두 통과했다. Phase 6에서는 project picker와 Agent list의 대표 사용
-주기, physical Linux/Windows/WSL/cmux smoke를 근거로 `compatibility:nvim-projects`,
-`compatibility:agents`, `bb wenv`, `bb sec` 경로를 warning → shim → 제거 순서로 평가한다. 관찰 결과만으로
-자동 삭제하지 않는다.
-
-착수 전:
-
-```bash
-cd ~/home/setup
-git pull --ff-only
-./doctor.sh
-
-git -C binbox status --short
-git -C nvim status --short
-git -C cmux-config status --short
-git -C workbench status --short
-```
-
-Windows/WSL에서는 cmux가 없는 것이 정상이며 platform selector가 자동으로 disabled 처리한다.
-
-```bash
-./bootstrap.sh --platform windows-wsl --show-selection
-./binbox/bb list
-test -e "$HOME/.config/nvim"
-git -C binbox status --short
-git -C nvim status --short
-./doctor.sh --platform windows-wsl
-```
-
-Phase 0~5 구현 시점에는 full tests/race/vet, Windows cross-compile, root contract를 통과했다. 기준 구현
-`10347a9`에서는 `make vet`, `make test`, Windows cross-compile, `./tests/contract-test.sh` 18 group,
-`./doctor.sh`, `tests/workbench-e2e.sh` 11 group이 통과했고 race detector는 이번 회차에 실행하지 않았다.
-통합 E2E는 가짜 tmux fixture 위에서 동작하므로 실제 tmux server 동작을 증명하지 않는다. 변형·file/network
-유출 방지는 sandbox 범위가 아니며 물리 Linux/Windows/WSL/cmux smoke는 residual risk로 남긴다.
-
-## 범위 제외
-
-현재 계획에서 의도적으로 제외한다.
-
-- Orca 또는 다른 상용 Agent IDE로 전체 환경 교체
-- 외부 네트워크에 노출되는 Workbench server
-- 팀/조직용 multi-user 권한 모델
-- arbitrary shell command를 Dashboard에서 자유 입력·실행하는 기능
-- 처음부터 상시 daemon 또는 cloud synchronization 도입
-
-필요성이 확인되면 별도 결정 기록을 만든 뒤 범위를 확장한다.
+결정되지 않은 항목은 구현 작업으로 자동 승격하지 않는다.

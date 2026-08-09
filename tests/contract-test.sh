@@ -209,10 +209,12 @@ for tool in tm agents gx kx assume assm tfx tvx dx portcheck md2jira wenv sec; d
 done
 pass 'binbox toolbox entrypoints remain available without Workbench'
 
-# Assert navigation integrity of the plan package, not prose wording: paths and
-# filenames are stable, while any rewording of a sentence would break the suite.
-[ -f "$ROOT/plan/09-product-plan.md" ] || die 'plan/09-product-plan.md is missing'
-assert_file_contains "$ROOT/plan/README.md" '09-product-plan.md' 'plan/README.md no longer links the product baseline document'
+# Assert navigation integrity of the current plan package without coupling the
+# contract to prose wording or archived filenames.
+[ -f "$ROOT/plan/PRODUCT-PLAN.md" ] || die 'plan/PRODUCT-PLAN.md is missing'
+[ -f "$ROOT/plan/raw/current-system.md" ] || die 'plan/raw/current-system.md is missing'
+assert_file_contains "$ROOT/plan/README.md" 'PRODUCT-PLAN.md' 'plan/README.md no longer links the current product plan'
+assert_file_contains "$ROOT/plan/README.md" 'raw/README.md' 'plan/README.md no longer links the raw evidence index'
 assert_file_contains "$ROOT/WORKBENCH-PLAN.md" 'plan/README.md' 'WORKBENCH-PLAN.md no longer points at the plan package'
 pass 'plan package entry points remain linked'
 

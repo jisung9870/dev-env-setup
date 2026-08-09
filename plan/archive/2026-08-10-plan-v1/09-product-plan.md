@@ -246,7 +246,7 @@ Ensure→Agent 전달을 검증하고, 통합 E2E는 provider stdout과 exit 7�
 
 ## 단계별 로드맵
 
-초기 구현 상세 이력은 [구현 로드맵 archive](archive/04-implementation-roadmap.md)에 보관한다. 현재 Phase는 이 문서의
+초기 구현 상세 이력은 [구현 로드맵 archive](../04-implementation-roadmap.md)에 보관한다. 현재 Phase는 이 문서의
 수용 조건과 회귀 검증을 통과한 뒤 다음 단계로 이동한다.
 
 | Phase | 상태 | 목표 | 핵심 완료 조건 |
@@ -353,15 +353,15 @@ arbitrary command runner를 만들지 않는다. Phase 5의 수용 조건은 CLI
 - [결정과 목표 아키텍처](01-decisions-and-target-architecture.md)
 - [Workbench CLI와 데이터 계약](02-workbench-cli-and-data-contracts.md)
 - [UI와 client spec](03-ui-and-client-spec.md)
-- [구현 로드맵](archive/04-implementation-roadmap.md)
+- [구현 로드맵](../04-implementation-roadmap.md)
 - [저장소 변경 지도](05-repository-change-map.md)
 - [검증·보안·운영](06-validation-security-operations.md)
-- [Phase 4 cleanup plan](archive/08-phase4-cleanup-plan.md)
-- [Workbench README](../workbench/README.md)
-- [Workbench Dashboard](../workbench/docs/dashboard.md)
-- [Workbench backend contract](../workbench/docs/backend-contract.md)
-- [binbox README](../binbox/README.md)
-- [binbox ROADMAP](../binbox/ROADMAP.md)
-- [LazyVim Workbench help](../nvim/doc/nvim-workbench.txt)
-- [cmux-config README](../cmux-config/README.md)
-- [dev-env-setup README](../README.md)
+- [Phase 4 cleanup plan](../08-phase4-cleanup-plan.md)
+- [Workbench README](../../../workbench/README.md)
+- [Workbench Dashboard](../../../workbench/docs/dashboard.md)
+- [Workbench backend contract](../../../workbench/docs/backend-contract.md)
+- [binbox README](../../../binbox/README.md)
+- [binbox ROADMAP](../../../binbox/ROADMAP.md)
+- [LazyVim Workbench help](../../../nvim/doc/nvim-workbench.txt)
+- [cmux-config README](../../../cmux-config/README.md)
+- [dev-env-setup README](../../../README.md)

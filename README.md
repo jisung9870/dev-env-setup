@@ -131,8 +131,7 @@ cd ~/home/setup
 
 ## 더 읽기
 
-- **[plan/README.md](plan/README.md)** — 현재 네 repo의 역할과 결합 지점, 권장 hybrid workbench
-  구조, CLI/UI 계약, 단계별 구현·검증·롤백, 새 세션과 다른 장비의 인수인계 기준.
+- **[plan/README.md](plan/README.md)** — 현재 사실을 모은 `raw/`, 이전 계획 `archive/`, 공동 작성 중인 새 제품 기획서의 진입점.
 - **[DEPENDENCIES.md](DEPENDENCIES.md)** — 동작 흐름, 무엇이 자동 실행되나, 계약(변경 시 같이
   고칠 것), repo 추가/변경 방법. 이 repo 를 손볼 때 먼저 읽는다.
 - **[binbox README](https://github.com/jisung9870/binbox/blob/main/README.md)** — `bb` 도구 전체 목록과 사용법.

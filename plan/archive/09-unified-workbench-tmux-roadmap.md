@@ -3,7 +3,7 @@
 - 상태: **아카이브 — 후속 구현이 main에 통합됨**
 - 작성일: 2026-08-05 · 최종 갱신일: 2026-08-06
 - 대상: `workbench`, `binbox`, Workbench Dashboard
-- 현재 기준: [제품 계획](../09-product-plan.md)
+- 현재 기준: [새 제품 기획](../PRODUCT-PLAN.md)
 
 ## 1. 문제와 결정
 

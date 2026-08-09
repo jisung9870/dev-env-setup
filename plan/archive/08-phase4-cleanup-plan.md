@@ -1,6 +1,6 @@
 # Phase 4 cleanup plan
 
-> **아카이브:** Phase 4 cleanup pass의 완료 기록이다. 현재 상태와 다음 작업은 [제품 계획](../09-product-plan.md)을 기준으로 한다.
+> **아카이브:** Phase 4 cleanup pass의 완료 기록이다. 현재 상태와 다음 작업은 [새 제품 기획](../PRODUCT-PLAN.md)을 기준으로 한다.
 
 ## 목표와 범위
 
