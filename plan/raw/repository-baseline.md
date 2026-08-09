@@ -4,7 +4,7 @@
 
 | 저장소 | 역할 | HEAD | origin 동기화 | working tree |
 |---|---|---:|---|---|
-| dev-env-setup | 전체 선택·설치·업데이트·통합 검증 | `99f5c9f` | 동기화 | clean |
+| dev-env-setup | 전체 선택·설치·업데이트·통합 검증 | `d9462cc` | 동기화 | clean |
 | workbench | 상태 core, backend, Dashboard | `10347a9` | 동기화 | clean |
 | binbox | `bb` 운영 toolbox | `682e018` | 동기화 | clean |
 | nvim | LazyVim·tmux 설정과 client | `d25dbfe` | 동기화 | `lazy-lock.json` 사용자 변경 존재 |

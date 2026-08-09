@@ -1,58 +1,95 @@
-# 후보 과제와 미결 질문
+# 미결정 사항과 남은 단계
 
-이 문서는 이전 계획의 “남은 단계”와 현재 조사에서 발견한 갭을 보존한다. 순서, Phase, 구현 승인은
-아직 정하지 않았다.
+> 기준일: 2026-08-10
+> 제품 방향과 MVP 선택은 [통합 기획서](../PRODUCT-PLAN.md), 선택 이유는
+> [통합 판단](synthesis-and-decisions.md)을 따른다.
 
-## 사용자에게서 확인된 장기 방향
+## 확인된 방향
 
-- 최종 목표는 단순 개발환경 설치가 아니라 개인 업무와 개발을 위한 나만의 도구 플랫폼이다.
-- MCP 관리는 Codex·Claude·에디터·업무 서비스를 연결하는 관리 영역 후보로 포함한다.
-- 구체적인 MCP 기능 범위와 구현 순서는 아직 결정하지 않았다.
+- 최종 목표는 개인 업무와 개발을 함께 관리하는 local-first 개인 운영 환경이다.
+- 통합 대상은 문서, 계획, 정보 수집, 실행, 반복 업무, 자동화와 외부 서비스지만 한 번에 만들지 않는다.
+- 원문 소유권을 보존하고 Setup은 provenance, reference, projection, policy와 run journal을 연결한다.
+- MCP는 여러 adapter 중 하나며 핵심 목표나 필수 transport가 아니다.
+- Agent 관리·멀티 Agent orchestration은 제품 범위에 포함한다. 첫 선택은 Orca optional backend이며 자체
+  scheduler/DAG는 증거가 생길 때까지 보류한다.
+- binbox, tmux, LazyVim의 독립 경로는 복구 자산이며 삭제 목표로 삼지 않는다.
+- WSL은 primary Tier-1이고 macOS는 같은 30일 smoke track에서 병행한다.
+- 일반 설치는 `workbench` profile, 복구·최소 설치는 명시적 `terminal` profile을 사용한다.
+- Markdown은 canonical authoring format이고 SQLite는 재구축 가능한 projection이다.
+- 외부 read connector는 GitHub→Slack 순서로 검증한다.
+- private GitHub는 Markdown·설정 history, OneDrive는 Secret을 제외한 암호화 backup snapshot에 사용한다.
 
-## 이전 계획에서 이관한 후보
+## 다음 의사결정
 
-| 후보 | 이전 의도 | 현재 근거 | 재결정할 점 |
-|---|---|---|---|
-| 대표 사용 관찰 | project picker와 Agent list의 primary/fallback 사용 기록 | compatibility 관찰 기능은 구현됨 | 어떤 사용 주기와 표본이면 충분한가 |
-| compatibility 경로 정리 | nvim project/Agent fallback, `bb wenv`, `bb sec`를 warning→shim→제거로 평가 | 독립 경로가 여전히 운영 가치가 있음 | 제거가 목표인지 역할 명확화가 목표인지 |
-| 물리 장비 smoke | Linux/macOS/Windows/WSL/cmux 실제 흐름 확인 | cross-build와 fake E2E만으로 부족 | 지원 tier와 필수 장비 조합 |
-| 공개 배포 판정 | release/tag/versioned compatibility 검토 | 현재는 source checkout 중심 | 개인용 배포에 release가 필요한가 |
-| Worktree client 확장 | LazyVim 또는 Dashboard에서 create/remove | core 안전 계약은 구현됨 | 실제 사용 빈도와 UI 필요성 |
-| backend 공통 session lifecycle | tmux 외 surface ownership 확대 | 신뢰 가능한 stable ID가 backend마다 다름 | 공통 추상화가 실제 가치를 주는가 |
-| cmux action 동기화 | project registry 변경 시 generated action drift 감소 | 수동 generator/check가 존재 | 자동화 위치와 쓰기 권한 |
+| 순서 | 결정 | 필요한 근거 | 완료 판정 |
+|---:|---|---|---|
+| 1 | WSL·macOS 지원 판정 | 두 실제 장비의 동일 smoke | WSL Tier-1 유지, macOS 통과 시 함께 Tier-1 |
+| 2 | 매일 대표 세 흐름 | 2주 category-only 사용 기록 | 실제 Inbox 20개, closed loop 3개 |
+| 3 | Markdown 세부 계약 | frontmatter·rename·SQLite rebuild prototype | 수동 복구, export·reimport, migration fixture |
+| 4 | GitHub·Slack scope | personal/work 계정, 최소 권한·retention | read-only 실제 사용과 revoke/disable 검증 |
+| 5 | Orca E0→E1 | 2주 또는 Agent session 20개 | Orca 사용 30% 이상 또는 찾기 불편 3회 |
+| 6 | GitHub/OneDrive 복구 | 별도 경로·암호화 snapshot fixture | Git history와 off-device restore 모두 성공 |
+| 7 | 첫 제한 write | read adapter 가치와 conflict 사례 | preview, CAS/idempotency, journal, rollback fixture |
 
-## 이번 조사에서 새로 확인한 후보
+## 30일 남은 단계
 
-| 후보 | 관찰 | 위험 |
-|---|---|---|
-| lock snapshot 정책 재정의 | 4개 중 3개 child commit이 lock과 다름 | “검증된 조합” 의미가 약해짐 |
-| Workbench required/optional 결정 | 문서는 optional, platform profile은 required | 설치 실패 정책과 제품 메시지가 충돌 |
-| native Windows 지원 범위 | Workbench target은 있으나 root platform profile 없음 | 지원 주장과 실제 bootstrap 경험 불일치 |
-| toolchain 발견성 | Go/Node/bats가 설치돼도 일반 PATH에서 shim 해석 실패 | 검증·설치 명령이 장비별로 달라짐 |
-| 관리 문서 중복 축소 | root README, DEPENDENCIES, child docs, 이전 plan이 같은 설명 반복 | drift와 긴 인수인계 비용 |
-| 운영 telemetry 최소화 | compatibility 관찰 외 실제 사용 근거가 없음 | 감으로 fallback을 제거할 가능성 |
-| MCP 관리 inventory | client별 server/config/Secret 경계가 아직 수집되지 않음 | 성급한 공통화가 설정과 권한을 더 복잡하게 만들 수 있음 |
+1. 기본 `workbench`와 명시적 `terminal` profile 정책을 문서·selector·exit contract에서 일치시킨다.
+2. lock snapshot을 검증 날짜, run ID, child commit과 rollback이 있는 manifest로 정의한다.
+3. WSL에서 Tier-1 fresh setup/update/doctor와 synthetic restore를 수행하고 macOS에서 같은 smoke를 병행한다.
+4. Markdown+최소 frontmatter를 canonical format으로 두고 SQLite rebuild를 포함한 schema spike를 검토한다.
+5. file/stdin capture → Today/Next → resume → result/recovery review의 세로 흐름을 검증한다.
+6. 로컬 opt-in usage 기록으로 capture·resume 시간, fallback, stale/partial 상태를 측정한다.
+7. Orca E0를 수행하고 gate를 통과할 때만 read-only E1 adapter를 설계한다.
 
-## 제품 기획에서 먼저 답할 질문
+## 31~90일 후보
 
-1. 매일 반드시 쓰는 세 개의 업무·개발 흐름은 무엇인가?
-2. 첫 MCP 대상 client와 server 조합은 무엇인가?
-3. Workbench 장애 시 terminal 독립 경로를 어느 수준까지 보장할 것인가?
-4. native Windows는 core build target인가, 전체 setup 지원 platform인가?
-5. lock은 재현 가능한 release manifest인가, 최신 관찰 상태인가?
-6. 중복 명령의 성공 기준은 제거 개수인가, 책임과 복구 경로의 명확성인가?
-7. Dashboard와 background server가 실제 일상 기본 경로인지 선택 도구인지?
-8. 공개 release 없이도 개인 장비 간 안정적 배포가 가능한가?
-9. MCP 설정의 source of truth를 root manifest와 Workbench registry 중 어디에 둘 것인가?
-10. MCP lifecycle에서 catalog·health 이후 enable/disable·update까지 어디까지 자동화할 것인가?
+- 가장 큰 복귀/정리 마찰 한 개 개선
+- recurring task와 weekly review
+- GitHub read-only metadata 후 동일 core 계약을 재사용하는 Slack read-only adapter
+- 두 번째 platform smoke와 지원 tier
+- source-of-truth 문서 표, release/rollback 절차
+- E1 성공 시 policy가 보이는 Orca controlled launch와 result pointer
+- 실제 사용 중인 MCP가 있을 때만 read-only inventory 및 1 server/2 client 가역 실험
 
-## 즉시 구현으로 넘기지 않을 항목
+## 장기 재검토 gate
+
+### 자체 Agent orchestration
+
+다음 조건을 모두 만족해야 provider-neutral registry/control 또는 자체 orchestration을 검토한다.
+
+- Orca와 non-Orca backend를 가로지르는 동일 목표 월 10회 이상
+- read-only projection으로 해결되지 않는 audit/queue 불편 월 3회 이상
+- 두 provider가 stable attempt ID와 terminal outcome 제공
+- crash/restart/retry/late-completion fixture 선작성 가능
+- 30일 shadow mode 상태 불일치 1% 미만, destructive action 0건
+
+### Cloud/mobile
+
+두 장비 또는 mobile capture가 반복적으로 closed loop를 막고, export+사용자 선택 sync로 해결되지 않을 때만
+encrypted sync와 mobile share target을 별도 threat model로 검토한다.
+
+### Generic integration framework
+
+두 개 이상의 adapter에서 동일한 capability, cursor, health, disable/export 계약이 실제로 반복된 뒤에만
+공통 plugin/RPC surface를 추출한다.
+
+## 즉시 구현하지 않을 항목
 
 - monorepo 전환
-- 상시 daemon 또는 cloud sync
-- arbitrary command runner
-- 팀·조직용 multi-user 권한
-- 별도 native desktop shell
-- 사용 근거 없는 범용 MCP proxy 또는 generic plugin/RPC framework
+- 상시 cloud daemon, remote multi-user control
+- arbitrary command runner와 자연어 파괴 작업
+- 범용 MCP proxy, 자동 server 설치·update
+- mail/calendar/Docs의 초기 양방향 sync
+- 자체 scheduler, message bus, DAG, transcript state inference
+- 별도 native desktop/mobile shell
+- 사용 근거 없이 기존 fallback이나 binbox 명령 삭제
 
-이 항목들은 명시적인 문제 증거와 새 결정 기록이 생길 때만 다시 검토한다.
+## 계속 열린 질문
+
+1. 첫 20개 입력과 가장 자주 복귀하는 세 작업은 무엇인가?
+2. Markdown frontmatter의 최소 필드, 파일 배치와 rename 규칙은 무엇인가?
+3. GitHub·Slack의 personal/work account scope와 retention은 어디까지인가?
+4. Git working tree와 OneDrive encrypted snapshot의 주기·보존·충돌 정책은 무엇인가?
+5. Orca E0가 E1 승격 gate를 통과하는가?
+6. 첫 제한 write의 action과 rollback 계약은 무엇인가?
+7. macOS가 WSL과 같은 Tier-1 gate를 통과하는가?

@@ -1,48 +1,53 @@
 # Setup 제품 기획
 
-이 디렉터리는 `dev-env-setup`과 네 개의 관리 저장소를 하나의 제품으로 다시 정의하기 위한
-기획 공간이다.
+이 디렉터리는 `dev-env-setup`과 네 개의 관리 저장소를 local-first 개인 운영 환경으로 발전시키기 위한
+현행 제품 기획 공간이다.
 
-- 상태: **공동 작성 초안**
+- 상태: **통합 방향 확정, MVP 검증 전**
 - 기준일: 2026-08-10
-- 현재 구현 기준: root `99f5c9f`, workbench `10347a9`, binbox `682e018`,
+- 현재 구현 기준: root `d9462cc`, workbench `10347a9`, binbox `682e018`,
   nvim `d25dbfe`, cmux-config `f5e5195`
-- 현재 기획서: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
-- 사실 자료: [raw/README.md](raw/README.md)
+- 현행 기획서: [PRODUCT-PLAN.md](PRODUCT-PLAN.md)
+- 통합 판단: [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md)
 - 이전 계획: [archive/2026-08-10-plan-v1/](archive/2026-08-10-plan-v1/)
 
 ## 문서 구조
 
-| 위치 | 역할 | 편집 규칙 |
+| 위치 | 역할 | 사용 규칙 |
 |---|---|---|
-| [PRODUCT-PLAN.md](PRODUCT-PLAN.md) | 제품 정의, 우선순위, 성공 기준을 함께 결정하는 초안 | 합의된 결정과 검토 중인 선택지를 구분한다 |
-| [raw/](raw/) | 코드·Git·검증 결과에서 수집한 현재 사실과 미결 과제 | 추측을 사실처럼 쓰지 않고 관찰 날짜와 근거를 남긴다 |
-| [archive/](archive/) | 완료됐거나 대체된 계획과 구현 이력 | 현행 지시로 사용하지 않는다 |
-| 각 저장소 README/docs | 구현·운영 계약 | 세부 동작의 최종 근거로 사용한다 |
+| [PRODUCT-PLAN.md](PRODUCT-PLAN.md) | 제품 정의, 원칙, MVP, roadmap, 성공·중단 기준 | 현행 제품 결정의 source of truth |
+| [raw/](raw/) | 현재 상태, 분야별 조사 원문, 반론·불확실성, 통합 판단 | 특정 시점의 근거이며 구현 자체를 대체하지 않음 |
+| [archive/](archive/) | 완료·대체된 계획과 구현 이력 | 현행 지시로 사용하지 않음 |
+| root/child README와 docs | 실제 설치·운영·schema·명령 계약 | 구현 세부의 source of truth |
 
-## 지금 읽을 순서
+## 읽는 순서
 
-1. [raw/current-system.md](raw/current-system.md) — 현재 실제 제품 구조와 기능
-2. [raw/repository-baseline.md](raw/repository-baseline.md) — 저장소·플랫폼·lock 상태
-3. [raw/validation-baseline.md](raw/validation-baseline.md) — 검증된 것과 검증되지 않은 것
-4. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 이전 계획에서 남은 후보와 새로 발견한 갭
-5. [PRODUCT-PLAN.md](PRODUCT-PLAN.md) — 위 사실을 바탕으로 다시 작성한 기획 초안
+1. [PRODUCT-PLAN.md](PRODUCT-PLAN.md) — 선정된 제품 방향과 제한된 MVP
+2. [raw/synthesis-and-decisions.md](raw/synthesis-and-decisions.md) — 워커 간 충돌과 선택 이유
+3. [raw/current-system.md](raw/current-system.md) — 현재 구현 자산과 책임 경계
+4. [raw/repository-baseline.md](raw/repository-baseline.md) 및
+   [raw/validation-baseline.md](raw/validation-baseline.md) — Git·지원·검증 기준선
+5. [raw/README.md](raw/README.md)의 A–E 조사 원문 — 사실, 근거, 반론과 불확실성
+6. [raw/backlog-and-open-questions.md](raw/backlog-and-open-questions.md) — 아직 결정하지 않은 항목과 다음 gate
 
-## Source of truth
+## 이번 기획에서 확정한 것
 
-- 현재 동작은 코드, 테스트, 각 저장소의 구현 문서를 우선한다.
-- `raw/`는 특정 시점의 관찰 기록이며 구현 자체를 대체하지 않는다.
-- 제품 방향과 우선순위는 [PRODUCT-PLAN.md](PRODUCT-PLAN.md)에서 합의한다.
-- 이전 Phase 번호와 완료 기록은 archive의 역사 자료일 뿐 새 로드맵의 자동 입력이 아니다.
-- 사용자 로컬 변경은 제품 계획 정리 과정에서 수정하거나 삭제하지 않는다.
+- 제품은 설치 도구나 Workbench IDE가 아니라 개인 업무와 개발 맥락을 연결하는 local-first 운영 환경이다.
+- 첫 제품 쐐기는 `Prepare → Resume → Recover`이고, 30일에는 신뢰 기반과 한 개의 닫힌 개인 운영 loop만 만든다.
+- 외부 원문은 복제보다 reference/projection으로 연결하며 개인/업무 credential과 write 권한을 분리한다.
+- MCP는 file, Git, API, webhook, CLI와 같은 adapter 선택지 중 하나다.
+- Orca는 Agent 관리·멀티 Agent 실행의 첫 optional backend다. Workbench는 Orca runtime을 복제하지 않는다.
+- 자체 Agent scheduler/message bus/DAG, cloud sync, native app과 폭넓은 양방향 연동은 사용 gate까지 보류한다.
+- WSL은 primary Tier-1이며 macOS를 같은 30일 smoke track에서 병행한다.
+- 일반 설치는 `workbench` profile, 복구·최소 설치는 명시적 `terminal` profile을 사용한다.
+- Markdown을 canonical authoring format으로 두고 SQLite는 재구축 가능한 index로 제한한다.
+- GitHub→Slack 순으로 read connector를 검증하고, private GitHub와 암호화된 OneDrive backup을 역할별로 사용한다.
 
-## 이번 재기획에서 결정할 것
+## Source of truth와 보존
 
-- 확인된 “개인 업무·개발 도구 플랫폼” 비전의 정확한 제품 경계
-- Workbench를 필수 구성요소로 둘지 선택 기능으로 복원할지
-- Linux/macOS/WSL/native Windows의 지원 수준과 증명 기준
-- binbox·tmux·LazyVim의 독립 경로와 Workbench 기능이 겹치는 부분의 유지·축소 기준
-- MCP catalog·설정 배포·health·access를 어느 구성요소가 소유할지
-- 배포, 버전, 호환 snapshot을 어떤 단위로 관리할지
-
-결정되지 않은 항목은 구현 작업으로 자동 승격하지 않는다.
+- 동작이 문서와 충돌하면 코드, 테스트와 각 구현 문서가 우선하며 충돌을 raw에 기록한다.
+- 제품 방향과 우선순위는 [PRODUCT-PLAN.md](PRODUCT-PLAN.md)가 소유한다.
+- 완료된 이전 계획과 SVG는 archive에 보존한다. 활성 영역에서 추가로 이동할 완료 계획은 현재 없다.
+- `WORKBENCH-PLAN.md`는 기존 링크를 현행 plan으로 연결하는 호환 진입점으로 유지한다.
+- binbox 명령 문서는 독립 terminal 운영·복구 경로이므로 삭제·정리 대상이 아니다.
+- 사용자 로컬 변경, 특히 `nvim/lazy-lock.json`의 기존 변경은 기획 작업에서 수정하지 않는다.
