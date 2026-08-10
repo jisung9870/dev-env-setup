@@ -568,10 +568,11 @@ git diff --check
 
 ### 7.1 2026-08-10 committed slice acceptance review
 
-**Status: IMPLEMENTATION CHECKPOINT ACCEPTED; release evidence OPEN; full S1 NOT COMPLETE.** Workbench commits
-`e80187e`와 `6d7750c`는 linear하고 nested checkout `orca/work`에 commit되어 있으며 root/nested worktree는 이
-review 시작 시 clean했다. 두 commit은 data migration, provider write, root recovery 또는 v2 schema를 포함하지
-않으므로 독립적으로 검토 가능한 bounded compatibility checkpoint다.
+**Status: IMPLEMENTATION CHECKPOINT ACCEPTED; Inbox source defect RESOLVED; release evidence OPEN; full S1 NOT
+COMPLETE.** Workbench commits `e80187e`, `6d7750c`, 그리고 planner dissent를 닫은 frontend 보정
+`e8cc586`은 linear하고 nested checkout `orca/work`에 commit되어 있다. 이 commit들은 data migration,
+provider write, root recovery 또는 v2 schema를 포함하지 않으므로 독립적으로 검토 가능한 bounded
+compatibility checkpoint다.
 
 | area | accepted evidence | remaining gate |
 |---|---|---|
@@ -579,8 +580,8 @@ review 시작 시 clean했다. 두 commit은 data migration, provider write, roo
 | 16 KiB pre-mutation | complete body를 `MaxBytesReader`로 먼저 읽고 16,384 bytes는 execute 1, 16,385 bytes는 malformed 여부와 무관하게 execute 0/HTTP 413/fixed copy/empty details다. auth/origin/content-type precedence와 unknown/trailing rejection을 보존했다. | none for code gate. 실제 code 이름인 `ACTION_REQUEST_TOO_LARGE`가 planner spec/backend/frontend contract의 canonical v1 code이며 이전 PM draft의 `ACTION_BODY_TOO_LARGE`를 이 review에서 정정했다. |
 | 15 actions/Secret | executable 15 request shape를 각각 통과시키고 public table에 `update_secret`을 추가했다. Secret replacement는 write-only이고 oversize response가 body/decoder sentinel을 echo하지 않는다. | validation owner가 hostile server `message/details`, path/token/Secret sentinel이 DOM/accessibility tree/title에 0임을 real browser에서 증명한다. existing scheduler/diagnostic display의 S2/S3 threat review는 이 slice가 새로 해결했다고 주장하지 않는다. |
 | routes/deep links | current page와 Guide aliases의 GET/HEAD는 200, `/today`, `/inbox`, `/runs`, `/integrations`, v2는 404다. UI target label은 `/`, `/projects`, `/activity`, `/settings`, `/system`만 사용하고 Inbox는 non-navigating unavailable control이다. | `/activity?source=bookmark#task-detail`와 `/settings?source=bookmark#secrets`의 path/search/hash 보존은 browser gate에서 확인한다. selected-object URL grammar는 여전히 S2/S3 deferred다. |
-| focus/error UI | exact id/existing non-secret data/form identity만 capture하고 same connected/enabled/visible control로 restore한다. missing/disabled/hidden/`aria-disabled` target은 visible route `h1`만 선택한다. generic failure UI는 raw server message/details 대신 bounded code와 fixed copy를 쓴다. Node 20/20이 helper와 manual/timer/action wiring을 검증했다. | 실제 DOM replacement, keyboard order, focus ring, scroll retention과 concurrent refresh/action behavior는 real browser evidence 전에는 release-pass로 계산하지 않는다. |
-| validation/rollback | PM rerun에서 focused Go, `go test ./...`, `go vet ./...`, `go build ./cmd/wb`, JS syntax, Node 20/20와 root/nested `git diff --check`가 모두 통과했다. | rollback은 data 복구 없이 `6d7750c` frontend를 먼저, 필요하면 `e80187e` backend를 뒤에 revert하는 commit-level 경로다. 실제 rollback 수행은 failure/decision gate가 있을 때 owner가 한다. |
+| focus/error UI | exact id/existing non-secret data/form identity만 capture한다. `e8cc586`은 activation-unavailable인 present `aria-disabled` Inbox를 focus-restore-unavailable로 보던 predicate를 분리했고, rerender 후 같은 Inbox identity 복원과 notice 0건을 fixture로 고정했다. missing/native-disabled/hidden target은 visible route `h1`로 fallback하며 destructive neighbor를 선택하지 않는다. generic failure UI는 raw server message/details 대신 bounded code와 fixed copy를 쓴다. Node 20/20이 helper와 manual/timer/action wiring을 검증했다. | planner의 Inbox predicate source/fixture dissent는 resolved다. 실제 DOM replacement, keyboard order, focus ring, scroll retention과 concurrent refresh/action behavior는 real browser evidence 전에는 release-pass로 계산하지 않는다. |
+| validation/rollback | PM reconciliation에서 `e8cc586` diff, JS syntax, Node 20/20, focused Dashboard/CLI Go tests와 root/nested `git diff --check`가 통과했다. | rollback은 data 복구 없이 보정 `e8cc586`을 먼저, frontend lane 전체가 필요하면 `6d7750c`를 뒤에, 필요하면 backend `e80187e`를 마지막에 revert하는 commit-level 경로다. 실제 rollback 수행은 failure/decision gate가 있을 때 owner가 한다. |
 
 따라서 code checkpoint는 accept하지만 Dashboard release acceptance와 S1 stage completion은 보류한다. 23:30 전에
 아래 browser evidence가 green이면 slice를 `accepted`로 승격한다. 완료되지 않거나 재현 가능한 defect가 있으면
@@ -589,8 +590,8 @@ destructive sibling 선택, current route break가 나오면 release를 stop하�
 
 ### 7.2 exact next slice — S1 real-browser acceptance closure
 
-이 다음 slice는 **product code를 기본적으로 수정하지 않는 validation-only gate**다. dependencies는 `e80187e`와
-`6d7750c`, accepted v1 fixture와 local disposable Dashboard instance다.
+이 다음 slice는 **product code를 기본적으로 수정하지 않는 validation-only gate**다. dependencies는 `e80187e`,
+`6d7750c`, source-level Inbox focus 보정 `e8cc586`, accepted v1 fixture와 local disposable Dashboard instance다.
 
 - **Validation owner:** Chromium 계열 real browser에서 current five routes+Guide, query/hash 두 bookmark, manual/timer/
   action success/failure focus matrix, keyboard traversal, 360/768/1280px, 200% zoom, light/dark/system, visible focus,

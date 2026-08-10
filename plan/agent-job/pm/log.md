@@ -215,3 +215,34 @@
   acceptance/S1-not-done/browser matrix finding을 `msg_53a9e91a84d0`으로 보내 routing을 요청했다.
 - Final PM-only `git diff --check`와 required status/code/commit/next-slice/owner/rollback/23:30 marker 검증이
   통과했다. workspace의 concurrent planner-owned `DASHBOARD-SPEC.md`/planner log 변경은 건드리지 않았다.
+
+## 2026-08-10 09:15 KST — S1 Inbox focus dissent reconciliation
+
+### Reconciled decision and evidence
+
+- Planner의 conditional UX record는 present, keyboard-focusable `aria-disabled` Inbox를 timer rerender 후 route `h1`로
+  보내는 source predicate를 product dissent로 남겼다. Frontend 보정 `e8cc586` diff는 activation-disabled와
+  focus-restore-unavailable을 분리하고 present Inbox identity를 복원하며, route/action/API/state owner를 추가하지
+  않는다.
+- 보정 fixture는 rerender로 old Inbox node를 교체한 뒤 exact identity를 복원하고 removal notice가 0건임을
+  검증한다. removed, native-disabled, hidden-attribute/CSS-hidden target의 route-`h1` fallback과 destructive-neighbor
+  avoidance는 유지된다.
+- **Source-level Inbox focus defect resolved; release evidence open; full S1 not complete.** `node --check`, frontend
+  Node 20/20, `go test ./internal/dashboard ./internal/cli`와 nested `git diff --check`가 통과했다. 이 결과는
+  actual browser fetch/render lifecycle 또는 responsive/accessibility acceptance를 대체하지 않는다.
+
+### Exact next slice, owners, rollback and cutoff preserved
+
+- Next slice는 계속 product code change를 기본값으로 하지 않는 **S1 real-browser acceptance closure**다.
+  Validation owner는 disposable local Dashboard에서 current five routes+Guide, query/hash bookmarks, manual/timer/action
+  success/failure focus, keyboard, 360/768/1280px, 200% zoom, themes, focus/target/text/overflow/scroll과 hostile-envelope
+  sentinel DOM/accessibility-tree/title matrix를 그대로 실행한다.
+- Frontend/backend는 browser evidence가 자기 lane defect를 재현할 때만 각각 assets/browser fixture 또는
+  handler/test/docs를 exclusive로 수정한다. Planner는 screenshot/accessibility evidence를 acceptance matrix에
+  대조하고, PM은 checkpoint와 S1-not-done language를 소유한다.
+- Rollback은 data recovery 없이 `e8cc586` 보정을 먼저, frontend lane 전체가 필요하면 `6d7750c`,
+  필요하면 backend `e80187e` 순으로 commit-level revert한다. 23:15 new-case/fix freeze와 23:30
+  green 시 `accepted`, 아니면 `in-progress-safe`/lane rollback+exact failed evidence cutoff은 그대로다.
+- Frontend owner `term_5c0b82de-4d83-4b3b-b902-1d09ba9acf65`에 reconciliation을 `msg_88f177fea481`로
+  알렸다. Planner terminal은 release된 상태라 coordinator `term_01e597b5-cc85-460a-b67a-0e736f794dae`에
+  planner용 결론을 `msg_e7d30cbff8a2`로 보내 routing을 요청했다.
