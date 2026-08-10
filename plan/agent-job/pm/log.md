@@ -1,5 +1,14 @@
 # PM agent job log
 
+## 2026-08-10 19:40 KST — Orca 단일 workspace 결정
+
+- 사용자 결정에 따라 Windows Terminal과 iTerm2를 target bootstrap/fallback surface에서 제외했다.
+- WSL과 macOS의 제품 workspace는 Orca 하나이며 tmux는 Orca worktree 내부 human partition으로 유지한다.
+- cmux도 신규 제품 경로에서 제외하되 기존 Windows Terminal/cmux 구현은 즉시 삭제하지 않고 Orca 전환
+  smoke와 deprecation gate를 거쳐 정리한다.
+- Orca 장애 복구는 Workbench가 다른 terminal을 자동 launch하는 방식이 아니라, 사용 가능한 shell에서
+  `wb`·Markdown·Git을 명시적으로 사용하는 break-glass runbook으로 제한한다.
+
 ## 2026-08-10 08:19 KST — task `task_f44f3e2fb756`
 
 > Dispatch: `ctx_a57c4b93407a`.

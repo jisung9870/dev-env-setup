@@ -27,20 +27,19 @@ workstream 이름이며 delivery DAG의 `S0–S9`를 대체하지 않는다.
 
 ## 2. 확정된 아키텍처 결정
 
-1. Workbench는 optional observer가 아니라 개인 운영의 논리적 core다. 단, 장애 시 Markdown, Git과 native
-   terminal로 읽고 복구하는 경로를 막지 않는다.
+1. Workbench는 optional observer가 아니라 개인 운영의 논리적 core다. 단, 장애 시 어떤 사용 가능한
+   shell에서도 Markdown, Git과 `wb`로 읽고 복구할 수 있는 수동 경로를 막지 않는다.
 2. `wb` CLI와 Dashboard는 동등한 first-party client다. 한쪽에만 존재하는 domain capability는 완료로
    보지 않으며, platform 제약으로 UI 동작이 다르면 같은 plan/receipt와 명시적 handoff를 제공한다.
 3. Orca는 WSL, macOS와 이후 검증된 platform에서 기본 terminal/Agent workspace다. Workbench는 Orca의
    worktree, terminal, Agent, Run/Task/Dispatch lifecycle을 복제하지 않는다.
-4. Windows Terminal과 iTerm2는 각각 Windows/WSL과 macOS의 native bootstrap/recovery terminal이다.
-   Workbench/Orca 장애 시 setup, doctor, restore와 direct CLI 진입을 제공하지만 장기 workspace state를
-   소유하지 않는다.
+4. Workbench는 Windows Terminal과 iTerm2를 별도 backend, bootstrap 또는 recovery surface로 통합하지
+   않는다. WSL과 macOS의 제품 workspace는 Orca 하나이며 OS별 terminal 차이는 Orca 아래의 구현 세부다.
 5. tmux는 각 Orca worktree **안에서** 사람이 session/window/pane을 분리하는 계층으로 유지한다. Orca가
    관리하는 Agent는 tmux 밖의 Orca Agent terminal에서 실행한다. 따라서 tmux pane scraping은 Orca Agent
    lifecycle의 근거가 아니다.
-6. cmux는 optional/compatibility client/backend다. macOS 기본 경로나 필수 dependency가 아니며 제거도
-   자동화하지 않는다.
+6. cmux는 신규 제품 경로에서 제외한다. 이미 존재하는 호환 구현과 문서는 즉시 파괴적으로 삭제하지 않고
+   migration 및 사용 증거를 확인한 뒤 별도 deprecation 단계에서 처리한다.
 7. Markdown은 사람이 작성하고 LLM이 소비하는 task, note, decision, plan, runbook과 중요한 receipt의
    canonical format이다. SQLite는 삭제 후 재구축 가능한 projection/cache다.
 8. operational state는 무조건 SQLite에 넣지 않고 authority와 복구 성질로 분류한다. 재구축 불가능한
@@ -57,11 +56,11 @@ workstream 이름이며 delivery DAG의 `S0–S9`를 대체하지 않는다.
 |---|---|---|---|
 | Workbench 역할 | project/environment/secret/session/worktree/Agent/workflow registry와 loopback Dashboard | personal operating core: Context, Inbox, Project, Task, ExternalRef, WorkLocation, Run, policy | 현재 registry가 새 canonical model을 이미 구현했다는 주장 |
 | client 관계 | CLI가 넓은 command surface, Dashboard가 snapshot과 제한된 typed action 제공 | CLI와 Dashboard가 동일 application service의 동등 client | 화면에 button이 있다고 contract parity가 증명된 것 |
-| 기본 workspace | backend auto 선택; tmux 우선 보존, cmux/Windows Terminal/shell adapter 존재 | Orca가 기본 cross-platform workspace; native terminal은 bootstrap/recovery | 현재 Workbench에 Orca adapter가 존재한다는 주장 |
+| 기본 workspace | backend auto 선택; tmux 우선 보존, cmux/Windows Terminal/shell adapter 존재 | Orca가 유일한 cross-platform 제품 workspace | 현재 Workbench에 Orca adapter가 존재하거나 기존 adapter 제거가 끝났다는 주장 |
 | tmux | managed project session과 Agent/workflow pane의 runtime owner 역할도 수행 | Orca worktree 안의 **human-only** session/window/pane 분리 | 기존 Workbench managed Agent를 즉시 삭제하거나 migration 없이 중단하는 것 |
 | Agent | Workbench가 Codex/Claude task registry와 tmux/cmux launch 일부를 소유 | Orca가 Agent와 orchestration runtime을 단독 소유; Workbench는 opaque ref/result pointer만 보유 | tmux foreground command를 Orca Agent 상태로 추론하는 것 |
-| native terminal | Windows Terminal launch backend 구현; iTerm2 전용 contract 없음 | Windows Terminal/iTerm2가 bootstrap/recovery terminal | native Windows 전체 setup 또는 실제 macOS smoke 완료 주장 |
-| cmux | macOS optional backend/client, mocked contract 중심 | optional/compatibility 유지 | 기본 macOS workspace 또는 제거 승인 |
+| native terminal | Windows Terminal launch backend 구현; iTerm2 전용 contract 없음 | 신규 integration 없음; OS terminal은 Orca 아래의 비소유 구현 세부 | 기존 Windows Terminal adapter가 이미 제거됐다는 주장 |
+| cmux | macOS optional backend/client, mocked contract 중심 | 신규 제품 경로에서 제외; 안전한 deprecation은 후속 | 기존 구현의 즉시 삭제 승인 |
 | 저장 | schema-v1 TOML/JSON registry, bounded activity/workflow history, backup | Markdown canonical + rebuildable SQLite projection/cache + classified operational journal | 전면 SQLite migration 또는 DB file sync |
 | 외부 adapter | file/Git 일부 관찰 기능; GitHub/Slack product adapter 없음 | GitHub read 후 Slack read | write connector, webhook, generic plugin SDK |
 | backup | registry별 local backup; off-device restore 미검증 | private GitHub history + encrypted OneDrive snapshot, restore drill | 평문 Secret backup 또는 동일 directory 이중 sync |
@@ -86,9 +85,7 @@ flowchart TB
     AD --> ORCA["Orca adapter\nhealth · observe · open/jump · result pointer"]
     ORCA --> ORT["Orca runtime owner\nworktree · terminal · Agent · orchestration"]
     ORT --> HT["tmux inside worktree\nhuman sessions only"]
-    WIN["Windows Terminal\nbootstrap/recovery"] --> ORT
-    ITERM["iTerm2\nbootstrap/recovery"] --> ORT
-    CMUX["cmux optional/compatibility"] -.-> APP
+    SHELL["OS shell\nmanual break-glass only"] -.-> CLI
     MD --> GIT["private GitHub\nhistory"]
     MD --> SNAP["encrypted OneDrive\nsnapshot"]
     DB --> SNAP
@@ -103,8 +100,8 @@ flowchart TB
 | Dashboard | overview, Today/review, relation 탐색, plan/diff, foreground approval, recovery visibility | 별도 registry, browser-side source parsing, arbitrary shell |
 | Orca | worktree, terminal, Agent session, Run/Task/Dispatch, remote/local runtime lifecycle | Workbench의 장기 personal Task와 canonical content |
 | tmux | Orca worktree 안에서 사람의 persistent session/window/pane | Orca Agent launch/status, cross-worktree control plane |
-| Windows Terminal/iTerm2 | native shell entry, bootstrap, doctor, restore, Orca launch/recovery | canonical state와 managed long-running workspace |
-| cmux | 선택적 macOS view/compatibility entry | 필수 workspace, canonical config/state |
+| OS shell | Orca 장애 시 문서화된 수동 `wb`/Markdown/Git break-glass | 제품 workspace, 자동 terminal 선택·실행, canonical state |
+| Windows Terminal/iTerm2/cmux | 신규 제품 ownership 없음; 기존 adapter는 deprecation 전까지 compatibility 이력 | 목표 workspace와 신규 기능 |
 | file/Git adapter | local Markdown discovery, Git fact/read projection | core policy와 provider mutation authority |
 | GitHub/Slack adapter | provider ID, scope, cursor, health, read projection, deep link, disable/export | provider 원문과 초기 write |
 | private GitHub | canonical Markdown/config history and review | runtime DB, Secret, live lock/queue |
@@ -211,8 +208,8 @@ duplicate, cursor reset, revoke, wrong account/context, export와 disconnect를 
 - timeout 뒤 write를 자동 재시도하지 않고 provider를 reconcile한다.
 - Secret plaintext는 argv, prompt, Markdown, SQLite, Dashboard snapshot, activity/audit에 넣지 않는다.
 - managed와 observed를 분리하며 관찰 사실로 stop/delete 권한을 만들지 않는다.
-- Orca 부재나 incompatible capability에서는 Windows Terminal/iTerm2 → direct Git/CLI → human tmux 경로로
-  degrade한다.
+- Orca 부재나 incompatible capability에서는 자동으로 다른 terminal을 launch하지 않는다. 사용자가 현재
+  접근 가능한 shell에서 문서화된 `wb`/Markdown/Git break-glass 절차를 명시적으로 실행한다.
 - Dashboard는 loopback, runtime token, same-origin, typed payload와 bounded input을 유지한다.
 - 중요한 mutation 전 cutoff checkpoint를 만들고, partial failure는 살아 있는 asset과 exact next action을
   receipt에 남긴다.
@@ -228,6 +225,6 @@ duplicate, cursor reset, revoke, wrong account/context, export와 disconnect를 
 - SQLite 삭제/rebuild 뒤 canonical content, important receipt 또는 O1 operational state가 사라진다.
 - GitHub/OneDrive가 같은 path를 동시 sync하거나 plaintext Secret이 backup/history에 나타난다.
 - Slack 구현을 위해 GitHub와 무관한 generic plugin framework를 먼저 만들어야 한다.
-- native terminal 또는 direct Git/Markdown recovery path가 Workbench/Orca 장애 때문에 동작하지 않는다.
+- direct Git/Markdown/`wb` break-glass path가 Workbench/Orca 장애 때문에 동작하지 않는다.
 
 이 경우 기능 수를 줄이는 것은 실패가 아니라 ownership과 복구 계약을 지키는 설계 선택이다.

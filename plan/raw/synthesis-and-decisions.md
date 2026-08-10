@@ -167,12 +167,14 @@ Dashboard와 `wb` CLI는 Workbench Core의 동등한 client다. Dashboard, brows
 Markdown·설정 history를 보존하고 OneDrive는 Secret을 제외한 암호화 snapshot·attachment·runtime backup을
 담당한다. 같은 working tree의 Git/OneDrive 이중 sync는 금지한다.
 
-terminal/runtime 역할도 다음과 같이 확정했다. Orca가 기본 terminal workspace이자 Agent runtime owner이고,
-Agents는 Orca 아래에서 직접 실행한다. tmux는 Orca worktree별 사람의 shell/editor 작업을 나누는 partition,
-Windows Terminal과 iTerm2는 각 OS의 native fallback, cmux는 선택적 macOS client다. Workbench는 Orca의
+terminal/runtime 역할은 2026-08-10 사용자 결정으로 다시 단순화했다. Orca가 WSL과 macOS의 유일한 제품
+workspace이자 Agent runtime owner이고 Agents는 Orca 아래에서 직접 실행한다. tmux는 Orca worktree별
+사람의 shell/editor 작업을 나누는 partition이다. Windows Terminal과 iTerm2는 target surface에서 제외하며
+cmux도 신규 제품 경로에서 제외한다. 기존 Windows Terminal/cmux adapter는 현재 구현 사실과 복구 가능한
+이력으로 보존하되 Orca 전환 smoke 뒤 deprecation gate에서 정리한다. Workbench는 Orca의
 Run/Task/Dispatch lifecycle을 복제하지 않고 opaque reference, capability, 관찰 시각과 result pointer만
-투영한다. iTerm2 adapter와 새 navigation/API는 Phase 0 결정이지 현재 구현 완료 주장이 아니며, 구현 전까지
-capability를 unavailable로 정직하게 표시한다.
+투영한다. 새 navigation/API는 Phase 0 결정이지 현재 구현 완료 주장이 아니며, 구현 전까지 capability를
+unavailable로 정직하게 표시한다.
 
 PM architecture/roadmap cross-review에서 저장과 delivery 용어를 더 엄밀하게 맞췄다. Markdown canonical과
 SQLite projection이라는 원칙은 유지하되, state를 C1–C3, O1–O3와 Secret으로 분류하고 중요한 receipt와

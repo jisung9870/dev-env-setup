@@ -80,9 +80,10 @@ provenance를 보존하고 project와 next action을 붙인다. 실행 시 repos
 
 project에서 관련 task·문서·Git 상태·worktree를 모아 기본 terminal workspace인 Orca로 연다. 사람의
 shell/editor 작업은 Orca worktree별 tmux partition으로 나누고 Agent는 Orca 아래에서 직접 실행한다.
-Windows Terminal과 iTerm2는 각 OS의 native fallback이고 cmux는 선택적 client다. Orca가 runtime을
-소유하고 Setup은 opaque reference와 관찰 시각, 결과 pointer만 보존한다. diff, test, 미결 항목을 review
-packet으로 만들며 commit, push, merge는 별도 승인 작업이다.
+Workbench가 Windows Terminal이나 iTerm2를 별도 surface/backend로 선택·실행하지 않으며, WSL과 macOS 모두
+Orca 하나를 사용자 workspace로 사용한다. cmux는 신규 제품 경로에서 제외하고 기존 호환 구현만 이력으로
+보존한다. Orca가 runtime을 소유하고 Setup은 opaque reference와 관찰 시각, 결과 pointer만 보존한다. diff,
+test, 미결 항목을 review packet으로 만들며 commit, push, merge는 별도 승인 작업이다.
 
 ### 검토와 자동화 승격
 
@@ -140,7 +141,7 @@ Recipe(typed_input, risk, approval, retry/recovery policy)
 ```mermaid
 flowchart TB
     U["사용자"] --> C["Capture · Today · Review"]
-    U --> X["wb CLI · Orca · tmux · native terminal"]
+    U --> X["wb CLI · Orca · tmux"]
     U --> UI["로컬 Web UI"]
     C --> CORE["Workbench Core\nproject · task · ref · run · policy"]
     X --> CORE
@@ -165,8 +166,8 @@ flowchart TB
 | tmux/LazyVim/binbox | Orca worktree별 human work partition과 독립 실행·복구 경로 | 중앙 registry와 Orca Agent lifecycle |
 | Adapter | capability, ID mapping, health, cursor, disable | provider 내부 상태 추측 |
 | Orca | 기본 terminal workspace와 worktree·terminal·Agent·orchestration runtime | 장기 개인 업무 index |
-| Windows Terminal/iTerm2 | Orca 부재 시 OS native fallback | Core state와 안정되지 않은 tab/process ownership 추측 |
-| cmux | 선택적 macOS client/open target | 기본 workspace와 필수 복구 경로 |
+| OS shell | Orca 장애 시 운영자가 실행하는 수동 `wb`/Markdown/Git break-glass | 제품 workspace와 자동 terminal launch |
+| Windows Terminal/iTerm2/cmux | 신규 제품 역할 없음; 기존 호환 구현은 deprecation 전까지 보존 | 목표 workspace와 신규 기능 |
 
 일반 설치는 **`workbench` profile을 기본값**으로 삼아 Workbench와 prerequisite를 필수로 검증한다.
 `terminal` profile은 tmux·LazyVim·binbox만으로 복구하거나 최소 설치할 때 명시적으로 선택하는 독립
@@ -350,8 +351,10 @@ state transition, outcome/error code와 receipt schema mismatch가 0이어야 cl
 9. Dashboard는 Today/review의 권장 UI로 두되 CLI·terminal을 항상 독립 복구 경로로 유지한다.
 10. Dashboard는 별도 state owner가 아니며 `wb` CLI와 Workbench Core를 공유한다. 목표 navigation은 Today,
     Inbox, Projects, Runs & Agents, Integrations, System & Recovery다.
-11. Orca는 기본 terminal workspace이고 Agents는 Orca 아래에서 직접 실행한다. Windows Terminal/iTerm2는
-    native fallback, tmux는 Orca worktree별 human work partition, cmux는 선택적 client다.
+11. Orca는 WSL과 macOS의 유일한 제품 workspace surface이며 Agents는 Orca 아래에서 직접 실행한다.
+    Workbench는 Windows Terminal/iTerm2/cmux integration을 신규 목표에서 제외하고, tmux만 Orca worktree별
+    human work partition으로 유지한다. Orca 장애 시 `wb`·Markdown·Git 직접 접근은 자동 terminal
+    integration이 아닌 문서화된 수동 복구 경로다.
 
 ### 관찰 후 확정할 항목
 

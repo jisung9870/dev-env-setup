@@ -24,15 +24,16 @@ Dashboard는 폐기하거나 새 애플리케이션으로 대체하지 않는다
    provider에서 다시 받는 O2 cache와 C1–C3/O1/O2에서 재생성하는 O3 derived projection만 가진다.
 3. 외부 원문은 provider가 소유하며 Core는 stable reference, 허용된 cached metadata, provenance와 cursor만 가진다.
 4. Orca가 기본 terminal workspace와 Agent runtime이다. Workbench는 Orca lifecycle을 복제하지 않는다.
-5. Windows Terminal과 iTerm2는 각 OS의 native fallback, tmux는 Orca worktree별 human-work partition,
-   cmux는 선택적 macOS client다.
+5. Orca는 WSL과 macOS의 유일한 제품 workspace surface다. tmux는 Orca worktree별 human-work partition이며,
+   Windows Terminal/iTerm2/cmux는 신규 Dashboard target과 backend 선택지에서 제외한다.
 6. 모든 write는 typed mutation, 직전 대상 재검증, 위험 표시, preview/승인, journal과 복구 결과를 갖는다.
 7. arbitrary shell, prompt, path, argv, environment, force/delete 우회 필드는 Dashboard API에 두지 않는다.
 8. file/Git 다음 외부 connector는 GitHub read-only, 그 다음은 같은 계약을 재사용하는 Slack read-only다.
 9. private GitHub는 Markdown·설정 history, OneDrive는 Secret을 제외한 암호화 snapshot·attachment·runtime
    backup을 담당한다. 같은 working tree를 둘이 동시에 동기화하지 않는다.
-10. Dashboard, Orca 또는 외부 service가 없어도 `wb`, Markdown, Git과 native terminal fallback으로 읽기와
-    복구가 가능해야 한다.
+10. Dashboard 또는 외부 service가 없어도 Orca 안에서 `wb`, Markdown과 Git으로 읽기와 복구가 가능해야
+    한다. Orca 자체 장애에는 자동 terminal fallback 대신 사용 가능한 shell에서 실행하는 문서화된
+    break-glass 절차를 제공한다.
 
 ## 2. Surface와 실행 위치
 
@@ -42,14 +43,12 @@ Dashboard는 폐기하거나 새 애플리케이션으로 대체하지 않는다
 | `wb` CLI | capture/action/resume의 terminal-first 경로, 장애 시 복구 | Dashboard와 같은 Core service·schema·policy 사용 |
 | Orca | 기본 workspace, worktree·terminal·Agent·Run/Task/Dispatch lifecycle | provider runtime의 유일한 owner; Core에는 opaque ref와 관찰 시각만 투영 |
 | tmux | Orca worktree마다 사람의 shell/editor 작업을 분리·복귀 | human work partition; Agent를 tmux registry로 재소유하지 않음 |
-| Windows Terminal | Windows/WSL에서 Orca가 없거나 사용할 수 없을 때 native fallback | native tab/pane identity가 불안정하면 launch-only로 표시 |
-| iTerm2 | macOS에서 Orca가 없거나 사용할 수 없을 때 native fallback | Phase 0 결정이며 adapter 구현·검증 전에는 unavailable로 표시 |
-| cmux | macOS의 선택적 client/open target | 기본값이나 필수 dependency가 아니며 실패 시 iTerm2/CLI 경로 유지 |
+| OS shell | Orca 장애 시 운영자가 명시적으로 사용하는 수동 break-glass | Dashboard가 선택·실행·소유하지 않음 |
 
-기본 project resume 순서는 `Orca → OS native fallback(Windows Terminal/iTerm2) → current shell`이다.
-tmux는 이 순서와 경쟁하는 별도 workspace backend가 아니라, Orca worktree 내부에서 사람의 장기 shell/editor
-맥락을 나누는 partition이다. Agents는 Orca terminal에서 직접 실행한다. Orca가 없는 fallback 실행은
-`observed/unmanaged`로만 투영하며 Workbench가 stop 권한을 추측하지 않는다.
+기본 project resume 대상은 Orca 하나다. tmux는 별도 workspace backend가 아니라 Orca worktree 내부에서
+사람의 장기 shell/editor 맥락을 나누는 partition이며 Agents는 Orca terminal에서 직접 실행한다. Orca가
+없는 상태에서 수동으로 실행한 작업은 `observed/unmanaged`로만 투영하며 Workbench가 stop 권한을 추측하지
+않는다.
 
 ## 3. 목표 정보 구조
 
@@ -123,7 +122,7 @@ outcome, next action, done condition과 canonical repo를 먼저 보여주고 Gi
 
 - 기본 Resume은 Orca worktree를 canonical repo/path/branch로 재검증해 연다.
 - human tmux partition은 연결된 Orca worktree 아래에 표시한다.
-- Windows Terminal/iTerm2 fallback은 선택 이유와 capability를 표시하고 자동 이중 launch하지 않는다.
+- Orca가 unavailable이면 다른 terminal을 자동 launch하지 않고 수동 break-glass 안내만 표시한다.
 - 외부/dirty/prunable worktree는 관찰 상태와 허용 action을 구분한다.
 - note/decision edit는 canonical Markdown revision을 대상으로 하며 projection row 직접 편집은 금지한다.
 
@@ -151,7 +150,7 @@ last attempt/success, stale reason과 next retry를 표시한다. Secret 값과 
 
 ### System & Recovery
 
-active profile, platform support evidence, Workbench/Orca/native fallback capability, Doctor, projection 상태,
+active profile, platform support evidence, Workbench/Orca capability, Doctor, projection 상태,
 backup history와 restore drill 결과를 한곳에서 보여준다.
 
 - Markdown canonical store가 readable이면 SQLite projection 장애 중에도 read-only 목록과 rebuild action을 제공한다.
@@ -176,7 +175,7 @@ backup history와 restore drill 결과를 한곳에서 보여준다.
 | retryable | next retry와 idempotency 근거 | read/idempotent retry만 |
 | blocked | auth/policy/conflict reason과 owner | reconnect, policy review, manual merge |
 | unknown/observed | evidence, confidence, observed time | 재관찰/jump만; mutation 금지 |
-| unavailable/unsupported | platform/capability reason과 fallback | CLI/native fallback |
+| unavailable/unsupported | platform/capability reason과 break-glass 안내 | 현재 shell의 수동 CLI 절차 |
 | offline/provider down | local cached/canonical data 유지 | local capture, Markdown/Git 작업 |
 | permission denied | requested/effective scope와 target | credential/policy 변경 경로; 자동 확대 금지 |
 | action success | non-blocking notice + fresh snapshot/journal ref | 결과/detail 열기 |
@@ -349,12 +348,12 @@ Deliverable:
 
 - 현재 Overview/Projects/Activity/Settings/System route/action을 목표 여섯 영역에 mapping하고 current/planned,
   owner, capability와 migration gap을 기록한다. 구현 변경은 하지 않는다.
-- target IA, Orca/native-terminal/tmux/cmux ownership, C1–C3/O1–O3/Secret과 compatibility policy를 잠근다.
+- target IA, Orca/tmux ownership, 수동 break-glass, C1–C3/O1–O3/Secret과 compatibility policy를 잠근다.
 
 Acceptance:
 
 1. 현재 v1 action이 모두 owner와 target area에 mapping되고 누락·중복 owner가 0개다.
-2. Orca default, native recovery, worktree별 human tmux, tmux 밖 Orca Agent와 optional cmux가 한 matrix에 있다.
+2. Orca 단일 workspace, 수동 break-glass, worktree별 human tmux와 tmux 밖 Orca Agent가 한 matrix에 있다.
 3. planner/backend/frontend가 동시에 수정할 file owner가 0개인 S1–S3 change map을 만들 수 있다.
 
 ### S1 — trust foundation와 System & Recovery shell
@@ -362,14 +361,14 @@ Acceptance:
 Deliverable:
 
 - profile, capability/support tier, manifest freshness, last verified checkpoint와 exact recovery command를 표시한다.
-- Windows Terminal/iTerm2 bootstrap·doctor·restore와 Markdown/Git/tmux direct fallback을 안내한다.
+- WSL/macOS Orca bootstrap·doctor·restore와 Markdown/Git/`wb` 수동 break-glass를 안내한다.
 - install/repair는 자동 실행하지 않고 CLI의 backup/verify/restore dry-run receipt로 handoff한다.
 
 Acceptance:
 
 1. WSL fresh setup+doctor 2회, update 2회와 synthetic restore 1회의 evidence가 같은 manifest/checkpoint로 표시된다.
 2. macOS 미통과 fixture는 experimental이며 지원 완료로 보이지 않는다.
-3. Workbench/Orca unavailable 상태에서 native recovery command까지 keyboard로 도달하고 canonical state를 바꾸지 않는다.
+3. Workbench/Orca unavailable 상태에서 수동 break-glass command까지 keyboard로 도달하고 canonical state를 바꾸지 않는다.
 
 ### S2 — canonical core read surface
 
@@ -539,7 +538,7 @@ integration checkpoint에 없으면 release하지 않는다.
 - `/today`, `/inbox`, `/runs`, `/integrations` handler, redirect, query parameter 또는 selected-object deep-link grammar.
 - Inbox/Today/Run object, Markdown/frontmatter, SQLite, `ActionPlan/ActionRun`, v2 envelope/field 또는 browser state store.
 - `update_secret` 이동/복제, provider account model, Secret recovery mutation 또는 raw credential/error/path 표시.
-- current destructive action의 새 navigation 노출, Orca/iTerm2/connector 구현, install/repair, automatic retry/fallback.
+- current destructive action의 새 navigation 노출, Orca/connector 구현, install/repair, automatic retry/fallback.
 - framework/build-system migration, remote asset, analytics, service worker, arbitrary command/path/prompt/argv/env input.
 
 ### deferred questions and owner feedback

@@ -14,7 +14,8 @@ Dashboard, data/recovery, validation 전달물을 함께 갖는다. stage가 끝
 
 - WSL은 primary Tier-1 후보이며 macOS는 같은 smoke track에서 독립 판정한다.
 - root와 child repo ownership을 지킨다. root는 profile/manifest/integration contract, Workbench는 core/clients,
-  nvim/binbox는 terminal/editor fallback, cmux-config는 optional compatibility를 소유한다.
+  nvim/binbox는 Orca 내부 도구와 수동 break-glass를 소유한다. cmux-config는 신규 제품 범위에서 제외하되
+  deprecation 전까지 기존 repo 이력을 보존한다.
 - 첫 external read adapter는 GitHub, 다음은 Slack이다.
 - Orca는 기본 workspace 목표지만 E0/E1 gate를 통과하기 전에는 현재 구현 기능이라고 부르지 않는다.
 - 한 stage의 Dashboard는 후속 polish가 아니라 acceptance 대상이다.
@@ -86,7 +87,7 @@ acceptance에 포함한다. planner 명세가 화면과 interaction의 source이
 
 - 이 architecture와 roadmap, component ownership 및 staged DAG.
 - 기존 Workbench package/CLI/Dashboard/file boundary의 current-state inventory.
-- Workbench core, `wb`, Dashboard, root setup, Orca, tmux, native terminal, cmux의 owner matrix.
+- Workbench core, `wb`, Dashboard, root setup, Orca, tmux와 수동 break-glass의 owner matrix.
 - data classification(C1–C3, O1–O3, Secret)과 current-vs-planned wording rule.
 - Dashboard: 현재 route/action inventory를 새 IA(Today, Inbox, Projects, Runs, Integrations, Recovery)에 mapping한
   read-only gap report. 구현 변경은 S0에 포함하지 않는다.
@@ -129,14 +130,14 @@ field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Sec
 
 ### S1 — trust foundation와 recovery shell
 
-**목표:** 새 domain 전에 설치, native recovery와 검증 조합을 신뢰할 수 있게 한다.
+**목표:** 새 domain 전에 Orca 단일 workspace 설치, 수동 break-glass와 검증 조합을 신뢰할 수 있게 한다.
 
 **Dependencies:** S0.
 
 **Root/setup deliverables**
 
 - default `workbench` profile과 explicit `terminal` recovery profile의 selector/preflight/exit contract 정렬.
-- WSL에서 Windows Terminal, macOS에서 iTerm2를 쓰는 bootstrap/doctor/restore runbook.
+- WSL과 macOS에서 Orca를 쓰는 bootstrap/doctor/restore runbook.
 - child commit, platform, date, validation run, expiry(90일), rollback을 가진 verified manifest.
 - dirty child preservation, no-force update, synthetic corruption restore fixture.
 
@@ -150,7 +151,8 @@ field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Sec
 
 - WSL fresh setup + doctor 2회, update 2회, synthetic restore 1회.
 - macOS는 같은 smoke를 별도 결과로 기록; 미통과면 experimental 표기.
-- Workbench/Orca 없이 native terminal에서 Markdown/Git/tmux fallback 진입 성공.
+- Orca 장애를 가정해 사용 가능한 shell에서 Markdown/Git/`wb` 수동 break-glass 진입 성공. Workbench가
+  Windows Terminal/iTerm2/cmux를 자동 선택하거나 launch하지 않음.
 - profile 문서, selection output과 exit code가 일치.
 
 **Stop/cutoff**
@@ -245,7 +247,7 @@ field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Sec
 - 2주 또는 Agent session 20개의 category-only 기록: Orca/direct/tmux, start/resume/result time, fallback,
   permission profile. prompt/path/output은 기록하지 않는다.
 - human tmux-inside-worktree와 Orca-Agent-outside-tmux 운영 runbook.
-- Dashboard: Integrations/Workspace card에 E0 sample size, current default, fallback과 readiness gate 표시.
+- Dashboard: Integrations/Workspace card에 E0 sample size, current default, 수동 break-glass와 readiness gate 표시.
 
 **Acceptance / promotion**
 
@@ -254,7 +256,7 @@ field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Sec
 **Stop**
 
 - Orca가 실사용되지 않거나 current terminal path가 같은 문제를 충분히 해결하면 integration을 시작하지
-  않고 native recovery + tmux 계약만 유지한다.
+  않고 수동 break-glass + tmux 계약만 유지한다.
 
 ### S4B — Orca E1 read/open/jump
 
@@ -267,13 +269,13 @@ field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Sec
 - capability/version/health, read-only worktree/Agent summary, `observed_at`, confidence.
 - canonical repo/path/branch 재검증 후 open/jump; runtime handle은 매번 재탐색.
 - Workbench Task/Run에 opaque provider ref와 result pointer 연결.
-- CLI: status/list/open/jump, `--json`, explicit unavailable and native recovery guidance.
+- CLI: status/list/open/jump, `--json`, explicit unavailable and manual break-glass guidance.
 - Dashboard: Workspace/Project에서 Orca state, staleness, open/jump와 result pointer; stop/remove 없음.
 - tmux pane observation을 Orca Agent state와 분리하는 migration/compatibility label.
 
 **Acceptance**
 
-- 20회 resume에서 wrong-worktree jump 0, stale handle 재탐색 ≥95%, Orca 부재 fallback 100%.
+- 20회 resume에서 wrong-worktree jump 0, stale handle 재탐색 ≥95%, Orca 부재 수동 break-glass 안내 100%.
 - CLI/Dashboard가 같은 canonical target와 capability error를 표시.
 
 **Stop**
@@ -453,7 +455,7 @@ checkpoint ID
 2. SQLite projection delete/rebuild.
 3. previous schema binary + pre-migration canonical snapshot restore.
 4. verified root/child manifest rollback.
-5. native terminal에서 Markdown/Git/tmux direct recovery.
+5. 사용 가능한 shell에서 Markdown/Git/`wb` 수동 break-glass recovery.
 
 ## 6. 전체 program stop criteria
 

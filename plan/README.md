@@ -45,12 +45,13 @@
 - 첫 제품 쐐기는 `Prepare → Resume → Recover`이고, 30일에는 신뢰 기반과 한 개의 닫힌 개인 운영 loop만 만든다.
 - 외부 원문은 복제보다 reference/projection으로 연결하며 개인/업무 credential과 write 권한을 분리한다.
 - MCP는 file, Git, API, webhook, CLI와 같은 adapter 선택지 중 하나다.
-- Orca는 기본 Agent runtime이지만 필수 state dependency는 아니다. Workbench는 Orca runtime을 복제하지
-  않고, Orca 부재 시 native terminal/direct 경로를 fallback으로 유지한다.
+- Orca는 유일한 제품 workspace와 Agent runtime이지만 canonical state dependency는 아니다. Workbench는
+  Orca runtime을 복제하지 않고, Orca 장애 시 자동 terminal 전환이 아닌 수동 `wb`/Markdown/Git
+  break-glass 경로를 유지한다.
 - Dashboard는 operations console을 버리지 않고 Today/Inbox/Projects/Runs & Agents/Integrations/System & Recovery로
   발전하며, `wb` CLI와 같은 Workbench Core를 사용한다.
-- Orca는 기본 terminal workspace다. Windows Terminal/iTerm2는 native fallback, tmux는 Orca worktree별 human
-  work partition, cmux는 선택적 client이며 Agents는 Orca에서 직접 실행한다.
+- Orca는 WSL과 macOS의 단일 terminal workspace다. Windows Terminal/iTerm2/cmux는 신규 제품 경로에서
+  제외하고, tmux는 Orca worktree별 human work partition으로 유지하며 Agents는 Orca에서 직접 실행한다.
 - 자체 Agent scheduler/message bus/DAG, cloud sync, native app과 폭넓은 양방향 연동은 사용 gate까지 보류한다.
 - WSL은 primary Tier-1이며 macOS를 같은 30일 smoke track에서 병행한다.
 - 일반 설치는 `workbench` profile, 복구·최소 설치는 명시적 `terminal` profile을 사용한다.

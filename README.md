@@ -20,8 +20,9 @@ Agent 관리와 multi-agent orchestration은 Orca 같은 외부 backend 연동�
 Slack의 read-only 흐름부터 시작하며, 여러 장비 보존은 private GitHub history와 암호화된 OneDrive
 backup을 역할별로 분리하는 방향이다. 세부 내용은 [제품 기획서](plan/PRODUCT-PLAN.md)를 따른다.
 
-통합 Workbench 계획은 cmux를 필수로 하지 않는다. macOS에서는 cmux를 선택적으로 사용하고,
-Windows에서는 Windows Terminal + WSL2를 전체 기능 기본 경로로 사용한다.
+통합 Workbench의 목표 workspace는 WSL과 macOS 모두 Orca 하나다. Windows Terminal, iTerm2와 cmux를
+Workbench의 신규 backend나 제품 진입점으로 확장하지 않는다. 저장소에 남아 있는 기존 adapter는 현재
+구현 이력이며, Orca 전환 검증 후 별도 deprecation 단계에서 안전하게 정리한다.
 
 실제 구현은 4개의 독립 GitHub repo(**binbox · nvim · cmux-config · workbench**)에 있고, 이 폴더의 작은
 스크립트 3개가 그것들을 **의존 순서대로 clone·연결·셋업**하고 **점검·동기화**한다. 새 장비에서
