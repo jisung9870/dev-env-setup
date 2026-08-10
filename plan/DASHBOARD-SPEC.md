@@ -555,6 +555,55 @@ integration checkpoint에 없으면 release하지 않는다.
 - **Deferred to S2/S3:** stable object URL grammar, canonical path allowlist, structured error/recovery fields,
   Settings split의 final route, profile/credential target view model과 alias retirement mechanism이다.
 
+### S1 committed compatibility-lock UX acceptance review — 2026-08-10
+
+검토 대상은 Workbench `e80187e`(action request limit)와 `6d7750c`(focus-safe compatibility shell), 두 role log,
+embedded HTML/JS/CSS, Go handler fixtures와 Node fixtures다. 이 gate는 두 commit을 **bounded implementation
+checkpoint로 accept**하지만 real-browser product acceptance나 S1 capability completion으로 promote하지 않는다.
+
+| 판정 | 항목 | commit/fixture evidence | 남은 조건 또는 dissent |
+|---|---|---|---|
+| **Accepted** | six labels/order와 current destination | `navigation_test.mjs`가 Today, Inbox, Projects, Runs & Agents, Integrations, System & Recovery 순서와 `/`, non-link Inbox, `/projects`, `/activity`, `/settings`, `/system`을 고정한다. `/today`, `/inbox`, `/runs`, `/integrations` link가 없고 Go fixture는 target route 404를 확인한다. | label은 capability 완료가 아니며 Guide는 별도 Help nav다. |
+| **Accepted** | focusable non-link Inbox semantics | HTML은 native `button`에 `aria-disabled=true`, reason association과 S2 copy를 사용하고 `disabled`/`href`/route/action을 만들지 않는다. activation은 local polite notice만 낸다. | 아래 timer-focus dissent는 별도다. |
+| **Accepted** | v1 compatibility/backend pair | `e80187e`는 15 action transport fixtures, exact 16,384-byte execute 1회와 16,385-byte HTTP 413/execute 0, current GET/HEAD와 target 404를 고정한다. | 이는 새 domain/API acceptance가 아니다. |
+| **Accepted** | no second state owner | frontend diff는 기존 in-memory `state.projectId`/`state.taskId`를 유지하고 URL/storage/history/Core replica를 추가하지 않는다. focus identity는 한 refresh를 위한 ephemeral descriptor이며 domain state가 아니다. | S2/S3 전 selected-object persistence/deep link를 추가하지 않는다. |
+| **Partial** | current route preservation | app은 `location`/History API를 쓰지 않고 current document에서 snapshot/action fetch만 하며 server fixture는 current route를 그대로 render한다. | `/activity?source=bookmark#task-detail`와 `/settings?source=bookmark#secrets`의 path/search/hash byte equality는 Node/Go fixture가 없고 real browser에서 아직 미실행이다. |
+| **Partial** | deterministic focus/fallback | Node helper fixture는 stable id/data/form identity, removed/disabled/hidden fallback, route-heading focus와 fixed polite notice를 검증하고 manual/timer/action wiring을 정적으로 확인한다. | 실제 fetch/render와 keyboard focus를 함께 실행하지 않는다. 또한 focusable Inbox가 DOM에 남아도 `aria-disabled`라 timer refresh 때 heading으로 이동한다. 이는 “background refresh는 current focus로 복귀”와 충돌하므로 그대로 accept하지 않는다. |
+| **Partial** | safe failure copy와 sensitive detail | frontend는 backend `message/details`를 읽지 않고 allowlisted code와 fixed snapshot/action copy만 persistent alert/notice에 넣으며 raw Doctor reason notice도 제거했다. oversized-request response도 fixed copy/empty details다. | generic handler는 여전히 일부 `err.Error()`와 typed action details를 API response에 전달한다. hostile message/details가 DOM/accessibility tree/title에 0건임을 증명하는 executable end-to-end fixture도 없으므로 redacted-failure acceptance 전체는 미충족이다. |
+| **Partial** | responsive/accessibility | semantic nav/Help separation, active `aria-current`, focusable headings/alert, narrow reflow rules, 44px controls와 16px narrow text는 static HTML/CSS/Node assertions로 확인된다. | 360/768/1280, 200% zoom, keyboard order, focus ring, overflow, screen-reader tree, themes/reduced-motion은 real browser evidence가 없다. |
+| **Rejected** | “S1 UX acceptance complete” 또는 “responsive/accessibility passed” 주장 | frontend log도 browser harness 부재를 명시한다. source-regex/VM helper와 Go route tests는 rendering engine, actual focus lifecycle 또는 accessibility tree를 실행하지 않는다. | 아래 evidence가 생길 때까지 release report는 `implementation accepted; product validation pending`이라고 써야 한다. |
+
+#### remaining validation과 exact acceptance fixtures
+
+1. real browser에서 `/activity?source=bookmark#task-detail`와 `/settings?source=bookmark#secrets`를 initial load,
+   manual refresh, timer refresh, successful action refresh와 failed action 뒤 각각 검사해
+   `pathname+search+hash` byte equality를 100% 확인한다.
+2. project/task/Refresh/Secret submit/Inbox 각각을 keyboard로 focus하고 same five lifecycle을 실행한다. 남아 있는
+   focusable control은 same stable identity, 제거·disabled·hidden control은 visible route `h1`+polite notice,
+   `document.body`/destructive neighbor focus는 0건이어야 한다. Inbox가 남아 있는 timer case는 현재 예상 실패다.
+3. 360/768/1280 CSS px와 200% zoom에서 light/dark/system, reduced motion, keyboard-only로 one visible `h1`, named
+   nav/landmarks, active/unavailable announcement, visible focus, 44×44 target, 16px form text,
+   `scrollWidth <= clientWidth`, content/focus loss 0을 viewport별 evidence로 남긴다.
+4. snapshot/action fake response의 message/details에 Unix/Windows path, `sec://`, token, command/stdout/stderr와
+   markup sentinel을 넣고 user-visible DOM, accessibility tree, title/attribute의 sentinel 0건을 확인한다. 별도로
+   API response redaction은 backend contract owner가 유지할 raw v1 compatibility와 S1 security fix 범위를 결정한다.
+
+#### product decision, non-goals와 role feedback
+
+- **Decision:** 두 commit은 rollback 없이 유지할 수 있는 S1 v1 compatibility implementation checkpoint다. 다음
+  product decision은 frontend가 **DOM에 남아 있는 focusable Inbox에는 timer refresh 후 focus를 유지**하도록
+  unavailable-for-activation과 unavailable-for-focus-restore를 분리한 evidence를 제시하거나, PM이 background-focus
+  contract 예외를 명시적으로 승인하는 것이다. 그 결정과 real-browser fixtures 전에는 UX gate를 close하지 않는다.
+- **PM feedback:** six labels, backend lock과 static focus seam은 accept하되 S1 완료로 보고하지 않는다. browser gap,
+  Inbox timer 예상 실패와 generic API redaction boundary를 validation/owner decision으로 추적한다.
+- **Backend feedback:** exact body/action/route fixtures는 accepted다. fixed 413 이외 generic `err.Error()`/details가
+  response에 남는 current v1 behavior를 “safe end-to-end failure”로 표현하지 말고 redaction scope를 별도 gate한다.
+- **Frontend feedback:** nav/Inbox/no-new-owner와 fixed DOM copy는 accepted다. route byte-preservation, actual
+  fetch/render focus matrix와 responsive/a11y는 browser fixture로 증명하고 Inbox restore predicate를 해소한다.
+- **Non-goals:** 이 review에서 새 target route, URL identity grammar, Inbox/Today/Run schema, Markdown/SQLite projection,
+  v2 error envelope, application-service 또는 browser store를 설계하지 않는다. current v1 control/payload/ownership,
+  compatibility routes와 existing selected Project/Task state도 이동하지 않는다.
+
 ## 12. 출시 전 공통 검증
 
 - unit/contract: Core owner, schema/version, unknown field, revision/idempotency, redaction, error/outcome fixture.

@@ -187,3 +187,62 @@
 - six decisions, 15-action/16 KiB/route/focus/sentinel/browser fixture, non-goal/deferred owner와 owned-file diff를
   정적 검토했다.
 - PM/backend/frontend baseline/log와 runtime files는 수정하지 않고 commit/push도 하지 않는다.
+
+## 2026-08-10 09:07 KST — committed S1 v1 compatibility-lock UX acceptance review
+
+### scope와 evidence
+
+- Workbench commits `e80187e`와 `6d7750c`, frontend/backend logs, accepted Dashboard spec, embedded
+  `index.html`/`app.js`/`style.css`, Go handler tests와 Node `testdata/*.mjs`를 대조했다.
+- runtime/code, PM/backend/frontend files와 commits는 수정하지 않았다. planner-owned `plan/DASHBOARD-SPEC.md`와
+  이 log에만 gate 결과를 기록했다.
+
+### accepted findings
+
+- six labels는 Today → Inbox → Projects → Runs & Agents → Integrations → System & Recovery 순서이고 current
+  destinations만 사용한다. Inbox는 focus 가능한 non-link `button`, `aria-disabled=true`, S2 reason/notice이며 새
+  route/data/action이 없다.
+- backend pair는 15 current action shapes, exact 16,384/16,385 boundary, current GET/HEAD와 planned route 404를
+  executable fixture로 고정했다.
+- frontend는 기존 `projectId`/`taskId` in-memory owner 외 URL/storage/history owner를 만들지 않았다. transient
+  focus descriptor는 domain state가 아니며 current v1 payload/control ownership도 유지한다.
+
+### partial/rejected findings와 dissent
+
+- **Partial route:** source는 URL/History를 변경하지 않지만 query/hash byte-preservation browser fixture가 없다.
+- **Partial focus:** helper VM은 exact key/fallback을 검증하지만 actual fetch/render lifecycle은 실행하지 않는다.
+  특히 DOM에 남아 있는 focusable Inbox도 `aria-disabled` predicate 때문에 timer refresh 후 route heading으로
+  이동한다. background refresh current-focus promise와 충돌하므로 product dissent로 남겼다.
+- **Partial safe failure:** DOM은 raw backend message/details를 무시하고 allowlisted code+fixed copy만 표시하지만
+  generic handler response에는 일부 `err.Error()`/typed details가 남고 hostile response의 DOM/accessibility-tree
+  sentinel fixture가 없다.
+- **Partial responsive/a11y:** semantic/static CSS assertions는 있으나 360/768/1280, 200% zoom, keyboard/focus ring,
+  overflow, screen-reader tree, themes/reduced-motion real-browser evidence가 없다.
+- **Rejected claim:** 이 evidence로 “S1 UX complete” 또는 “responsive/accessibility passed”라고 보고하는 것.
+  정확한 status는 `implementation accepted; product validation pending`이다.
+
+### remaining validation, next decision과 feedback
+
+- exact browser fixtures는 두 bookmark URL × load/manual/timer/success/failure route equality, five focus targets ×
+  lifecycle same-key/fallback, three viewports+200% responsive/a11y matrix, hostile error/path/Secret sentinel DOM/tree/title
+  scan이다. Inbox timer case는 현재 예상 실패로 명시했다.
+- next product decision은 frontend가 activation-disabled와 focus-restore-unavailable을 분리해 present Inbox focus를
+  보존할지, PM이 background-focus 예외를 명시적으로 승인할지다. 이 결정과 browser evidence 전에는 gate를
+  close하지 않는다.
+- PM에는 conditional checkpoint/reporting boundary, backend에는 generic response redaction boundary, frontend에는
+  Inbox predicate와 browser fixture gap을 concrete feedback으로 Orca에서 전달한다.
+- PM/coordinator `term_01e597b5-cc85-460a-b67a-0e736f794dae`에 conditional gate와 Inbox decision을
+  `msg_7a1bf87fed81`, backend `term_62e323ac-17ac-4043-b8b4-80bc9ccb4a0b`에 redaction boundary를
+  `msg_ffe4407ce261`, frontend `term_5c0b82de-4d83-4b3b-b902-1d09ba9acf65`에 focus/browser gap을
+  `msg_dffce72f71ed`로 보냈다.
+
+### validation과 next steps
+
+- `node --check`와 all Node fixtures 20/20, focused Dashboard/CLI와 full `go test ./...`, `go vet ./...`,
+  `go build ./cmd/wb`가 통과했다.
+- planner-owned diff check와 local Markdown target check가 통과했다. final status에서 이 task가 수정한 파일은
+  두 planner file뿐이다. 검증 중 shared root worktree에 PM-owned `plan/IMPLEMENTATION-ROADMAP.md`와
+  `plan/agent-job/pm/log.md` 변경이 나타났으며 concurrent owner 변경으로 보존하고 검토·수정하지 않았다.
+- 새 S2/S3 route/schema, Markdown/SQLite projection, v2 error envelope, application service 또는 browser state owner는
+  이 review의 non-goal이다.
+- 변경 파일은 `plan/DASHBOARD-SPEC.md`, `plan/agent-job/planner/log.md`뿐이며 commit/push하지 않는다.
