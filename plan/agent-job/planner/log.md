@@ -246,3 +246,36 @@
 - 새 S2/S3 route/schema, Markdown/SQLite projection, v2 error envelope, application service 또는 browser state owner는
   이 review의 non-goal이다.
 - 변경 파일은 `plan/DASHBOARD-SPEC.md`, `plan/agent-job/planner/log.md`뿐이며 commit/push하지 않는다.
+
+## 2026-08-10 09:15 KST — Inbox focus source/fixture dissent closure
+
+### focused review와 accepted evidence
+
+- Workbench `e8cc586`의 focused diff를 `6d7750c`에 대한 conditional S1 UX acceptance와 대조했다. 변경은
+  `focusTargetUnavailable`에서 `aria-disabled=true`를 native disabled/hidden/disconnected와 분리하고, planned Inbox의
+  activation 불가 의미는 유지하면서 present focus target으로 복구할 수 있게 한다.
+- 수정된 Node fixture는 기존 Inbox element를 disconnected 처리한 뒤 같은 stable `id=inbox-planned`와
+  `aria-disabled=true`를 가진 replacement를 설치한다. `restoreFocus`가 `restored`를 반환하고 replacement가 active
+  element이며 fallback notice가 0건임을 검증하므로, 이전 source predicate와 반대 기대를 가진 fixture defect가 함께
+  해소됐다.
+- `node --check internal/dashboard/assets/app.js`와
+  `node --test internal/dashboard/testdata/focus_test.mjs`가 통과했고 focused 회귀는 6/6이다. 따라서 present Inbox의
+  activation-disabled와 focus-restore-unavailable 분리, same-ID focus 복구와 no-fallback-notice를 bounded UX evidence로
+  accept하며 이전 Inbox source/fixture dissent를 close한다.
+
+### acceptance boundary와 remaining validation
+
+- 이 closure는 browser engine, actual fetch/render/timer lifecycle 또는 실제 keyboard focus를 실행하지 않는다.
+  `/activity`·`/settings` route/search/hash byte preservation, project/task/Refresh/Secret submit/Inbox focus matrix는
+  real-browser evidence로 계속 분리한다.
+- 360/768/1280 viewport, 200% zoom, light/dark/system, reduced motion, keyboard order/visible focus, 44×44/16px,
+  overflow와 accessibility tree/screen-reader evidence도 여전히 별도 validation owner 범위다.
+- 따라서 status는 `Inbox source/fixture defect resolved; bounded UX evidence accepted; product validation pending`이며
+  full S1, responsive/accessibility pass 또는 real-browser UX gate closure를 주장하지 않는다. 새 route/schema/state owner나
+  unrelated S1 scope는 열지 않았다.
+
+### coordination과 files
+
+- PM/coordinator에는 `msg_b728e49a8c71`, frontend에는 `msg_6bcfa857eff5`로 이 bounded closure와 남은 browser
+  boundary를 Orca로 통지했다.
+- 변경은 planner-owned `plan/DASHBOARD-SPEC.md`와 이 log만이며 commit/push하지 않는다.
