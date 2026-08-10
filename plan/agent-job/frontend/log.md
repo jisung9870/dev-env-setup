@@ -102,3 +102,34 @@
   keyboard traversal, visual clipping, scroll position, and focus-ring capture
   at those widths remain an explicit validation-owner evidence gap rather than
   a claimed pass.
+
+## 2026-08-10 — S1 Inbox focus acceptance correction
+
+### Conditional-gate resolution
+
+- Reviewed the conditional acceptance and dissent in `DASHBOARD-SPEC.md`, the
+  planner log, and the PM checkpoint records. The accepted contract makes Inbox
+  unavailable for activation while intentionally keeping its native button in
+  the keyboard order, so `aria-disabled="true"` must not itself make that same
+  present control unavailable for focus restoration.
+- Removed the ARIA-disabled check from the restore-unavailable predicate.
+  Removed nodes, native `disabled` controls, the `hidden` attribute/ancestor,
+  and CSS-hidden/no-box controls still fall back to the visible route heading
+  with the fixed polite notice; no adjacent or destructive control is selected.
+- Inbox retains its existing `aria-disabled` semantics and notice-only click
+  handler. No route, action, API field, selection owner, handler, or backend
+  behavior changed.
+
+### Regression and validation
+
+- Replaced the contrary Inbox fixture with a rerender regression that captures
+  the old Inbox identity, replaces the DOM node with a present ARIA-disabled
+  Inbox button, and proves exact restoration with no removal notice. The
+  fallback matrix separately covers removed, native-disabled, hidden-attribute,
+  and CSS-hidden targets plus destructive-neighbor avoidance.
+- `node --check internal/dashboard/assets/app.js` passed and all frontend Node
+  fixtures passed 20/20. `go test ./...`, `go vet ./...`, and
+  `go build ./cmd/wb` also passed.
+- This closes the planner's source/fixture Inbox predicate dissent. The earlier
+  real-browser route, actual lifecycle, keyboard, accessibility-tree, viewport,
+  and zoom evidence gap remains unchanged and is not claimed as completed here.
