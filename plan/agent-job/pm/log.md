@@ -158,3 +158,60 @@
 - Modified only `plan/IMPLEMENTATION-ROADMAP.md` and `plan/agent-job/pm/log.md`.
 - No commit/push. PM-owned `git diff --check`, required heading/decision/owner/test/rollback/23:30 marker 검색과
   referenced Workbench file existence 검증이 통과했다. workspace의 planner-owned 변경은 건드리지 않았다.
+
+## 2026-08-10 09:15 KST — committed S1 v1 compatibility-lock acceptance review
+
+### Scope and evidence reviewed
+
+- Workbench commits `e80187e`(backend)와 `6d7750c`(frontend), both full diffs, current Workbench code/docs/tests,
+  backend/frontend/planner role logs, accepted roadmap와 Dashboard spec을 대조했다.
+- commit은 linear하고 nested `orca/work` HEAD는 `6d7750c`다. root/nested working tree는 review 시작 시 clean했고
+  data migration, provider write, root recovery, v2 route/schema 또는 Orca behavior가 없다.
+
+### Acceptance decision
+
+- **Implementation checkpoint accepted; release evidence open; full S1 not complete.** backend/frontend code lane과
+  static/full test gate는 green이므로 두 commit은 safe rollback checkpoint로 accept한다.
+- PM draft의 oversized error code `ACTION_BODY_TOO_LARGE`와 accepted implementation/spec의
+  `ACTION_REQUEST_TOO_LARGE` 불일치를 후자로 정정했다. HTTP 413, fixed safe message, empty details, service call 0
+  semantics는 동일하고 code/docs/tests/frontend contract가 후자에 일치한다.
+- planner refinement가 허용한 six-area vocabulary/current-route mapping과 unavailable Inbox를 accepted scope로
+  보았다. 새 target route/capability/state owner는 없으며 추가 `navigation_test.mjs`는 frontend testdata owner
+  안이다.
+
+### Findings
+
+- **Accepted:** complete 16 KiB pre-decode bound; exact 16,384 execute 1 and 16,385 execute 0; unknown/trailing JSON
+  rejection; all 15 v1 request shapes and public `update_secret` row; current GET/HEAD aliases and target 404s.
+- **Accepted with browser gate:** focus identity는 exact existing id/data/form identity뿐이고 removed/disabled/hidden
+  target은 visible `h1`로 fallback한다. frontend는 raw error message/details를 읽지 않고 bounded code/fixed copy만
+  표시하며 Node 20/20이 helper/wiring을 증명한다.
+- **Remaining:** real browser에서 query/hash preservation, actual DOM replacement focus, keyboard/focus ring/scroll,
+  360/768/1280px와 200% zoom, hostile error/path/token/Secret sentinel의 visible DOM/accessibility tree/title zero-leak
+  evidence가 없다. 이는 release acceptance blocker지만 committed code checkpoint rollback 사유는 아니다.
+- **Deferred:** current scheduler/diagnostic detail의 S2/S3 threat review, selected-object deep-link grammar, target
+  routes/data, shared application service와 S1 root recovery completion.
+
+### Exact next slice, rollback and cutoff
+
+- Next slice는 product code change를 기본값으로 하지 않는 **S1 real-browser acceptance closure**다. validation owner가
+  disposable local Dashboard에서 route/bookmark, focus/action/timer, responsive/zoom/keyboard, hostile-envelope sentinel
+  matrix를 실행한다.
+- frontend/backend는 evidence가 자기 lane defect를 재현할 때만 exclusive assets 또는 handler/test/docs를 수정한다.
+  planner는 acceptance matrix 대조, PM은 checkpoint 판정과 S1-not-done language를 소유한다.
+- rollback은 필요 시 frontend `6d7750c`를 먼저, backend `e80187e`를 뒤에 commit-level revert하며 data recovery는
+  없다. 23:15 new-case/fix freeze, 23:30 browser green이면 slice `accepted`, 아니면 `in-progress-safe`/lane rollback과
+  exact failed evidence를 남긴다.
+
+### Validation and communication
+
+- PM rerun: `go test ./internal/dashboard ./internal/cli`, `go test ./...`, `go vet ./...`, `go build ./cmd/wb`,
+  `node --check internal/dashboard/assets/app.js`, Node 20/20, root/nested `git diff --check`가 통과했다.
+- PM-owned roadmap/log만 수정하고 code, planner/backend/frontend files, commits와 remote를 변경하지 않았다.
+- Backend `term_62e323ac-17ac-4043-b8b4-80bc9ccb4a0b`에 accepted backend checkpoint와 evidence-only next owner를
+  `msg_7fffed19aec3`, frontend `term_5c0b82de-4d83-4b3b-b902-1d09ba9acf65`에 accepted frontend checkpoint와
+  browser gap을 `msg_3fb0eb6f3a16`으로 보냈다.
+- Planner terminal은 release된 상태라 coordinator `term_01e597b5-cc85-460a-b67a-0e736f794dae`에 planner용
+  acceptance/S1-not-done/browser matrix finding을 `msg_53a9e91a84d0`으로 보내 routing을 요청했다.
+- Final PM-only `git diff --check`와 required status/code/commit/next-slice/owner/rollback/23:30 marker 검증이
+  통과했다. workspace의 concurrent planner-owned `DASHBOARD-SPEC.md`/planner log 변경은 건드리지 않았다.

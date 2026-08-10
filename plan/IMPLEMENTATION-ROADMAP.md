@@ -123,7 +123,7 @@ S1–S3 fixture와 zero-overlap file-owner map을 current/planned로 분리해 �
 | `/settings` split, `/activity`→`/runs`, destructive action 재노출 | **deferred** | S2/S3 capability, owner와 migration fixture 전에는 compatibility UI를 유지한다. |
 
 16 KiB는 request 전체의 UTF-8 byte 수(`16 << 10`)다. 초과 요청은 service mutation 전 HTTP 413과 stable
-`ACTION_BODY_TOO_LARGE`를 반환한다. 유효한 16 KiB 이하 JSON은 기존 typed decoder를 통과하며 unknown/trailing
+`ACTION_REQUEST_TOO_LARGE`를 반환한다. 유효한 16 KiB 이하 JSON은 기존 typed decoder를 통과하며 unknown/trailing
 field 오류는 기존 400 contract를 유지한다. 16 KiB를 넘는 실제 Secret/typed action 요구가 fixture로
 발견되면 16 MiB로 자동 회귀하지 않고 Secret transport와 storage threat review를 별도 decision gate로 연다.
 
@@ -484,7 +484,7 @@ checkpoint ID
 Owner는 backend 한 명이며 다음 file만 수정한다.
 
 - `workbench/internal/dashboard/dashboard.go`: `maxActionBody = 16 << 10`; `*http.MaxBytesError`를 mutation 전
-  413/`ACTION_BODY_TOO_LARGE`로 normalize한다.
+  413/`ACTION_REQUEST_TOO_LARGE`로 normalize한다.
 - `workbench/internal/dashboard/dashboard_test.go`: valid-at-limit/one-byte-over-limit, service-not-called,
   unknown/trailing JSON, `/activity`·`/settings`·`/docs`와 query-bearing current-route regression을 추가한다.
 - `workbench/docs/dashboard.md`: `update_secret`을 포함한 15-action table과 16 KiB total-body contract를 code와
@@ -502,7 +502,8 @@ Owner는 frontend 한 명이며 backend lane과 병렬로 다음 file만 수정�
   rerender 뒤 같은 enabled control이 존재하면 복원한다. 대상이 사라졌거나 disabled이면 destructive/인접
   control을 추측하지 않고 현재 route의 visible `h1`로 이동한다.
 - `workbench/internal/dashboard/assets/index.html`과 `style.css`: stable focus key와 visible/focusable route `h1`에
-  필요한 최소 markup/style만 수정한다. navigation label, target route와 state owner는 바꾸지 않는다.
+  필요한 최소 markup/style만 수정한다. planner가 accepted한 six-area vocabulary는 current route에 label로만
+  mapping하고 target route, capability와 state owner는 만들거나 바꾸지 않는다.
 - `workbench/internal/dashboard/testdata/focus_test.mjs`: scheduled refresh, action success/failure reload, removed
   target, disabled target과 route fallback을 검증한다. 기존 theme/Guide/context tests를 재사용한다.
 
@@ -529,7 +530,7 @@ git diff --check
 **Success criteria**
 
 1. 16 KiB 이하의 유효 request는 기존 action contract를 유지하고 16 KiB 초과는 service call/side effect 없이
-   413/`ACTION_BODY_TOO_LARGE`가 된다.
+   413/`ACTION_REQUEST_TOO_LARGE`가 된다.
 2. public action table과 executable dispatch/test inventory가 15개로 일치하며 `update_secret` plaintext가
    response, log, snapshot에 나타나지 않는다.
 3. `/activity`, `/settings`, `/docs`와 query-bearing request가 기존 content/status를 유지하고 target route는
@@ -565,6 +566,52 @@ git diff --check
 - 23:30 이후에는 read-only diff/test evidence와 handoff만 허용하며 limit 또는 focus 구현을 새 방식으로
   재시도하지 않는다.
 
-이 slice 뒤의 다음 순서는 S1 root profile/verified-manifest/recovery, S2 canonical schema/journal/projection,
-S3 shared application service다. S2 schema contract가 accepted되기 전 backend/frontend가 concrete v2 field를
-각자 고정하지 않으며, S1 recovery와 S2 data gate 전에는 GitHub adapter 또는 Orca E1을 시작하지 않는다.
+### 7.1 2026-08-10 committed slice acceptance review
+
+**Status: IMPLEMENTATION CHECKPOINT ACCEPTED; release evidence OPEN; full S1 NOT COMPLETE.** Workbench commits
+`e80187e`와 `6d7750c`는 linear하고 nested checkout `orca/work`에 commit되어 있으며 root/nested worktree는 이
+review 시작 시 clean했다. 두 commit은 data migration, provider write, root recovery 또는 v2 schema를 포함하지
+않으므로 독립적으로 검토 가능한 bounded compatibility checkpoint다.
+
+| area | accepted evidence | remaining gate |
+|---|---|---|
+| scope/ownership | backend commit은 handler/test/public docs 3 files, frontend commit은 embedded assets와 frontend testdata만 변경했다. `navigation_test.mjs` 추가는 frontend-owned fixture 범위이며 six-area label은 current route mapping일 뿐 capability 완료가 아니다. | production source 확장 없음. evidence failure가 없으면 source를 더 수정하지 않는다. |
+| 16 KiB pre-mutation | complete body를 `MaxBytesReader`로 먼저 읽고 16,384 bytes는 execute 1, 16,385 bytes는 malformed 여부와 무관하게 execute 0/HTTP 413/fixed copy/empty details다. auth/origin/content-type precedence와 unknown/trailing rejection을 보존했다. | none for code gate. 실제 code 이름인 `ACTION_REQUEST_TOO_LARGE`가 planner spec/backend/frontend contract의 canonical v1 code이며 이전 PM draft의 `ACTION_BODY_TOO_LARGE`를 이 review에서 정정했다. |
+| 15 actions/Secret | executable 15 request shape를 각각 통과시키고 public table에 `update_secret`을 추가했다. Secret replacement는 write-only이고 oversize response가 body/decoder sentinel을 echo하지 않는다. | validation owner가 hostile server `message/details`, path/token/Secret sentinel이 DOM/accessibility tree/title에 0임을 real browser에서 증명한다. existing scheduler/diagnostic display의 S2/S3 threat review는 이 slice가 새로 해결했다고 주장하지 않는다. |
+| routes/deep links | current page와 Guide aliases의 GET/HEAD는 200, `/today`, `/inbox`, `/runs`, `/integrations`, v2는 404다. UI target label은 `/`, `/projects`, `/activity`, `/settings`, `/system`만 사용하고 Inbox는 non-navigating unavailable control이다. | `/activity?source=bookmark#task-detail`와 `/settings?source=bookmark#secrets`의 path/search/hash 보존은 browser gate에서 확인한다. selected-object URL grammar는 여전히 S2/S3 deferred다. |
+| focus/error UI | exact id/existing non-secret data/form identity만 capture하고 same connected/enabled/visible control로 restore한다. missing/disabled/hidden/`aria-disabled` target은 visible route `h1`만 선택한다. generic failure UI는 raw server message/details 대신 bounded code와 fixed copy를 쓴다. Node 20/20이 helper와 manual/timer/action wiring을 검증했다. | 실제 DOM replacement, keyboard order, focus ring, scroll retention과 concurrent refresh/action behavior는 real browser evidence 전에는 release-pass로 계산하지 않는다. |
+| validation/rollback | PM rerun에서 focused Go, `go test ./...`, `go vet ./...`, `go build ./cmd/wb`, JS syntax, Node 20/20와 root/nested `git diff --check`가 모두 통과했다. | rollback은 data 복구 없이 `6d7750c` frontend를 먼저, 필요하면 `e80187e` backend를 뒤에 revert하는 commit-level 경로다. 실제 rollback 수행은 failure/decision gate가 있을 때 owner가 한다. |
+
+따라서 code checkpoint는 accept하지만 Dashboard release acceptance와 S1 stage completion은 보류한다. 23:30 전에
+아래 browser evidence가 green이면 slice를 `accepted`로 승격한다. 완료되지 않거나 재현 가능한 defect가 있으면
+committed pair를 `in-progress-safe`로 기록하고 새 mutation/retry를 시작하지 않는다. security leak, wrong focus로
+destructive sibling 선택, current route break가 나오면 release를 stop하고 해당 lane만 rollback/fix gate로 돌린다.
+
+### 7.2 exact next slice — S1 real-browser acceptance closure
+
+이 다음 slice는 **product code를 기본적으로 수정하지 않는 validation-only gate**다. dependencies는 `e80187e`와
+`6d7750c`, accepted v1 fixture와 local disposable Dashboard instance다.
+
+- **Validation owner:** Chromium 계열 real browser에서 current five routes+Guide, query/hash 두 bookmark, manual/timer/
+  action success/failure focus matrix, keyboard traversal, 360/768/1280px, 200% zoom, light/dark/system, visible focus,
+  44px target, 16px form text, body overflow/scroll retention을 evidence로 남긴다. hostile 413/snapshot envelope의
+  Unix/Windows path, token, Secret, command/stdout/stderr sentinel이 visible DOM, accessibility tree와 title에 0인지
+  확인한다.
+- **Frontend owner:** browser evidence가 focus/navigation/render defect를 재현할 때만 embedded assets와 frontend
+  browser fixture를 수정한다. route/schema/backend file은 수정하지 않는다.
+- **Backend owner:** 413 pre-execution, route status 또는 server envelope redaction defect가 재현될 때만 handler/
+  test/docs lane을 수정한다. target route나 v2 field를 만들지 않는다.
+- **Planner owner:** recorded screenshot/accessibility results를 Dashboard acceptance matrix에 대조하고 label과
+  capability 완료를 분리한다. PM은 evidence를 판정하고 full S1로 잘못 승격하지 않는다.
+
+**Success:** required browser matrix 전부 pass, path/search/hash byte preservation, body/destructive-neighbor focus 0,
+sentinel leak 0이고 existing Go/Node/full gates가 다시 green이다. **Stop:** harness/dependency 도입이 product code,
+network install, S2/S3 state/route를 요구하거나 destructive/current-authority mutation 없이는 fixture를 만들 수 없으면
+중단하고 validation-infrastructure decision gate를 연다. 23:15에는 새 case/fix를 freeze하고 23:30에 green이면
+slice `accepted`, 아니면 `in-progress-safe` 또는 lane rollback과 exact failed evidence를 기록한다.
+
+이 browser closure가 accepted된 뒤의 implementation 순서는 S1 root profile/verified-manifest/recovery, S2 canonical
+schema/journal/projection, S3 shared application service다. browser closure가 늦어져도 S1 root의 isolated planning은
+가능하지만 Dashboard release 또는 S1 completion을 주장할 수 없다. S2 schema contract가 accepted되기 전
+backend/frontend가 concrete v2 field를 각자 고정하지 않으며, S1 recovery와 S2 data gate 전에는 GitHub adapter
+또는 Orca E1을 시작하지 않는다.
