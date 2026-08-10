@@ -43,3 +43,37 @@
 2. Root owner supplies S1 verified-manifest/recovery input; backend consumes it read-only.
 3. Backend prototypes S2 Markdown/O1 journal/projection fixtures without freezing frontend fields independently.
 4. S3 extracts shared query/command services and adapts v1 only after the S2 data gate.
+
+## 2026-08-10 08:52 KST — task `task_a7efcdcf003e`
+
+> Dispatch: `ctx_45b3230277bc`.
+
+### Implementation
+
+- Accepted the S1 compatibility-lock decision in the roadmap and Dashboard specification and re-read both S0 backend/frontend baselines.
+- Changed the complete authenticated `POST /api/v1/actions` JSON-body maximum from the accidental approximately 16 MiB+64 KiB value to exactly 16 KiB (16,384 bytes).
+- The handler now bounded-reads the complete body before JSON decoding. Any 16,385-byte-or-larger body returns HTTP 413 with stable code `ACTION_REQUEST_TOO_LARGE`, fixed safe message `dashboard action request exceeds 16,384 bytes`, empty details, and no call to `Service.Execute`.
+- Preserved authorization/origin and content-type ordering, unknown-field rejection, trailing-value rejection, schema-v1 envelopes, and the existing action request shapes.
+- Updated the public Dashboard contract to enumerate all 15 executable v1 actions, including `update_secret`, and to state the exact total-body boundary and pre-execution rejection behavior.
+
+### Tests and evidence
+
+- Added exact threshold fixtures: a valid 16,384-byte request executes once; valid-plus-whitespace and malformed 16,385-byte requests both return the same safe 413 response without echoing body or decoder diagnostics and without execution.
+- Added GET/HEAD regression coverage for all current page/Guide aliases and explicit 404 checks for unimplemented Today/Inbox/Runs/Integrations/v2 routes.
+- Added transport fixtures for all 15 current action request shapes and a trailing-JSON-value regression alongside the existing unknown-field and token/origin tests.
+- Passed the focused `internal/dashboard` suite, focused compatibility tests, `go test ./...`, `go vet ./...`, and `go build ./cmd/wb`.
+
+### Peer review
+
+- Frontend implementation peer is dispatch `ctx_b0a4e703e581`; file ownership remains disjoint.
+- Sent the accepted HTTP contract proactively: HTTP 413, `ACTION_REQUEST_TOO_LARGE`, fixed allowlisted message, empty details, no v2 routes, unchanged v1 action payloads, and authorization/content-type precedence.
+- Reviewed the visible frontend `index.html`/`app.js` changes without editing them. They stay on current v1 routes and payloads, parse the schema-v1 envelope, accept the stable oversized-request code, ignore backend message/details in favor of generic safe recovery text, and do not automatically retry the failed action.
+- Requested a Node HTTP 413 fixture with hostile message/details to prove only `ACTION_REQUEST_TOO_LARGE` and generic recovery reach the DOM. No backend API conflict or shared-file overlap was found.
+- Combined validation exposed one backend-owned test that coupled to HTML attribute order after the frontend added a stable `tmux-observer` ID. Updated the assertion to check the ID and `session-observer` class independently; no production contract change was needed.
+
+### Files
+
+- `workbench/internal/dashboard/dashboard.go`
+- `workbench/internal/dashboard/dashboard_test.go`
+- `workbench/docs/dashboard.md`
+- `plan/agent-job/backend/log.md`
