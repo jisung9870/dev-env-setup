@@ -50,3 +50,55 @@
   internal/dashboard/testdata/*.mjs` passed 9/9.
 - New-file `git diff --no-index --check`, relative Markdown link validation,
   ownership/status checks, and final diff review passed.
+
+## 2026-08-10 — S1 focus-safe six-area compatibility shell
+
+### Scope and implementation
+
+- Changed only the embedded Dashboard HTML/JavaScript/CSS, frontend Node
+  fixtures, and this log; no handler, service, API, route, target-schema,
+  commit, or branch changes were made by the frontend owner.
+- Reframed the primary navigation as Today (`/`), Projects (`/projects`), Runs
+  & Agents (`/activity`), Integrations (`/settings`), and System & Recovery
+  (`/system`) while keeping Guide separate. Inbox is a focusable non-link with
+  `aria-disabled="true"` and explicit “requires S2” help text; no `/inbox`,
+  `/runs`, or v2 URL was introduced.
+- Kept `/activity` and `/settings` as rendered compatibility pages and retained
+  current profile, context, Secret, agent, workflow, terminal, and recovery
+  controls. Added stable route headings, snapshot status, and a persistent
+  fixed-copy error summary whose optional code is allowlisted rather than
+  rendering backend messages or sensitive values.
+- Captured focus by exact stable `id`, existing data identity, details owner,
+  or form/control name before the 15-second refresh and action reload. Restore
+  accepts only the same connected, enabled, visible control; otherwise it
+  focuses the visible route heading with a polite notice and never chooses a
+  neighboring action or creates another owner for Project/Task selection.
+- Added narrow-shell reflow, horizontal navigation overflow, 44 px interactive
+  targets, and 16 px form controls for zoom/mobile compatibility without
+  hiding the planned Inbox semantics.
+
+### Contract and peer review
+
+- Reviewed the concurrent backend diff: it preserves all current Dashboard and
+  Guide routes plus all 15 v1 action shapes, rejects target `/today`, `/inbox`,
+  `/runs`, `/integrations`, and v2 paths, and implements the accepted exact
+  16,384-byte action boundary with `ACTION_REQUEST_TOO_LARGE` redaction.
+- The frontend continues to post only existing v1 payloads and uses only the
+  existing snapshot fields. Failure UI displays the allowlisted error code and
+  fixed frontend copy, so the backend's non-echo contract is not weakened in
+  the DOM.
+
+### Validation and evidence boundary
+
+- `node --check internal/dashboard/assets/app.js` passed; `node --test
+  internal/dashboard/testdata/*.mjs` passed 20/20, including exact focus
+  restore, removed/disabled/hidden/`aria-disabled` fallback, non-sensitive
+  identities, refresh/action wiring, six-area order/destinations, Inbox
+  semantics, persistent failure structure, and narrow CSS assertions.
+- `go test ./internal/dashboard ./internal/cli`, `go test ./...`, `go vet ./...`,
+  and `go build ./cmd/wb` passed with the shared backend changes present.
+- Static HTML/CSS/Node evidence covers the 360/768/1280 and 200% compatibility
+  rules, but this checkout has no executable real-browser viewport/zoom harness;
+  keyboard traversal, visual clipping, scroll position, and focus-ring capture
+  at those widths remain an explicit validation-owner evidence gap rather than
+  a claimed pass.
